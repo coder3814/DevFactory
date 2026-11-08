@@ -33,7 +33,8 @@ with stable IDs, a suggested model and effort, and for a parent issue a work ord
 which sub-issues run in parallel and which wait on what. Skills create cards, add to them and
 re-evaluate them, always recording what changed and folding it into the card. Every card is
 worked wherever it sits on your board; the plugin moves no card, but fires an event at each
-hand-off that your own `.devfactory/hooks/` scripts can use to move it.
+hand-off, and when work starts, when a spec loses Ready because its card changed, and when
+you refuse a result, which your own `.devfactory/hooks/` scripts can use to move it.
 
 **Grills the card into a spec.** A spec folder sits beside your code, one per card. It holds
 what the card does not: which decisions are delegated to the developer and which are the
@@ -44,6 +45,15 @@ an evidence plan with a checkpoint per criterion, and every owner step with its 
 run. A readiness checker measures the spec against nine numbered conditions. You answer each
 open question once. The spec is stamped with a hash of the card, so a later change to the
 card is detected mechanically, not remembered.
+
+**Judges each thing once.** A check runs in the stage that produces what it judges: the card
+reviewer when the card is written, the readiness checker when the spec is. A passing check
+leaves a receipt in the card's spec folder, committed with the code, recording a fingerprint
+of everything it read: the card's text, comments, fields and sub-issue order, the spec
+files, the gap records, the profile, the plugin's standard and the code commit. The next
+stage compares fingerprints instead of judging again, so moving from card to spec to
+development re-runs a check only when something it reads has changed, and then only that
+check.
 
 **Runs the build unattended.** For a parent issue, a coordinator starts one Claude desktop
 session per sub-issue, sets each going as its waits clear, relays the rare question that
@@ -70,6 +80,9 @@ scripts, so two checkers agree by construction.
 
 - **Fewer interruptions.** Readiness is checked before anything starts, with the same
   numbered list every time, so the start-of-run check usually finds nothing.
+- **No repeated checking.** Work that hasn't changed since it passed is not judged again at
+  the next stage, which saves the time of the check and the new questions a fresh reviewer
+  would raise about the same content.
 - **One approval, one acceptance.** The rewritten wording of a card is not re-approved on
   every edit; your answer is the acceptance, and you judge intent once at the end against the
   evidence plan, criterion by criterion.
