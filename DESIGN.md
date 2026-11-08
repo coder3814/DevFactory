@@ -39,6 +39,10 @@ which the plugin reads and never embeds.
 9. **Claude Code's mechanisms are used fully:** scripts for machine checks, hooks for
    enforcement, agents with their models and tools, and skill frontmatter for permissions
    and context. Portability to another agent system is not a goal.
+10. **Each thing is judged once.** A check runs in the stage that produces what it judges,
+    and a passing check leaves a receipt: a fingerprint of everything it read. A later stage
+    compares the fingerprint instead of judging again, and re-runs the check only when
+    something it reads has changed.
 
 ## 2. The objects
 
@@ -71,6 +75,9 @@ runs. It holds:
 - `wireframe.*`: present when the interface determination is non-trivial and the design is
   not its own card.
 - `gaps.md`: the gap record (section 2.7).
+- `receipts.md`: the receipts (section 2.8). The card's first passing request check creates
+  the folder to hold its receipt, so the folder can exist before `spec.md` does; a folder
+  without `spec.md` is not a spec.
 - `evidence/`: what the Done judge consumes, added during development, one folder per
   criterion ID, each artifact with a one-line sidecar recording its revision, checkpoint and
   what produced it.
@@ -186,12 +193,42 @@ the project ledger `.devfactory/gaps.md`, each under the card ID and the spec's 
 types. The readiness checker reads the ledger and every live `gaps.md` before grilling, so a
 recurring class is asked up front next time, and `curate` reads the same records.
 
+### 2.8 The receipts
+
+Without receipts every hand-off re-judged what the stage before it had just judged: `grill`
+started a fresh card reviewer on a card `create-card` had just passed, and the start of a
+parent issue run started a fresh readiness checker on specs `grill` had just stamped. That
+cost the time of the check, and because a fresh reviewer finds something different every
+time, it raised new questions about content that had not changed.
+
+A receipt records, field by field, the fingerprint of everything a passing check read, in
+`receipts.md` in the card's spec folder, committed with the code. `devfactory receipt write`
+writes it and `devfactory receipt check` compares it; nothing else reads or writes the file.
+
+- **Request**, written when the card reviewer finds the card meets the Definition of Request
+  and the card as written is exactly what it measured: the card revision, a hash of the card
+  facts (each team field, each comment with its text, each attachment, the parent and the
+  sub-issues in the tracker's order, and the related data a team module names), the
+  plugin's version with a hash of its references and agents, and a hash of the profile and
+  its team modules. `create-card` and `re-evaluate-card` write it; `grill`'s request gate
+  compares it and starts a reviewer only when it differs, writing a new one on a pass.
+- **Ready**, written when `grill` stamps a spec Ready and when `check-ready` finds nothing
+  open: the spec folders measured together, a hash of their files with the Status value left
+  out so approval keeps it matching, a hash of the gap ledger and every live gap record, the
+  standard, the profile, and the head commit the check read. The commit matches while it is
+  an ancestor of the head and nothing outside the specs path and `.devfactory/` has changed
+  since, because everything under those is fingerprinted on its own. `check-ready` compares
+  it at development start, after the stamps, and starts no checker when it matches.
+
+A receipt never replaces the stamp. The stamp says the spec still answers the card; the
+receipt says a check need not run again.
+
 ## 3. The lifecycle
 
 | Stage | What happens | Who acts | Exit |
 |---|---|---|---|
 | Request | The card is created or restructured under the card standard, and request grilling asks the owner every question the card reviewer raises and every open question, until none is left. | `create-card`, `re-evaluate-card`, the card reviewer agent, the owner | The card meets the Definition of Request |
-| Grilling | Specification grilling first checks the card against the Definition of Request, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back to request grilling. | `grill`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
+| Grilling | Specification grilling first checks the card against the Definition of Request, which a matching request receipt has already done, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back to request grilling. | `grill`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
 | Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved` |
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
 | Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
@@ -467,7 +504,8 @@ DevFactory/
     scripts/
       devfactory.py         the machine checks and helpers: stamp, stamp-check, spec-lint,
                             criteria-ids, gaps add, gaps check, gaps ledger,
-                            evidence-check, begin, end, markers, profile
+                            evidence-check, receipt write, receipt check, begin, end,
+                            markers, profile, event
       README.md             the commands, their arguments and exit codes
       tests/                the script's tests
     hooks/
@@ -484,7 +522,8 @@ DevFactory/
 ```
 
 **Scripts.** `scripts/devfactory.py` decides every `[machine]` condition that has a command
-(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), holds the
+(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), writes
+and compares the receipts (`receipt`), holds the
 markers (`begin`, `end`, `markers`), is the one profile reader (`profile`), and fires the
 events (`event`). Every script
 and hook is Python 3, standard library only, run with `python`, and tested with `unittest`;
@@ -519,7 +558,8 @@ its line says off, and on any error of its own.
   parent branch, which a build session makes with
   `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. A `grill`
   marker allows its spec commit and fast-forward onto the integration branch, so `grill`
-  holds its marker through the spec commit and the spec line.
+  holds its marker through the spec commit and the spec line. A `create-card` or
+  `re-evaluate-card` marker allows the same fast-forward, which lands a request receipt.
 - The **stamp notice** gives a prompt that names a card with a spec the result of
   `stamp-check`. It never blocks.
 - The **session context** gives a session in a project with a profile the profile's
