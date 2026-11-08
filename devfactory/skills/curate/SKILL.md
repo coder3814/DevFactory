@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
   - Bash(git log *)
   - Bash(git show *)
   - Bash(git ls-tree *)
@@ -18,9 +18,9 @@ gap entry naming the condition that let it through. Curating turns those entries
 proposals, so the next grilling asks up front what this run had to ask mid-build. It writes
 nothing the requester has not accepted.
 
-`devfactory` below means running the plugin's script with `node`: the script is
-`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
-is `../../scripts/devfactory.js` relative to this skill's folder.
+`devfactory` below means running the plugin's script with `python`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin curate` as your first action and
 `devfactory end curate` as your last, including when you stop to ask the requester or to

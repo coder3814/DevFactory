@@ -6,10 +6,10 @@ contracts fix the interfaces several files share so authors working in parallel 
 
 ## Runtime
 
-- Node, standard library only, no package install. Every script runs as
-  `node <plugin>/devfactory/scripts/devfactory.js <command> ...`. Inside a hook or skill the
+- Python 3, standard library only, no package install (the owner wants no Node dependency
+  anywhere). Every script runs as `python <plugin>/scripts/devfactory.py <command> ...`. Inside a hook or skill the
   plugin path is `${CLAUDE_PLUGIN_ROOT}`; a skill says once that the script is
-  `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`, or `../../scripts/devfactory.js` relative
+  `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`, or `../../scripts/devfactory.py` relative
   to the skill's folder when that variable is empty in the shell. Scripts exit 0 on
   success, 1 on a failed check (findings on stdout, one per line, as `<code> <message>`), 2
   on usage or environment error (stderr).
@@ -23,7 +23,7 @@ contracts fix the interfaces several files share so authors working in parallel 
   `begin <skill>` again on resume. `configure-project` adds `.devfactory/.active/` to
   `.gitignore`.
 
-## Script commands (`scripts/devfactory.js`)
+## Script commands (`scripts/devfactory.py`)
 
 | Command | Does | Exit |
 |---|---|---|
@@ -43,10 +43,10 @@ contracts fix the interfaces several files share so authors working in parallel 
 
 | Event | Matcher | Script | Behaviour |
 |---|---|---|---|
-| PreToolUse | Bash | `guard-tracker.js` | If the command contains a tracker write (`gh issue edit`, `gh issue comment`, `gh issue create`, `gh project item-edit`, `gh project item-add`, a `gh api graphql` mutation, a `gh api` call with `-f`, `-F`, `--input`, `--method` or a non-GET `-X`, `az boards work-item update|create`, `az boards work-item relation`) and no live marker exists, deny with reason "DevFactory: card writes go through the card skills (create-card, add-to-card, re-evaluate-card, grill); none is running." Otherwise allow. No profile → allow. |
-| PreToolUse | Bash | `guard-git.js` | Protects the profile's integration branch and every branch matching its parent-branch pattern. Blocks `git push`, and any change to a protected branch: a merge, fast-forward, rebase, hard reset or amend while HEAD is on a protected branch, or the same through `git -C` into a protected branch's worktree. A rebase or merge of a protected branch into an unprotected one is never blocked. A live `release` or `coordinate` marker allows everything; a `build` marker allows the fast-forward into a parent branch; a `grill` marker allows its spec commit and fast-forward onto the integration branch. A denial names the skill that would allow it. No profile → allow. |
-| UserPromptSubmit | — | `stamp-notice.js` | For at most two cards the prompt names (`#<n>` or `card <n>`) whose `<specs path>/<n>/spec.md` exists and whose status is not drafting, run `stamp-check` and print one line each: "DevFactory: card <n>'s spec is current (Ready at <commit>)" or "DevFactory: card <n> changed since its spec earned Ready; run grill re-derive before building." Silent on a drafting spec. Never blocks. |
-| SessionStart | — | `session-context.js` | If `<repository root>/.devfactory/profile.md` exists, print: the profile path; the lifecycle stages and their columns; "use create-card / add-to-card / re-evaluate-card for cards, grill for specs, coordinate for a parent issue, build for one card, accept, release"; the decision line in one sentence; and whether any marker is active. Under 25 lines. |
+| PreToolUse | Bash | `guard_tracker.py` | If the command contains a tracker write (`gh issue edit`, `gh issue comment`, `gh issue create`, `gh project item-edit`, `gh project item-add`, a `gh api graphql` mutation, a `gh api` call with `-f`, `-F`, `--input`, `--method` or a non-GET `-X`, `az boards work-item update|create`, `az boards work-item relation`) and no live marker of a card-writing skill exists (create-card, add-to-card, re-evaluate-card, grill, check-ready, build, coordinate, accept, release; a configure-project or curate marker does not unlock), deny with reason "DevFactory: card writes go through the card skills (create-card, add-to-card, re-evaluate-card, grill); none is running." Otherwise allow. No profile → allow. |
+| PreToolUse | Bash | `guard_git.py` | Protects the profile's integration branch and every branch matching its parent-branch pattern. Blocks `git push`, and any change to a protected branch: a merge, fast-forward, rebase, hard reset or amend while HEAD is on a protected branch, or the same through `git -C` into a protected branch's worktree. A rebase or merge of a protected branch into an unprotected one is never blocked. A live `release` or `coordinate` marker allows everything; a `build` marker allows the fast-forward into a parent branch; a `grill` marker allows its spec commit and fast-forward onto the integration branch. A denial names the skill that would allow it. No profile → allow. |
+| UserPromptSubmit | — | `stamp_notice.py` | For at most two cards the prompt names (`#<n>` or `card <n>`) whose `<specs path>/<n>/spec.md` exists and whose status is not drafting, run `stamp-check` and print one line each: "DevFactory: card <n>'s spec is current (Ready at <commit>)" or "DevFactory: card <n> changed since its spec earned Ready; run grill re-derive before building." Silent on a drafting spec. Never blocks. |
+| SessionStart | — | `session_context.py` | If `<repository root>/.devfactory/profile.md` exists, print: the profile path; the lifecycle stages and their columns; "use create-card / add-to-card / re-evaluate-card for cards, grill for specs, coordinate for a parent issue, build for one card, accept, release"; the decision line in one sentence; and whether any marker is active. Under 25 lines. |
 
 Hook input is the JSON Claude Code sends on stdin (`tool_name`, `tool_input.command`,
 `prompt`, `cwd`, `session_id`). A PreToolUse deny is the JSON
@@ -68,7 +68,7 @@ effort only for build sessions; agents keep their own `model`.
 ## Skills (`skills/*/SKILL.md`)
 
 Frontmatter may use `allowed-tools` (pre-approve the reads the skill makes, such as
-`Bash(gh issue view *)`, `Bash(gh project item-list *)`, `Bash(git log *)`, `Bash(node *devfactory.js*)`), `disable-model-invocation: true` for `release`. Every card
+`Bash(gh issue view *)`, `Bash(gh project item-list *)`, `Bash(git log *)`, `Bash(python *devfactory.py*)`), `disable-model-invocation: true` for `release`. Every card
 and spec skill calls `begin <skill>` as its first action and `end <skill>` as its last,
 including on the path where it stops to ask. Every `[machine]` condition is checked by the
 script named in the definitions, never by reading. The coordinator names the desktop
@@ -84,7 +84,7 @@ session tools directly (`start_session`, `SendMessage`, `stop_session`,
 - A coordinated build session runs `begin build` first, then rebases onto the parent branch, then follows `build`.
 - Markers expire after the profile's `Marker lifetime` (default 12h), so a marker an interrupted skill left behind stops counting; `begin` refreshes a marker, and every skill that holds one across a wait runs `begin` again on resume. `markers --clear-stale` removes expired ones, from `configure-project`'s troubleshooting and `coordinate`'s final reap.
 - The script and the hooks find `.devfactory/` at the repository (worktree) root, not the shell's working directory, and the hooks read the profile through the script's `profile` command.
-- Skills pre-approve the script as `Bash(node *devfactory.js*)`, with no spaces around the name, and name it as `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`, or `../../scripts/devfactory.js` relative to the skill's folder when that variable is empty in the shell.
+- Skills pre-approve the script as `Bash(python *devfactory.py*)`, with no spaces around the name, and name it as `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`, or `../../scripts/devfactory.py` relative to the skill's folder when that variable is empty in the shell.
 
 ## Verified facts (code.claude.com, 2026-11-07)
 

@@ -1,6 +1,6 @@
 # DevFactory scripts
 
-Run as `node <plugin>/devfactory/scripts/devfactory.js <command> ...` (Node standard library only). Exit 0 is success, 1 a failed check with findings on stdout as `<code> <message>`, 2 a usage or environment error on stderr. Tests: `node --test devfactory/scripts/test`.
+Run as `python <plugin>/scripts/devfactory.py <command> ...` (Python 3, standard library only; `python` on Windows, and the shebang `#!/usr/bin/env python3` elsewhere). Input files may use CRLF or LF line endings. Exit 0 is success, 1 a failed check with findings on stdout as `<code> <message>`, 2 a usage or environment error on stderr. Tests, from the repository root: `python -m unittest discover -s devfactory/scripts/tests -t .` for this script and `python -m unittest discover -s devfactory/hooks/tests -t .` for the hooks.
 
 - `stamp --card <n> [--repo owner/name]` or `stamp --text <file>`: prints the card revision (SHA-256 of title, LF, body without spec lines, LF line endings, no trailing LFs); `--text` takes the first line as title. Exit 0, 2 when `gh` or the file fails.
 - `stamp-check --card <n> [--repo owner/name] --spec <dir>` (or `--text <file>` for the card): prints `match` or `changed <old> <new>`, then `ancestor` or `not-ancestor` for the stamped Repo commit against HEAD in cwd. Exit 0 on match and ancestor, 1 otherwise, 2 when the stamp rows, `gh` or `git` fail.

@@ -48,6 +48,7 @@ where, so the readiness checker can read them.
 | Field or fields | Team module |
 |---|---|
 | <field>, … | `modules/<module>.md` |
+| none | `modules/<rules module>.md` |
 
 ## Folding
 Fold additions while the card is in: <column>, <column>, … (or: none)
@@ -71,7 +72,8 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - Path: <where the project keeps its decisions>
 
 ## Test gate
-- Command: <the command that proves existing behaviour>
+- Command: <the command that proves existing behaviour, or the procedure or script that
+  selects and runs it, in the project's words>
 
 ## Environments
 ### <name>
@@ -89,7 +91,8 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - <type>: <what the step is and who takes it>
 
 ## Wireframe fidelity
-- <wireframe, or the fidelity the project's design review works at>
+- <wireframe; or finished mock-up; or design card: a card of its own whose approved mock-up this
+  card's spec references>
 - Design review: <how a wireframe is shown to the requester and approved>
 
 ## Branches and merging
@@ -127,7 +130,9 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   moving a part into another field, are in [`card-standard.md`](card-standard.md).
 - **Additional fields** is optional: none, or as many entries as the team wants. Each names
   the field or fields and the team module that works them. One module may cover several
-  fields.
+  fields. A module whose field is `none` holds rules the team adds for the card as a whole,
+  such as what a kind of card may and may not cover; the card reviewer applies it to the
+  card's parts the way it applies a core module, and it recommends no field value.
 - **Folding** lists the board columns in which an addition is folded into the card: any
   number of them, all or none. Every profile has this section. A project that develops
   cards through `coordinate` and `build` includes its Development column, because an
@@ -142,7 +147,8 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   `specs/`. The folder's layout is in [`spec-template.md`](spec-template.md).
 - **Recorded decisions** is where the readiness checker reads the decisions that already
   answer a question.
-- **Test gate** is the command that proves existing behaviour. Done condition 1.1 runs it at
+- **Test gate** is the command, or the named procedure or script, that proves existing
+  behaviour; a gate with a precondition, such as a container runtime, names it here. Done condition 1.1 runs it at
   the revision under evaluation.
 - **Environments** lists every place a checkpoint can be captured. A spec's evidence row
   names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
@@ -155,8 +161,12 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   project then disposes of each one. Optional.
 - **Owner-step types** names the kinds of step only the requester can take in this project,
   so a spec can schedule one by its type.
-- **Wireframe fidelity** is what an approved wireframe fixes. The default is a wireframe:
-  structure, fields, states and interaction, not aesthetics. Its **Design review** line is
+- **Wireframe fidelity** is what the approved design artifact fixes. The default is a wireframe:
+  structure, fields, states and interaction, not aesthetics. A project may instead require a
+  finished mock-up, or a **design card**: the design is a card of its own, grilled and accepted
+  first, and the development card's spec names that card's approved mock-up as its interface
+  artifact, so Ready condition 6.2 is met by the reference rather than by a file in the spec
+  folder. Its **Design review** line is
   how a wireframe is shown to the requester and approved, in the project's steps or the
   skill that holds them; `grill` follows it when the interface determination is
   non-trivial.

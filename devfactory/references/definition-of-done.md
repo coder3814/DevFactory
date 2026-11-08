@@ -14,7 +14,7 @@ Every condition is evaluated over three objects:
 
 Every check carries a mode, as in [`definition-of-ready.md`](definition-of-ready.md):
 `[machine]` the command its tag names decides it, a command of
-`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js` or, for 1.1, the profile's own
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py` or, for 1.1, the profile's own
 test gate, and `[machine: the judge reads]` marks a condition no command covers yet, which
 the Done judge decides by a mechanical reading; `[rubric]` an agent applies a named rubric;
 `[judgment]` an agent exercises adversarial judgment, looking for the way the result fails.
@@ -92,7 +92,7 @@ requester at acceptance, criterion by criterion against the evidence, never here
 ## Machine conditions without a script yet
 
 - **1.2** The test types the request type requires: the Done judge runs and reads them
-  until a command of `scripts/devfactory.js` covers them.
+  until a command of `scripts/devfactory.py` covers them.
 
 Condition 1.1 needs no script: the profile's test gate command decides it. Condition 2.1 is
 decided by `evidence-check`, given the criterion IDs `criteria-ids` prints, because every

@@ -159,9 +159,10 @@ Check, in the standard's order, then placement and team fields:
 14. **Team fields** — judged by each team module, not by the standard: a field
     the module needs is set; a field with set values holds one of its allowed
     values and fits the module's "Choosing a value"; a free-text field meets the
-    module's rules and "Throughout the card". The same rules sort these findings
-    into breaches, questions and suggestions; name the team module each one
-    comes from.
+    module's rules and "Throughout the card". A module whose field is `none`
+    holds rules for the card as a whole: measure the card's parts against them as
+    against a core module. The same rules sort these findings into breaches,
+    questions and suggestions; name the team module each one comes from.
 
 ## Rules
 

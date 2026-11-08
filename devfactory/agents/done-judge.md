@@ -17,8 +17,8 @@ The prompt that started you gives you all of these. If any is missing, say which
 
 - **The references folder**: the path to the plugin's `references/`. Read
   `definition-of-done.md`, `decision-line.md` and `spec-template.md` in full first. The
-  plugin's script is `scripts/devfactory.js` beside that folder; below, `devfactory` means
-  `node <references folder>/../scripts/devfactory.js`.
+  plugin's script is `scripts/devfactory.py` beside that folder; below, `devfactory` means
+  `python <references folder>/../scripts/devfactory.py`.
 - **The parent card** with its criteria and IDs, and **the parent spec folder path**.
 - **Every sub-issue**: its card with criteria and IDs, and its spec folder path.
 - **The profile path**: `.devfactory/profile.md`.

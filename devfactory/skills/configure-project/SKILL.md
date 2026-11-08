@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
   - Bash(gh issue view *)
   - Bash(gh project list *)
   - Bash(gh project field-list *)
@@ -18,8 +18,8 @@ allowed-tools:
 # Configure a project
 
 Paths below are relative to this skill's directory. `devfactory` below means running the
-plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
-if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+plugin's script with `python`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.py` relative to
 this skill's folder.
 
 **Markers.** Run `devfactory begin configure-project` as your first action and
@@ -51,7 +51,10 @@ writes to the tracker. Ask the owner one question at a time with the
 AskUserQuestion tool, and wherever the board or the repository suggests an
 answer, propose it as the first option rather than asking from blank.
 
-1. **Begin.** Run `devfactory begin configure-project`.
+1. **Begin.** Run `devfactory begin configure-project`. When whoever started you handed
+   over answers the owner has already given (a brief that names the stages, the test gate,
+   the environments and so on), take each as that step's answer, show it in the summary at
+   step 20, and ask only the questions no answer covers.
 2. **Start from what exists.** If the project already has `.devfactory/profile.md`,
    read it and its team modules; change only what the owner asks for, and go
    straight to the steps that cover it. Where it lacks a section the template
@@ -134,7 +137,8 @@ answer, propose it as the first option rather than asking from blank.
 14. **Set the wireframe fidelity and design review.** Say that the default is a
     wireframe, which fixes structure, fields, states and interaction but not
     aesthetics, and ask whether the project's design review works at another
-    fidelity. Then ask how a wireframe is shown to the requester and approved,
+    fidelity: a finished mock-up, or a design card of its own whose approved
+    mock-up a development card's spec references. Then ask how a wireframe is shown to the requester and approved,
     proposing any procedure or skill the contributor rules name, and record it
     as the Design review line.
 15. **Set branches and merging.** Read the project's contributor rules, if any,
@@ -169,7 +173,7 @@ answer, propose it as the first option rather than asking from blank.
     that skill's `begin` refreshes.
 18. **Choose the permissions.** Propose the allowlist entries for the
     Permissions section, read commands only, in the `Bash(<command> *)`
-    spelling: the plugin's script, `Bash(node *devfactory.js*)`; the binding's
+    spelling: the plugin's script, `Bash(python *devfactory.py*)`; the binding's
     reads, `Bash(gh issue view *)`, `Bash(gh project item-list *)` and
     `Bash(gh api -X GET *)` for GitHub Projects, or
     `Bash(az boards work-item show *)` for Azure DevOps; and the repository
@@ -197,6 +201,8 @@ answer, propose it as the first option rather than asking from blank.
       the file if there is none, unless a line already ignores that folder;
     - carry out any migration the owner agreed to in step 2;
     - run `devfactory profile` and confirm it prints the profile you wrote.
-    Tell the owner to commit the profile, the modules, `.claude/settings.json`
-    and `.gitignore` so the whole team shares one profile.
+    Commit the profile, the modules, `.claude/settings.json` and `.gitignore` as the
+    project's conventions say, or tell the owner to, so the whole team shares one profile.
+    Say that hooks and the session context load when a session starts, so this session
+    runs without them: the next session in the project is the first with the guards on.
 21. **End.** Run `devfactory end configure-project`.

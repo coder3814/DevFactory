@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -30,9 +30,9 @@ the move to Development. A standalone card reports to the requester directly and
 its own card; after its review passes it hands to `accept`, and `release` merges it once.
 "Report" below means to whichever applies.
 
-`devfactory` below means running the plugin's script with `node`: the script is
-`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
-is `../../scripts/devfactory.js` relative to this skill's folder.
+`devfactory` below means running the plugin's script with `python`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin build` as your first action, and keep the marker for
 the whole build: through every question, wait, review round and the merge, since the git

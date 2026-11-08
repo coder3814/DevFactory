@@ -18,8 +18,8 @@ The prompt that started you gives you all of these. If any is missing, say which
 - **The references folder**: the path to the plugin's `references/`. Read
   `definition-of-ready.md`, `decision-line.md` and `spec-template.md` in full before
   anything else; they are your measure. Read `modules/work-order.md` when the check covers a
-  parent issue. The plugin's script is `scripts/devfactory.js` beside that folder; below,
-  `devfactory` means `node <references folder>/../scripts/devfactory.js`.
+  parent issue. The plugin's script is `scripts/devfactory.py` beside that folder; below,
+  `devfactory` means `python <references folder>/../scripts/devfactory.py`.
 - **The repository path**, the branch you are to read it at and that branch's head commit.
 - **The cards**: for each card its id, its current text as the tracker holds it (every part,
   the acceptance criteria with their IDs, open questions, comments with their dates), its

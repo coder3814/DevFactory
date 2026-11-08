@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
 ---
 
 # Coordinate a parent issue
@@ -27,9 +27,9 @@ agents (`readiness-checker`, `change-reviewer`, `done-judge`, `card-reviewer`) a
 by name with the Agent tool and carry their own model; any other subagent is started with
 the Agent tool too.
 
-`devfactory` below means running the plugin's script with `node`: the script is
-`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
-is `../../scripts/devfactory.js` relative to this skill's folder.
+`devfactory` below means running the plugin's script with `python`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin coordinate` as your first action and keep the marker
 for the whole run, through every turn and wait: the git guard allows a push, or a merge

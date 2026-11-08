@@ -144,7 +144,7 @@ line is the exception: `grill` writes it after stamping and committing the spec,
 card revision leaves it out.
 
 The plugin's script is the one implementation, run as
-`node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`: `stamp --card <n>` prints
+`python ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`: `stamp --card <n>` prints
 the card revision, and `stamp-check --card <n> --spec <dir>` compares it with the stamp's
 and checks that the stamped Repo commit is an ancestor of the current head (Ready
 condition 9.2). For a tracker the script cannot read, or a part the profile writes to

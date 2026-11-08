@@ -21,11 +21,13 @@ records it, and the agent follows it.
 | Owner | The user or organization that owns the project |
 | Project | The project's number, from its URL |
 | View | The board view the profile is for |
-| Column field | The single-select field that view is grouped by, usually Status |
 | Repository | The repository new cards are created as issues in, `owner/name` |
 | Issue type | The issue type new cards are created as, if the repository has issue types (or: none) |
 | Epics | How an epic is marked, for example issue type Epic or label `epic` |
 | Access | How the agent reaches GitHub, in the team's words |
+
+The single-select field the view is grouped by, usually Status, is the profile's **Column
+field**, written under its Stages section rather than here.
 
 ## Naming a card
 

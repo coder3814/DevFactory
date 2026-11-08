@@ -20,7 +20,7 @@ check commands only), and the skill that starts one passes no model. A card's Su
 model and effort sets the model of a build session, never of these agents.
 
 The readiness checker, the change reviewer and the Done judge decide every `[machine]`
-condition by running the `scripts/devfactory.js` command the definition names for it and
+condition by running the `scripts/devfactory.py` command the definition names for it and
 quoting its output. They decide by reading only the conditions tagged `[judgment]` or
 `[rubric]` and the few each definition lists under "Machine conditions without a script
 yet". The card reviewer's measure is the card standard alone.

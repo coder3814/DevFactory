@@ -23,7 +23,7 @@ Every check carries a mode:
 
 - `[machine]` a command of the plugin's script decides it: present or absent, matching or
   not. The tag names the command, as in `[machine: spec-lint]`, run as
-  `node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js <command> ...`; a failed
+  `python ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py <command> ...`; a failed
   command fails the condition. A condition no command covers yet is tagged
   `[machine: the checker reads]`: the readiness checker decides it by a mechanical reading,
   and "Machine conditions without a script yet" at the end lists each one.
@@ -192,7 +192,7 @@ These conditions apply when the request's rules act on existing data.
 ## Machine conditions without a script yet
 
 These `[machine]` conditions are decided by the readiness checker's mechanical reading
-until a command of `scripts/devfactory.js` covers them: 1.3, 1.4, 2.3, 3.1 (presence), 3.3,
+until a command of `scripts/devfactory.py` covers them: 1.3, 1.4, 2.3, 3.1 (presence), 3.3,
 4.3, 5.1, 6.1, 6.2 (presence), 7.3 and 9.1.
 
 Three conditions are covered by a command only in part, and the checker reads the rest:

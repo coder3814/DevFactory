@@ -363,18 +363,18 @@ DevFactory/
       agents.md               the agents' README: each agent and the skill that starts it
       examples/work-type-module.md   the work-type starter module, a team module example
     scripts/
-      devfactory.js           the machine checks and helpers: stamp, stamp-check, spec-lint, criteria-ids,
+      devfactory.py           the machine checks and helpers: stamp, stamp-check, spec-lint, criteria-ids,
                               gaps add, gaps check, gaps ledger, evidence-check, begin, end, markers, profile
       README.md               the commands, their arguments and exit codes
       test/                   the script's tests
     hooks/
       hooks.json              the four hooks, each switched by its line in the profile's Hooks section
-      guard-tracker.js        PreToolUse: refuses a tracker write while no card skill is running
-      guard-git.js            PreToolUse: refuses a push, or a change to the integration or a parent branch,
+      guard_tracker.py        PreToolUse: refuses a tracker write while no card skill is running
+      guard_git.py            PreToolUse: refuses a push, or a change to the integration or a parent branch,
                               except as the running skill's marker allows
-      stamp-notice.js         UserPromptSubmit: says whether the spec of a card the prompt names is current
-      session-context.js      SessionStart: the profile, the stages, the skills to use and any active marker
-      lib.js                  shared by the hooks: stdin, repository root, command tokens, profile and markers through the script
+      stamp_notice.py         UserPromptSubmit: says whether the spec of a card the prompt names is current
+      session_context.py      SessionStart: the profile, the stages, the skills to use and any active marker
+      hooks_lib.py                  shared by the hooks: stdin, repository root, command tokens, profile and markers through the script
       test/                   the hooks' tests
 ```
 
@@ -393,9 +393,9 @@ the decision line at start. A skill marks itself running with `begin <skill>` an
 guards read that folder, ignore a marker older than the profile's Marker lifetime (default
 12 hours), and `begin` refreshes one.
 
-**Scripts.** `scripts/devfactory.js` decides every `[machine]` condition that has a command
+**Scripts.** `scripts/devfactory.py` decides every `[machine]` condition that has a command
 (`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`) and holds
-the markers and the profile reader. Node, standard library only. The definitions name the
+the markers and the profile reader. Python 3, standard library only. The definitions name the
 command beside each condition.
 
 **Agents** carry their whole definition inline with `tools` and `model` in their
@@ -525,16 +525,34 @@ system is not a goal, so the plugin uses Claude Code's own mechanisms wherever t
 job instead of describing the job in neutral words. These entries supersede any earlier
 entry they contradict.
 
+- **Scripts and hooks are Python.** The owner decided on 2026-11-07 that the plugin has no
+  Node dependency: "I'm much more comfortable using Python scripts than Node for anything."
+  Every script and hook is Python 3, standard library only, run with `python`; tests are
+  `unittest`. The first version shipped Node and was ported.
+- **12.2 Wireframe fidelity, from the first adoption.** The owner, 2026-11-07, in the
+  BottleNote adoption session: "When coming up with a design, that should be a card of its
+  own. It can move from a wireframe but should have a full, fleshed-out, approved mockup in
+  the equivalent of completed HTML for any interface change. That completed HTML would then be
+  used in the implementation of a development card." The profile's Wireframe fidelity gains
+  the **design card** option: the design is its own card, and the development card's spec
+  references that card's approved mock-up to meet Ready 6.2.
+- **Adoption findings folded in (2026-11-07).** A team module may have no field and hold
+  rules for the card as a whole; the test gate may be a procedure; `configure-project` takes
+  answers its dispatcher already holds and asks only the rest, commits or tells the owner to,
+  and says hooks take effect in the next session; the column field is documented under Stages
+  in the GitHub binding; the tracker guard unlocks only for the skills that write cards
+  (`configure-project`'s marker does not).
+
 - **2 Principles, 9.** Replaced by: **Claude Code's mechanisms are used fully: scripts for
   machine checks, hooks for enforcement, agents with models and tools, skill frontmatter for
   permissions and context.**
 - **3.5 The definitions.** Every `[machine]` condition is decided by a command of the
-  plugin's script, `scripts/devfactory.js`, which each condition names, never by an agent
+  plugin's script, `scripts/devfactory.py`, which each condition names, never by an agent
   reading. A machine condition no command covers yet says so, and the definition lists it.
-- **9 Plugin layout.** The plugin gains `scripts/devfactory.js` (the commands `stamp`,
+- **9 Plugin layout.** The plugin gains `scripts/devfactory.py` (the commands `stamp`,
   `stamp-check`, `spec-lint`, `criteria-ids`, `gaps add`, `gaps check`, `gaps ledger`,
   `evidence-check`, `begin`, `end` and `profile`) and `hooks/` (`hooks.json` and the four
-  hooks `guard-tracker.js`, `guard-git.js`, `stamp-notice.js` and `session-context.js`). It
+  hooks `guard_tracker.py`, `guard_git.py`, `stamp_notice.py` and `session_context.py`). It
   loses `references/runtime/`, whose session mechanics are folded into `coordinate`. The
   card reviewer becomes the agent `agents/card-reviewer.md`, carrying its whole brief inline,
   and `references/card-reviewer.md` is removed; this supersedes the earlier 9 Plugin layout

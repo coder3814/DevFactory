@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(gh api -X GET *)
@@ -16,8 +16,8 @@ allowed-tools:
 # Create a card
 
 Paths below are relative to this skill's directory. `devfactory` below means running the
-plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
-if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+plugin's script with `python`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.py` relative to
 this skill's folder. Read the tracker with `gh issue view`, `gh project item-list`,
 `gh api -X GET` or `az boards work-item show`, as the profile's binding says; those reads
 and the script run without a permission prompt.

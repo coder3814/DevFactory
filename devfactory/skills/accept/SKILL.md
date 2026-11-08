@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js*)
+  - Bash(python *devfactory.py*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -20,9 +20,9 @@ each criterion is shown with the artifact its evidence row promised, so a refusa
 already naming what it refuses. Under a coordinator, every read, write and board move below
 is done by a session or a subagent it starts, as `coordinate` says.
 
-`devfactory` below means running the plugin's script with `node`: the script is
-`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
-is `../../scripts/devfactory.js` relative to this skill's folder.
+`devfactory` below means running the plugin's script with `python`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin accept` as your first action and
 `devfactory end accept` as your last. Whenever you end your turn to wait for the
