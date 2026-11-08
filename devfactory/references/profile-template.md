@@ -74,6 +74,9 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - Cannot show: <what it cannot>
 - Reached by: <how a checkpoint here is reached, in the project's words>
 
+## Data access
+- <population>: <how it is read, read-only, in the project's words; who may read it>
+
 ## Concern extensions
 - <concern>: <what a disposition of it must answer>
 
@@ -127,6 +130,9 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - **Environments** lists every place a checkpoint can be captured. A spec's evidence row
   names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
   the row promises. "Reached by" is in the project's words: a command, a deploy, a sign-in.
+- **Data access** names each population of existing data a card's rules might act on and
+  how it is read without writing, so the readiness checker can run the rules against it
+  (Ready condition 5). A population with no entry makes condition 5 unchecked, never passed.
 - **Concern extensions** adds to the core list of fixed concerns in
   [`definition-of-ready.md`](definition-of-ready.md), condition 4.1. Every spec in the
   project then disposes of each one. Optional.

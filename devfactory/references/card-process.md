@@ -64,7 +64,10 @@ the requester's answer to a question or the requester's words on an acceptance
 not given, the requester's answer is itself the acceptance: the fold is written
 without a further round on its wording, shown to the requester as done, and the
 requester may object. An objection is a new addition, recorded and folded like
-any other.
+any other. The same holds while a card is being grilled: an answer the requester
+gives to a readiness question is folded without a further round, because the
+requester approves the whole Ready spec, card included, once at the end of
+grilling.
 
 ### Additions through an agent
 

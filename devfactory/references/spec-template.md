@@ -121,6 +121,26 @@ exclusion or a delegation.*
 | 1 | <date> | Initial spec | — |
 ```
 
+## The stamp
+
+The stamp is three header rows of `spec.md`:
+
+- **Card revision**: the SHA-256 of the card's text, as lowercase hexadecimal. The text is
+  the title, a line feed, then the description body as the tracker returns it, with the spec
+  line removed, every line ending normalised to a single line feed (a carriage return and
+  line feed pair, or a lone carriage return, becomes a line feed) and trailing line feeds
+  removed. Where the profile writes a part to a field other than the description, that
+  field's content follows, each preceded by a line feed, in the card standard's part order.
+  Comments, attachments, the column and team fields are not part of the text, so recording a
+  comment or moving the card leaves the stamp matching.
+- **Repo commit**: the commit of the branch the spec lives on that the spec was checked
+  against.
+- **Stamped**: the date.
+
+Stamp only after the last write to the card, since every fold changes the text.
+Every skill and agent that compares a card with its stamp computes the card revision this
+way, so a mismatch means the card's text changed, never that two readers hashed differently.
+
 ## Sibling files
 
 ### `wireframe.*` *(when the interface determination is non-trivial)*

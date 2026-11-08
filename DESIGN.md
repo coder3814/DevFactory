@@ -126,7 +126,8 @@ One folder per project, `.devfactory/`, replacing `.card-standard/`:
 - `profile.md`: the board (tracker binding and its entries, column field, columns, fold
   columns, the column each lifecycle stage maps to), where specs live, the test gate (the
   command that proves existing behaviour), the environments available for checkpoints and
-  what each can and cannot show, the fixed-concern list extensions, the owner-step types the
+  what each can and cannot show, how each population of existing data is read without
+  writing, the fixed-concern list extensions, the owner-step types the
   project has, the branch and merge conventions (integration branch, worktree layout, how a
   parent branch is named), and the standing answers (section 8).
 - `modules/`: team modules for additional fields, as today.
@@ -152,9 +153,9 @@ asked up front next time.
 |---|---|---|---|
 | Request | The card is created or restructured under the card standard. | `create-card`, the owner | Card accepted |
 | Grilling | The spec is drafted from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question once. | `grill`, the readiness checker agent, the owner | Ready earned and stamped |
-| Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Card moves to the intake column |
+| Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved`; the card waits in the Approval column until work starts |
 | Development | One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch in the work order. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
-| Done | The Done judge measures the parent branch against the parent spec and the Definition of Done. Findings are fixed as sub-issue work. | the Done judge agent | Done verdict |
+| Done | Merged work sits in the Done column. The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Findings are fixed as sub-issue work. | the Done judge agent | Done verdict |
 | Acceptance | The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 7.2). | the owner | Accepted |
 | Release | Merge, push, release and close as the profile's conventions say; specs deleted; gap record curated. | `release` | Cards closed |
 
@@ -346,12 +347,12 @@ DevFactory/
       release/                merge, push, release and close as the profile says; delete specs; curate gaps
       curate/                 read gap records across specs; propose checker tuning and profile entries
     agents/
-      card-reviewer.md        from card-standard
+      README.md               why the card reviewer stays a reference, and that no agent names a model
       readiness-checker.md    applies the Definition of Ready, fixed inputs, fixed report
       change-reviewer.md      a sub-issue's result against its spec, given what not how
       done-judge.md           applies the Definition of Done to a parent branch
     references/
-      card-standard.md, card-template.md, card-process.md, working-a-card.md, modules/
+      card-standard.md, card-template.md, card-process.md, working-a-card.md, card-reviewer.md, modules/
       definition-of-ready.md, definition-of-done.md, decision-line.md
       spec-template.md, profile-template.md
       bindings/github-projects.md, bindings/azure-devops.md
@@ -419,7 +420,8 @@ and parent issues are worked with the DevFactory plugin and this project's profi
    to a new card.
 4. **Spec deletion at release.** The design deletes the spec folder; the alternative is an
    archive path.
-5. **Hooks.** Ship the two optional hooks in the first version, or defer them.
+5. **Hooks.** Ship the two optional hooks in the first version, or defer them. Deferred: the
+   first version ships none, and the hooks folder stays empty until the owner decides.
 
 ## 13. Build order
 
@@ -433,6 +435,6 @@ Each step lands as its own commit in this repository and is reviewed against thi
 5. Spec skills: `grill`, `check-ready`.
 6. Run skills: `build`, `coordinate` with the Claude desktop runtime file, `accept`,
    `release`, `curate`.
-7. Hooks, if chosen.
+7. Hooks, when the owner chooses them (deferred, see 12.5).
 8. First adopter: BottleNote's profile, removal of the replaced skills and rules, and one
    parent issue run end to end as the acceptance test of the plugin.

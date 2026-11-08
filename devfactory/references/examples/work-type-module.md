@@ -1,7 +1,7 @@
 # Work Type
 
-A starter team module. `configure-board` copies it into a team's
-`.card-standard/modules/` when the team wants its cards to carry a work type;
+A starter team module. `configure-project` copies it into a team's
+`.devfactory/modules/` when the team wants its cards to carry a work type;
 the team's copy is the team's to change. Drop this note from the copy.
 
 ## Holds
