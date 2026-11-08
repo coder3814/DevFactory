@@ -1,39 +1,21 @@
 # DevFactory design
 
-> Status: **accepted 2026-11-07; amended during the build as the Amendments section
-> records**. This document is the brief the plugin is built from, and it stays the design of
-> record: when the built plugin and this document disagree, one of them is wrong and the
+> Status: **accepted 2026-11-07**. This is the design of record for what the DevFactory
+> plugin is. When the plugin and this document disagree, one of them is wrong, and the
 > disagreement is a finding.
 
-DevFactory is one plugin that carries a change from a request to an accepted result with an
-agent doing the work unattended. It owns the request (a card on a board), grills the request
-into a specification that a fresh agent can build from without asking anything, runs the
-build (a parent issue as one session per sub-issue), handles the two things that interrupt an
-unattended build (a question the spec did not answer, and an acceptance not given), judges
-the result Done against the spec, and records every miss so the grilling improves.
+DevFactory is one Claude Code plugin that carries a change from a request to an accepted
+result with an agent doing the work unattended. It owns the request (a card on a board),
+grills the request into a specification that a fresh agent can build from without asking
+anything, runs the build (a parent issue as one session per sub-issue), handles the two
+things that interrupt an unattended build (a question the spec did not answer, and an
+acceptance not given), judges the result Done against the spec, and records every miss so
+the grilling improves.
 
 It is project-agnostic. Everything about one project lives in that project's **profile**,
 which the plugin reads and never embeds.
 
-## 1. Where the design comes from
-
-Three sources, and what each contributes.
-
-- **The card standard** (the `card-standard` plugin): what a good request looks like, how it
-  is written and changed on a tracker, how a board is configured. Kept as the request layer,
-  nearly whole.
-- **Grillwork** (its Definition of Ready and Definition of Done): the claim that a spec
-  exists to carry development to Done without a single additional question, enumerated
-  conditions with a mode each, dispositions where silence is not valid, boundaries with
-  reasons, the interface surface grounded before Ready, stable criterion IDs, the gap record,
-  and the learning loop. Kept as the spec and judgement layer, trimmed.
-- **The BottleNote run** (its `board-conventions`, `check-parent-issue-readiness` and
-  `coordinate-parent-issue` skills, and the 240 owner questions those runs produced): the
-  parent-issue coordination, the work order, the model-and-effort suggestion, and the
-  evidence of which questions get asked and why. The analysis of those questions is the
-  reason for every rule in sections 5 to 8.
-
-## 2. Principles
+## 1. Principles
 
 1. **The card is the request. The spec is what development reads.** The card stays small
    and outcome-shaped under the card standard. Everything a builder needs beyond that is in
@@ -54,60 +36,71 @@ Three sources, and what each contributes.
    true, never how it was built.
 8. **The process lives in the plugin; the project's facts live in the profile.** A question
    that recurs across runs is a missing profile entry, and the process says so.
-9. **One runtime seam.** Only the coordinator touches session mechanics, in one section,
-   so another runtime is that section rewritten.
+9. **Claude Code's mechanisms are used fully:** scripts for machine checks, hooks for
+   enforcement, agents with their models and tools, and skill frontmatter for permissions
+   and context. Portability to another agent system is not a goal.
 
-## 3. The objects
+## 2. The objects
 
-### 3.1 The card
+### 2.1 The card
 
 A work item on the project's tracker, written to the card standard: title, summary, the
 issue or request, what needs to be achieved, scope, supporting information, open questions,
-acceptance criteria. Two sections the BottleNote conventions added become core, because any
-adopter that runs sessions needs them:
+acceptance criteria. Two further sections are core, because every run of sessions needs
+them:
 
-- **Suggested model and effort**, after the acceptance criteria.
+- **Suggested model and effort**, after the acceptance criteria. A build session runs on
+  it, or on the profile's default when the card suggests none.
 - **Work order**, on a parent issue only: its sub-issues in the order to work them, each
   saying what it waits on (one of: needs the other's result; changes the same files; both
   need something only one session can hold) and which may run alongside it. Sub-issues run
   in parallel by default.
 
-Criteria carry **stable IDs** (`C1`, `C2`, …) that survive amendment: a removed criterion's
-ID is never reused, and a new one takes the next number. Work orders, comments, gap records
-and evidence cite the ID, never the position.
+A sub-issue carries a line naming its parent. Criteria carry **stable IDs** (`C1`, `C2`, …)
+that survive amendment: a removed criterion's ID is never reused, and a new one takes the
+next number. Work orders, comments, gap records and evidence cite the ID, never the
+position.
 
-### 3.2 The spec
+### 2.2 The spec
 
 One folder per card in the project repository, at the path the profile names (default
 `specs/<card>/`), versioned with the code and outside any documentation system the project
 runs. It holds:
 
-- `spec.md`: the specification (section 3.3).
-- `wireframe.*`: present when the interface determination is non-trivial.
-- `gaps.md`: the gap record (section 7).
-- `evidence/`: what the Done judge consumes, added during development.
+- `spec.md`: the specification (section 2.3).
+- `wireframe.*`: present when the interface determination is non-trivial and the design is
+  not its own card.
+- `gaps.md`: the gap record (section 2.7).
+- `evidence/`: what the Done judge consumes, added during development, one folder per
+  criterion ID, each artifact with a one-line sidecar recording its revision, checkpoint and
+  what produced it.
 
-The card carries one line pointing at the spec: its path and the commit at which it earned
-Ready. The spec is written while the card is in a pre-development column and lands on the
+The card points at its spec with exactly one line, `Spec: <path> @ <commit>`, the last line
+of the description body, where the commit is the spec folder's own commit. `grill` rewrites
+that line after every commit of the spec folder, and the card revision the stamp hashes
+excludes any line of that form, so writing it never makes the spec stale.
+
+The spec is written while the card is in a pre-development column and lands on the
 integration branch through a commit of its own. During development it is amended on the
-sub-issue's branch and merges with the work. At release the folder is deleted; history keeps
-it, and the durable facts have already gone wherever the project keeps decisions.
+sub-issue's branch and merges with the work. At release its gap entries are appended to the
+project's gap ledger and the folder is deleted, not archived; history keeps it, and the
+durable facts have already gone wherever the project keeps decisions.
 
-### 3.3 What the spec holds
+### 2.3 What the spec holds
 
 In this order, general to specific:
 
-1. **Header**: card, version, Ready stamp (card revision hash, repo commit, date), request
-   type(s).
+1. **Header**: card, version, status (`drafting`, `Ready` or `approved`), Ready stamp (card
+   revision hash, repo commit, date), request type(s).
 2. **Decisions delegated to the developer**: the calls the grilling identified as the
    developer's under principle 5, listed so the builder knows they are its to make, and the
    log of the calls it made.
 3. **Boundaries**: exclusions with reasons; deferrals with reasons; for each requirement, its
    edge behaviour either specified or named as excluded or delegated.
-4. **Dispositions**: one line per fixed concern (section 5, condition 4).
+4. **Dispositions**: one line per fixed concern (section 4, condition 4).
 5. **Interface surface**: the determination (non-trivial / trivial, because / not
-   applicable, because) and, when non-trivial, the approved wireframe's path and the pages
-   or screens it covers.
+   applicable, because) and, when non-trivial, the approved wireframe's path, or the design
+   card whose approved mock-up it uses, and the pages or screens it covers.
 6. **Data population**: when the card's rules act on existing data, the result of running
    them read-only against that population: counts per rule, and the rows no rule covers,
    each resolved.
@@ -119,50 +112,111 @@ In this order, general to specific:
 9. **Project bindings used**: the profile entries this spec relies on, by name.
 10. **Amendments**: version, date, what changed, and the gap or rejection that drove it.
 
-### 3.4 The project profile
+### 2.4 The project profile
 
-One folder per project, `.devfactory/`, replacing `.card-standard/`:
+One folder per project, `.devfactory/` at the repository root:
 
-- `profile.md`: the board (tracker binding and its entries, column field, columns, fold
-  columns, the column each lifecycle stage maps to), where specs live, the test gate (the
-  command that proves existing behaviour), the environments available for checkpoints and
-  what each can and cannot show, how each population of existing data is read without
-  writing, the fixed-concern list extensions, the owner-step types the
-  project has, the branch and merge conventions (integration branch, worktree layout, how a
-  parent branch is named), and the standing answers (section 8).
-- `modules/`: team modules for additional fields, as today.
-- `decisions/` is **not** here. Recorded decisions stay where the project keeps them; the
-  profile names where that is so the checker can read them.
+- `profile.md`: the profile.
+- `modules/`: the team modules the profile names.
+- `gaps.md`: the gap ledger, the gap records of released cards (section 2.7).
+- `.active/`: the marker folder the hooks read (section 8), ignored by git.
 
-### 3.5 The definitions
+`profile.md` holds, each as its own section:
+
+- **The board**: the tracker binding and the entries it asks for; the field each part of a
+  card is written to; any additional fields with the team module that works each one (a
+  module may have no field and hold rules for the card as a whole); the columns in which
+  additions are folded; and under Stages, the column field and the column each lifecycle
+  stage maps to.
+- **The work**: where specs live; where recorded decisions live, so the checker can read
+  them (they are never kept in the profile); the test gate, the command or procedure that
+  proves existing behaviour; the environments available for checkpoints and what each can
+  and cannot show; **Data access**, each population of existing data a card's rules might
+  act on and how it is read without writing, which `grill` and the readiness checker run
+  data rules through; the fixed-concern list extensions; the owner-step types the project
+  has.
+- **Wireframe fidelity**: what the approved design artifact fixes (section 2.5), with a
+  **Design review** line saying how a wireframe is shown to the requester and approved.
+- **Branches and merging**: the integration branch, the worktree layout, how a parent branch
+  and a sub-issue branch are named, who merges what and when, and the release procedure
+  (the project's steps or the skill it names).
+- **Sessions**: the default model and effort.
+- **Hooks**: one on or off line per hook, all on by default, and the Marker lifetime.
+- **Permissions**: the read-only allowlist entries `configure-project` writes to the
+  project's `.claude/settings.json`, so the skills' reads run without a prompt. A write to
+  the tracker or to a branch is never pre-approved.
+- **Standing answers** (section 7).
+
+`configure-project` writes the profile from the board, the repository and the owner's
+answers. It takes the answers its caller already holds and asks only the rest, commits the
+profile or tells the owner to, and says that hook changes take effect in the next session.
+
+### 2.5 Wireframe fidelity
+
+The approved design artifact grounds Ready condition 6.2. The profile chooses what it fixes:
+
+- **Wireframe**, the default: structure, fields, states and interaction, not aesthetics.
+- **Finished mock-up**: the artifact is a complete design.
+- **Design card**: the design is a card of its own, grilled and accepted first, and the
+  development card's spec references that card's approved mock-up, which meets condition
+  6.2 without a file in the spec folder. As the owner put it (the owner, 2026-11-07): "When
+  coming up with a design, that should be a card of its own. It can move from a wireframe
+  but should have a full, fleshed-out, approved mockup in the equivalent of completed HTML
+  for any interface change. That completed HTML would then be used in the implementation of
+  a development card."
+
+### 2.6 The definitions
 
 `references/definition-of-ready.md` and `references/definition-of-done.md`: numbered
-conditions, each tagged `[machine]`, `[rubric]` or `[judgment]`. Sections 5 and 6 are their
-content.
+conditions, each tagged `[machine]`, `[rubric]` or `[judgment]`. Sections 4 and 5 are their
+content. Every `[machine]` condition is decided by a command of the plugin's script,
+`scripts/devfactory.py`, which the condition names, never by an agent reading. A machine
+condition no command covers yet says so in its tag, and the definition lists it under
+"Machine conditions without a script yet".
 
-### 3.6 The gap record
+### 2.7 The gap record
 
-`gaps.md` beside the spec: one entry per question asked after Ready, per refused acceptance,
-and per Done-check miss, each naming the Ready or Done condition that let it through. The
-readiness checker reads the project's gap records before grilling, so a recurring class is
-asked up front next time.
+`gaps.md` beside the spec: one entry per question asked from Ready onward, per refused
+acceptance, and per Done-check miss, each naming the Ready or Done condition that let it
+through. A question answered before the spec first earns Ready is folded into the spec, not
+recorded as a gap.
 
-## 4. The lifecycle
+Gap records survive release: before a spec folder is deleted, its entries are appended to
+the project ledger `.devfactory/gaps.md`, each under the card ID and the spec's request
+types. The readiness checker reads the ledger and every live `gaps.md` before grilling, so a
+recurring class is asked up front next time, and `curate` reads the same records.
+
+## 3. The lifecycle
 
 | Stage | What happens | Who acts | Exit |
 |---|---|---|---|
 | Request | The card is created or restructured under the card standard. | `create-card`, the owner | Card accepted |
 | Grilling | The spec is drafted from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question once. | `grill`, the readiness checker agent, the owner | Ready earned and stamped |
 | Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved`; the card waits in the Approval column until work starts |
-| Development | One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch in the work order. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
-| Done | Merged work sits in the Done column. The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Findings are fixed as sub-issue work. | the Done judge agent | Done verdict |
-| Acceptance | The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 7.2). | the owner | Accepted |
-| Release | Merge, push, release and close as the profile's conventions say; specs deleted; gap record curated. | `release` | Cards closed |
+| Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
+| Done | Merged work sits in the Done column. The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
+| Acceptance | The card moves to the Acceptance column. The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
+| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated; the card moves to the Release column. | `release` | Cards closed |
 
 The profile maps each stage to a board column. A project whose board has fewer columns maps
 several stages to one.
 
-## 5. Definition of Ready
+`build` and `coordinate` check the spec's status, not the card's column, before any work
+starts. Results merge into the parent branch in the order they finish, except that a card
+that waits on another merges after the card it waits on. A standalone card is not merged
+when its review passes; `release` merges it once, after acceptance.
+
+**Loops are bounded.** After a change review or the Done judge fails, the work gets at most
+two further rounds. A third failure stops it and reports the findings to the coordinator,
+or to the requester for a standalone card.
+
+**Sessions are kept.** In a parent issue run, each sub-issue's session, worktree and branch
+are kept until the run is accepted and released. A Done-judge finding or a refusal that
+belongs to one sub-issue is fixed by that sub-issue's kept session, on its branch rebased
+onto the parent branch; one no sub-issue owns is fixed by a new session cut from the parent
+branch. Either is reviewed and merged as any sub-issue's work is.
+
+## 4. Definition of Ready
 
 A spec is Ready when every condition holds, evaluated over the card, the spec, the profile
 and the repository. Cheap presence checks come first; the end-to-end test is last.
@@ -196,15 +250,17 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
 4.3 A non-trivial disposition's demands appear as criteria or evidence rows. `[machine]`
 
 **5. The data population is checked** (when the request's rules act on existing data)
-5.1 The rules were run read-only against the population the spec names, with counts per
-    rule. `[machine: presence]`
+5.1 The rules were run read-only, through the profile's Data access entry, against the
+    population the spec names, with counts per rule. `[machine: presence]` A population
+    with no Data access entry leaves the condition unchecked, never passed.
 5.2 Every row no rule covers is resolved by a rule, an exclusion or a delegation. `[judgment]`
 
 **6. The interface surface is grounded**
 6.1 The determination is stated: non-trivial, trivial because, or not applicable because.
     `[machine]`
-6.2 When non-trivial, the wireframe is present and approved, and grounds structure, fields,
-    states and interaction. `[machine: presence; judgment: grounding]`
+6.2 When non-trivial, the design artifact the profile's wireframe fidelity requires is
+    present (or, for a design card, referenced) and approved, and grounds structure,
+    fields, states and interaction. `[machine: presence; judgment: grounding]`
 
 **7. The evidence plan is complete**
 7.1 Every criterion has an evidence row naming artifact, what it shows, condition, how it is
@@ -219,19 +275,23 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
 
 **9. The spec grounds the work**
 9.1 Every project binding the spec relies on exists in the profile. `[machine]`
-9.2 The spec is stamped with the card revision and repo commit it was checked against, and
-    the card matches the stamp. `[machine]`
+9.2 The spec is stamped with the card revision and the repo commit it was checked against,
+    the commit being the branch head the checker read. The condition holds when the card's
+    revision equals the stamp's and the stamped commit is an ancestor of the current head.
+    It is not applicable at creation, before the stamp exists, or in a re-derive check.
+    `[machine]`
 9.3 A fresh agent could decompose and build the work from the card, the spec, the profile
     and the repository without a single new question, every decision either grounded in them
     or delegated under principle 5. `[judgment]` This is the purpose of the definition tested
     directly; conditions 1 to 8 catch its common failures cheaply.
 
-Dropped from Grillwork and why: per-criterion tag traceability from commits (needs tooling
-and a commit discipline the plugin cannot enforce), video evidence (capture capability is
-the project's), the per-spec rubric set and instantiation (the profile binds the few terms
-that vary), and the existing-behaviour gate as a spec entry (it is a profile entry).
+The definition does not trace criteria through tags in commits, which needs a commit
+discipline the plugin cannot enforce; does not require video evidence, since capture
+capability is the project's; has no per-spec rubric set, since the profile binds the few
+terms that vary; and keeps the existing-behaviour gate in the profile rather than in each
+spec.
 
-## 6. Definition of Done
+## 5. Definition of Done
 
 A change is Done when every condition holds, evaluated over the spec, the base revision and
 the revision under evaluation.
@@ -270,19 +330,32 @@ the revision under evaluation.
 Exclusions: intent is not gated; the owner judges it at acceptance. Nothing is checked by
 taste; every check carries a mode.
 
-## 7. Change handling
+The change reviewer applies conditions 1 to 5 to one card's change; the Done judge applies
+the whole definition to a parent branch.
 
-### 7.1 Before development
+## 6. Change handling
 
-A card change goes only through the plugin's card skills (the board conventions already
-require this). Each skill, after writing the card, re-derives the spec for the conditions
-the changed part feeds, re-stamps, and reports what changed. A change to the interface
+### 6.1 Before development
+
+A card changes only through the plugin's card skills, which the tracker guard enforces
+(section 8). Each skill, after writing the card, re-derives the spec for the conditions the
+changed part feeds, re-stamps, and reports what changed. A change to the interface
 determination or to a scope boundary re-grounds the whole spec. A comment that changes no
 part of the card changes nothing. A direct edit on the tracker is caught by the stamp at the
 next check and handled the same way.
 
-### 7.2 During development
+`add-to-card` runs in one of two modes, named by its caller:
 
+- **Interactive**, the default: the addition is recorded and folded, and the requester
+  accepts the rewritten wording or asks for changes. This holds for additions made outside
+  grilling and outside a run.
+- **Settled**: the requester has already answered (a grilling question, a relayed question,
+  a refusal). The answer is the acceptance; the fold is written without a further round on
+  its wording, and the requester may still object.
+
+### 6.2 During development
+
+A card is not frozen when development starts: a request change is accepted as an amendment.
 Only two things change a spec in development.
 
 **A question the spec did not answer.** The session first applies principle 5 and the spec's
@@ -290,20 +363,20 @@ delegations; a question they answer is decided and logged, not asked. A survivin
 goes to the coordinator in a fixed shape: the question, the options, a recommendation, and
 the Ready condition that failed. The owner's answer becomes a spec amendment on the
 sub-issue's branch and a gap entry. The card changes only when the answer alters observable
-behaviour or scope, through `add-to-card`, with the answer as the acceptance and no second
-round on wording. A changed dependency re-checks the work order. The session rebases on the
-amended spec and continues.
+behaviour or scope, through `add-to-card` in settled mode. A changed dependency re-checks
+the work order. The session rebases on the amended spec and continues.
 
 **An acceptance not given.** The refusal names the criterion the result fails or states the
 outcome that is missing, and that sorts it:
 
-- *Fails a stated criterion*: a defect, not a change. The session fixes it; the Done judge's
-  miss is a gap entry against the Done condition.
+- *Fails a stated criterion*: a defect, not a change. It is fixed as section 3 says, by the
+  kept session that owns it; the Done judge's miss is a gap entry against the Done
+  condition.
 - *Meets every criterion but is not what was wanted*: a request change. The owner's words
-  are recorded on the card and folded through `add-to-card`; the spec is re-derived for the
-  conditions those criteria feed and re-stamped; the session continues to a second
-  acceptance. The gap entry notes that Ready was earned on a spec that did not ground the
-  outcome.
+  are recorded on the card and folded through `add-to-card` in settled mode; the spec is
+  re-derived for the conditions those criteria feed and re-stamped; the work continues to a
+  second acceptance. The gap entry notes that Ready was earned on a spec that did not ground
+  the outcome.
 - *Wants something the request never asked for*: a new card by default, with the current
   one accepted as specified. Amended into this card only when the addition is inseparable
   from the outcome under review.
@@ -311,282 +384,138 @@ outcome that is missing, and that sorts it:
 Acceptance is asked against the evidence plan, criterion by criterion, so a refusal arrives
 already classified.
 
-## 8. The decision line and the standing answers
+## 7. The decision line and the standing answers
 
 **The decision line** (principle 5) is stated once in `references/decision-line.md` and
-quoted in the readiness checker, the build brief and the coordinator. The requester decides:
-what an observer of the system sees or can do; what persisted data ends up as; scope. The
-developer decides: internal structure; anything a recorded decision, the profile, a design
-system or an existing pattern in the code already answers; anything the spec delegates. When
-several sub-issues share a gap, the checker asks for the rule, not the case.
+applied by the readiness checker, the build session and the coordinator. The requester
+decides: what an observer of the system sees or can do; what persisted data ends up as;
+scope. The developer decides: internal structure; anything a recorded decision, the
+profile, a design system or an existing pattern in the code already answers; anything the
+spec delegates. When several sub-issues share a gap, the checker asks for the rule, not the
+case.
 
 **The standing answers** are profile entries: the questions a project has answered once that
-would otherwise be asked every run. Examples from the first adopter: where post-release checks
-run; whether a data change is rehearsed and how; what a push carries; how finished branches
-are removed; which models run the project's own pipeline agents. The plugin ships no answers;
-it ships the rule that a question answered twice becomes a profile entry, and the `curate`
-skill proposes them from the gap records.
+would otherwise be asked every run, such as where post-release checks run, whether a data
+change is rehearsed and how, what a push carries, how finished branches are removed, or
+which models run the project's own pipeline agents. Each entry is the question as it was
+asked, its answer, and where the answer came from. The plugin ships no answers; it ships the
+rule that a question answered twice in gap records becomes a profile entry, and the `curate`
+skill proposes them from the gap records for the owner to accept.
 
-## 9. Plugin layout
+## 8. Plugin layout
 
 ```
 DevFactory/
   .claude-plugin/marketplace.json
-  README.md
-  BUILD-BRIEF.md
-  CLAUDE-FIRST.md
+  README.md                 what DevFactory is and how a project uses it
+  BUILD-BRIEF.md            voice, form and terms for authors of the plugin's files
+  CLAUDE-FIRST.md           the interfaces the plugin's files share
   DESIGN.md
   devfactory/
     .claude-plugin/plugin.json
     skills/
-      configure-project/      the profile: board, specs path, test gate, environments, concerns, conventions, hooks, permissions
-      create-card/            from card-standard, plus stable criterion IDs and the two core sections
-      add-to-card/            from card-standard, plus the spec re-derivation trigger
-      re-evaluate-card/       from card-standard, plus the trigger
-      grill/                  draft the spec from the card, code, decisions and data; run the checker; ask; stamp
-      check-ready/            the readiness check alone, for a card or every sub-issue of a parent; reports, asks, folds
-      coordinate/             a parent issue on the Claude desktop app: settle, start one session per sub-issue, relay, merge, judge, release
-      build/                  one card in one session: read spec, decide delegated calls, build, review, report
-      accept/                 walk the owner through acceptance against the evidence plan; classify a refusal
-      release/                merge, push, release and close as the profile says; delete specs; curate gaps
-      curate/                 read gap records across specs; propose checker tuning and profile entries
+      configure-project/    the profile: board, specs, test gate, environments, data access,
+                            concerns, wireframe fidelity, branches, hooks, permissions
+      create-card/          a card to the card standard, with stable criterion IDs and the
+                            two core sections
+      add-to-card/          fold an addition, interactive or settled; re-derive the spec
+      re-evaluate-card/     measure a card against the standard; re-derive the spec
+      grill/                draft the spec from the card, code, decisions and data; run the
+                            checker; ask; stamp; commit; write the spec line
+      check-ready/          the readiness check alone, for a card or every sub-issue of a
+                            parent; reports, asks, folds
+      coordinate/           a parent issue on the Claude desktop app: settle, start one
+                            session per sub-issue, relay, merge, judge, accept
+      build/                one card in one session: check the stamp, make the delegated
+                            calls, build, review, report
+      accept/               walk the owner through acceptance against the evidence plan;
+                            classify a refusal
+      release/              release by the profile's procedure; ledger the gaps; delete
+                            specs; close cards; remove sessions, worktrees and branches
+      curate/               read the gap records; propose checker emphasis and profile
+                            entries
     agents/
-      card-reviewer.md        measures a card against the card standard, read-only
-      readiness-checker.md    applies the Definition of Ready, fixed inputs, fixed report
-      change-reviewer.md      a sub-issue's result against its spec, given what not how
-      done-judge.md           applies the Definition of Done to a parent branch
+      card-reviewer.md      measures a card against the card standard
+      readiness-checker.md  applies the Definition of Ready
+      change-reviewer.md    applies Done conditions 1 to 5 to one card's change
+      done-judge.md         applies the Definition of Done to a parent branch
     references/
       card-standard.md, card-template.md, card-process.md, working-a-card.md, modules/
       definition-of-ready.md, definition-of-done.md, decision-line.md
       spec-template.md, profile-template.md
       bindings/github-projects.md, bindings/azure-devops.md
-      agents.md               the agents' README: each agent and the skill that starts it
-      examples/work-type-module.md   the work-type starter module, a team module example
+      agents.md             each agent and the skill that starts it
+      examples/work-type-module.md   a team module example, a Work Type field
     scripts/
-      devfactory.py           the machine checks and helpers: stamp, stamp-check, spec-lint, criteria-ids,
-                              gaps add, gaps check, gaps ledger, evidence-check, begin, end, markers, profile
-      README.md               the commands, their arguments and exit codes
-      test/                   the script's tests
+      devfactory.py         the machine checks and helpers: stamp, stamp-check, spec-lint,
+                            criteria-ids, gaps add, gaps check, gaps ledger,
+                            evidence-check, begin, end, markers, profile
+      README.md             the commands, their arguments and exit codes
+      tests/                the script's tests
     hooks/
-      hooks.json              the four hooks, each switched by its line in the profile's Hooks section
-      guard_tracker.py        PreToolUse: refuses a tracker write while no card skill is running
-      guard_git.py            PreToolUse: refuses a push, or a change to the integration or a parent branch,
-                              except as the running skill's marker allows
-      stamp_notice.py         UserPromptSubmit: says whether the spec of a card the prompt names is current
-      session_context.py      SessionStart: the profile, the stages, the skills to use and any active marker
-      hooks_lib.py                  shared by the hooks: stdin, repository root, command tokens, profile and markers through the script
-      test/                   the hooks' tests
+      hooks.json            the four hooks, each switched by its line in the profile
+      guard_tracker.py      PreToolUse: refuses a tracker write while no card skill runs
+      guard_git.py          PreToolUse: refuses a push, or a change to a protected branch,
+                            except as the running skill's marker allows
+      stamp_notice.py       UserPromptSubmit: says whether a named card's spec is current
+      session_context.py    SessionStart: the profile, the stages, the skills to use and
+                            any active marker
+      hooks_lib.py          shared by the hooks: input, repository root, command tokens,
+                            profile and markers through the script
+      tests/                the hooks' tests
 ```
 
-**Hooks.** Four ship in `hooks/hooks.json`, each switched on or off in the profile's Hooks
-section, all on by default. Two guards block: a tracker write (`gh issue edit`, `gh issue
-comment`, `gh project item-edit`, the Azure DevOps equivalents) outside a running card skill,
-and any `git push`, or a change to the integration or a parent branch (a merge,
-fast-forward, rebase, hard reset or amend while on it, or through `git -C` into its
-worktree) outside `coordinate` or `release`; rebasing or merging a protected branch into
-ordinary work is never blocked; a `build` marker allows the fast-forward into a parent branch
-the coordinator asks for, and a `grill` marker its spec commit onto the integration branch.
-Two inform: a prompt that names a card with a spec gets the result of
-`stamp-check`, and a session in a project with a profile gets the lifecycle, the skills and
-the decision line at start. A skill marks itself running with `begin <skill>` and `end
-<skill>`, which write and remove `.devfactory/.active/<skill>` at the repository root; the
-guards read that folder, ignore a marker older than the profile's Marker lifetime (default
-12 hours), and `begin` refreshes one.
-
 **Scripts.** `scripts/devfactory.py` decides every `[machine]` condition that has a command
-(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`) and holds
-the markers and the profile reader. Python 3, standard library only. The definitions name the
-command beside each condition.
+(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), holds the
+markers (`begin`, `end`, `markers`) and is the one profile reader (`profile`). Every script
+and hook is Python 3, standard library only, run with `python`, and tested with `unittest`;
+the plugin has no Node dependency. In the owner's words (the owner, 2026-11-07): "I'm much
+more comfortable using Python scripts than Node for anything." The script and the hooks find
+the profile, the markers and the gap ledger under `.devfactory/` at the repository (or
+worktree) root, wherever the shell's working directory is.
 
-**Agents** carry their whole definition inline with `tools` and `model` in their
-frontmatter; the four judging agents run read-only on the most capable model, and skills
-start them by name with the Agent tool. Build sessions run on the card's suggested model and
-effort.
+**Markers.** A skill marks itself running with `begin <skill>` and `end <skill>`, which
+write and remove `.devfactory/.active/<skill>`. A marker expires after the profile's Marker
+lifetime, a line of its Hooks section, 12 hours by default, and an expired marker counts as
+no skill running. `begin` refreshes a marker, and every skill that holds one across a wait
+runs `begin` again on resume. `markers` lists the markers and, with `--clear-stale`,
+removes the expired ones.
 
-**The coordinator** names the Claude desktop session tools directly and needs the desktop
-app; the card and spec skills run in any Claude Code client.
+**Hooks.** Four ship in `hooks/hooks.json`, each switched on or off by its line in the
+profile's Hooks section, all on by default. Each allows silently on a missing profile, when
+its line says off, and on any error of its own.
 
-## 10. What is carried over, changed and dropped
+- The **tracker guard** refuses a tracker write (an issue edit, comment or create, a project
+  item edit or add, the Azure DevOps equivalents, a GraphQL mutation or a query read from a
+  file, and any other API call that is not a GET) unless a card-writing skill is running:
+  `create-card`, `add-to-card`, `re-evaluate-card`, `grill`, `check-ready`, `build`,
+  `coordinate`, `accept` or `release`. A `configure-project` or `curate` marker does not
+  unlock it.
+- The **git guard** protects the integration branch and every parent branch. It refuses any
+  push, and any change to a protected branch: a merge, pull, rebase, cherry-pick, hard
+  reset, amend or forced branch move while HEAD is on it, the same through `cd` or `git -C`
+  into its worktree, or a rebase that names it. Merging, pulling or rebasing a protected
+  branch into an unprotected one is never refused, nor is a plain commit. A `release` or
+  `coordinate` marker allows everything. A `build` marker allows the fast-forward into a
+  parent branch, which a build session makes with
+  `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. A `grill`
+  marker allows its spec commit and fast-forward onto the integration branch, so `grill`
+  holds its marker through the spec commit and the spec line.
+- The **stamp notice** gives a prompt that names a card with a spec the result of
+  `stamp-check`. It never blocks.
+- The **session context** gives a session in a project with a profile the profile's
+  location, the stages and their columns, the skills, the decision line and any active
+  marker.
 
-| From | Piece | Fate |
-|---|---|---|
-| card-standard | Card standard, modules, template, process, working-a-card, card reviewer | Carried; criteria gain stable IDs; two core sections added |
-| card-standard | configure-board | Becomes `configure-project`; profile folder renamed `.devfactory/` |
-| card-standard | create-card, add-to-card, re-evaluate-card | Carried; gain the spec trigger; fold acceptance stays for card changes outside a run, dropped inside a run |
-| card-standard | suggest-work-type, work-type starter module | Dropped from core; the starter module stays available as a team module example |
-| card-standard | Bindings (GitHub Projects, Azure DevOps) | Carried |
-| Grillwork | Definition of Ready, Definition of Done | Carried, rewritten as sections 5 and 6 |
-| Grillwork | Spec template, gap markers, amendments table, findings and curator | Carried in reduced form: spec template, gaps.md, `curate` |
-| Grillwork | Tag traceability, video evidence, rubric instantiation, evidence publisher, Python engine, hook contract | Dropped |
-| BottleNote | board-conventions: model and effort, work order, sub-issue markers, parallel-by-default | Carried into the core card sections and `coordinate` |
-| BottleNote | board-conventions: content-card scope, image bar, intake criteria, title rule | Stay in BottleNote as team modules or project rules |
-| BottleNote | check-parent-issue-readiness | Replaced by `check-ready` and the readiness checker agent |
-| BottleNote | coordinate-parent-issue | Replaced by `coordinate`; its desktop mechanics move to the runtime file; its branch and merge conventions move to the profile |
-| BottleNote | CLAUDE.md "Card state follows the work" | Becomes the profile's stage-to-column map |
-| BottleNote | design-review | Stays in BottleNote; `grill` names it as the project's way of getting a wireframe approved |
+**Agents** carry their whole definition inline (character, inputs, rules, report format,
+checklist), with `name`, `description`, `tools` and `model` in their frontmatter. The four
+run read-only on the most capable model, and skills start them by name with the Agent tool,
+passing every input the definition lists and no model. They decide each `[machine]`
+condition by running the command the definition names and quoting its output. Build
+sessions run on the card's suggested model and effort, or the profile's default.
 
-## 11. What BottleNote keeps
+**Skills** declare their pre-approved commands in `allowed-tools`, and paths in a skill are
+relative to its folder.
 
-The profile at `.devfactory/profile.md` (board, specs path, `dotnet test` gate, environments
-Demo and production with what each can show, the extra concern "production data migration
-readiness", the branch and release conventions from `AGENTS.md`, the standing answers), its
-content-card rules as a team module, `design-review`, and every skill about its own
-operations. `AGENTS.md` and `CLAUDE.md` lose their card process text and gain one line: cards
-and parent issues are worked with the DevFactory plugin and this project's profile.
-
-## 12. Decisions for the owner before building
-
-1. **Fold acceptance outside a run.** Keep the card process's "every update ends with the
-   user accepting the rewrite" for changes made while a card is not in development, or drop
-   it everywhere. The design keeps it outside runs and drops it inside.
-2. **Wireframe fidelity.** Grillwork rejects a mock-up that pins aesthetics. BottleNote's
-   design reviews iterate polished mock-ups. The design lets the profile choose; the default
-   is the wireframe.
-3. **Request changes during development.** The design accepts them as amendments (7.2).
-   The alternative is to freeze a card at development start and route every request change
-   to a new card.
-4. **Spec deletion at release.** The design deletes the spec folder; the alternative is an
-   archive path.
-5. **Hooks.** Ship the two optional hooks in the first version, or defer them. Deferred: the
-   first version ships none, and the hooks folder stays empty until the owner decides.
-
-## 13. Build order
-
-Each step lands as its own commit in this repository and is reviewed against this document.
-
-1. Repository scaffold: marketplace and plugin manifests, README, this design.
-2. References: card standard carried over with stable IDs and the two core sections;
-   decision line; the two definitions; spec and profile templates; bindings.
-3. Agents: card reviewer, readiness checker, change reviewer, Done judge.
-4. Card skills: `configure-project`, `create-card`, `add-to-card`, `re-evaluate-card`.
-5. Spec skills: `grill`, `check-ready`.
-6. Run skills: `build`, `coordinate` with the Claude desktop runtime file, `accept`,
-   `release`, `curate`.
-7. Hooks, when the owner chooses them (deferred, see 12.5).
-8. First adopter: BottleNote's profile, removal of the replaced skills and rules, and one
-   parent issue run end to end as the acceptance test of the plugin.
-
-## Amendments
-
-Changes made to the design during the build, by the section they amend. Where a section's
-text above and an entry here disagree, the entry holds.
-
-- **3.2 The spec.** The spec line is exactly `Spec: <path> @ <commit>`, the last line of
-  the description body, where the commit is the spec folder's own commit; `grill` rewrites
-  it after every commit of the spec folder, and the stamp excludes any line of that form.
-- **3.4 The project profile.** The profile gains a Data access section: each population of
-  existing data a card's rules might act on, and how it is read without writing.
-  `configure-project` asks for it, and `grill` and the readiness checker run data rules
-  through it. It also gains three entries: the sub-issue branch name pattern and the
-  release procedure (the project's steps or the skill it names), under Branches and
-  merging, and the design-review procedure (how a wireframe is shown and approved), as a
-  Design review line under Wireframe fidelity.
-- **3.6 The gap record.** Gaps are recorded from Ready onward, not only after development
-  starts: a question answered before the spec first earns Ready is folded, not a gap. Gap
-  records survive release: before a spec folder is deleted, its `gaps.md` entries are
-  appended to the project ledger `.devfactory/gaps.md`, each prefixed with the card ID and
-  the spec's request types. The readiness checker and `curate` read the ledger and every
-  live `gaps.md`.
-- **4 The lifecycle, loops.** After a review or judge fails, at most two further rounds; a
-  third failure stops the work and reports the findings to the coordinator, or to the
-  requester for a standalone card.
-- **5 Definition of Ready, 9.2.** The stamp's repo commit is the branch head the checker
-  read; the condition holds when the card's revision equals the stamp's and that commit is
-  an ancestor of the current head. It is not applicable at creation, before the stamp
-  exists, and in a re-derive check.
-- **7.2 During development.** Sessions, worktrees and branches are kept until the run is
-  accepted and released. A Done-judge finding or a refusal that belongs to one sub-issue
-  is fixed by that sub-issue's kept session; one no sub-issue owns is fixed by a new
-  session cut from the parent branch.
-- **13 Build order.** Steps 3 to 6 landed in one commit rather than one each, and the
-  review fixes in another; later steps keep to one commit per step.
-- **4 The lifecycle.** Approval's exit is the spec status `approved`, and a build starts
-  only on an approved spec: `build` and `coordinate` check the spec status, not the column;
-  the card waits in the Approval column until work starts. At Done, merged work sits in the
-  Done column, and a standalone card's passing change review is its Done verdict; the card
-  is not merged then, and `release` merges it once after acceptance. Results merge in
-  finish order, a card that waits on another after the card it waits on. A card moves to
-  the Acceptance column when acceptance begins and to the Release column when released.
-- **9 Plugin layout.** The agents folder holds `README.md`, `readiness-checker.md`,
-  `change-reviewer.md` and `done-judge.md`. The card reviewer is not an agent definition:
-  it stays a brief at `references/card-reviewer.md` that the card skills hand to a
-  read-only agent, and the README says why. (Superseded by the Claude Code-first entries.)
-- **12.1 Fold acceptance.** Restated: acceptance of the rewritten wording stays for
-  interactive additions made outside grilling and outside a run; the requester's answer is
-  the acceptance everywhere else. `add-to-card` has two modes, named by its caller:
-  interactive (the default) and settled (the requester has already answered).
-- **12.5 Hooks.** Deferred: the first version ships no hooks and no hooks folder. The owner
-  has not yet decided; this remains open. (Superseded by the Claude Code-first entries.)
-
-### Claude Code-first (2026-11-07)
-
-The owner decided that DevFactory is designed for Claude Code. Portability to another agent
-system is not a goal, so the plugin uses Claude Code's own mechanisms wherever they do the
-job instead of describing the job in neutral words. These entries supersede any earlier
-entry they contradict.
-
-- **Scripts and hooks are Python.** The owner decided on 2026-11-07 that the plugin has no
-  Node dependency: "I'm much more comfortable using Python scripts than Node for anything."
-  Every script and hook is Python 3, standard library only, run with `python`; tests are
-  `unittest`. The first version shipped Node and was ported.
-- **12.2 Wireframe fidelity, from the first adoption.** The owner, 2026-11-07, in the
-  BottleNote adoption session: "When coming up with a design, that should be a card of its
-  own. It can move from a wireframe but should have a full, fleshed-out, approved mockup in
-  the equivalent of completed HTML for any interface change. That completed HTML would then be
-  used in the implementation of a development card." The profile's Wireframe fidelity gains
-  the **design card** option: the design is its own card, and the development card's spec
-  references that card's approved mock-up to meet Ready 6.2.
-- **Adoption findings folded in (2026-11-07).** A team module may have no field and hold
-  rules for the card as a whole; the test gate may be a procedure; `configure-project` takes
-  answers its dispatcher already holds and asks only the rest, commits or tells the owner to,
-  and says hooks take effect in the next session; the column field is documented under Stages
-  in the GitHub binding; the tracker guard unlocks only for the skills that write cards
-  (`configure-project`'s marker does not).
-
-- **2 Principles, 9.** Replaced by: **Claude Code's mechanisms are used fully: scripts for
-  machine checks, hooks for enforcement, agents with models and tools, skill frontmatter for
-  permissions and context.**
-- **3.5 The definitions.** Every `[machine]` condition is decided by a command of the
-  plugin's script, `scripts/devfactory.py`, which each condition names, never by an agent
-  reading. A machine condition no command covers yet says so, and the definition lists it.
-- **9 Plugin layout.** The plugin gains `scripts/devfactory.py` (the commands `stamp`,
-  `stamp-check`, `spec-lint`, `criteria-ids`, `gaps add`, `gaps check`, `gaps ledger`,
-  `evidence-check`, `begin`, `end` and `profile`) and `hooks/` (`hooks.json` and the four
-  hooks `guard_tracker.py`, `guard_git.py`, `stamp_notice.py` and `session_context.py`). It
-  loses `references/runtime/`, whose session mechanics are folded into `coordinate`. The
-  card reviewer becomes the agent `agents/card-reviewer.md`, carrying its whole brief inline,
-  and `references/card-reviewer.md` is removed; this supersedes the earlier 9 Plugin layout
-  entry. Agents carry a `model` and their `tools` in their frontmatter, and skills start them
-  by name. The tree in section 9 shows the result.
-- **12.5 Hooks.** Resolved, superseding the earlier 12.5 entry: four hooks ship, each
-  enabled by its own line in the profile. The tracker guard and the git guard block; the
-  stamp notice and the session context only inform.
-- **4 The lifecycle and 9 The runtime seam.** The coordinator requires the Claude desktop
-  app and names its session tools directly. There is no runtime seam and no second runtime
-  file.
-- **3.4 The project profile.** The profile gains a Hooks section (one on or off line per
-  hook, all on by default) and a Permissions section (the read-only allowlist entries
-  `configure-project` writes to the project's `.claude/settings.json`), and its Sessions
-  section loses the Runtime line.
-- **11 What BottleNote keeps.** The BottleNote adoption must also rewrite the "Agents and
-  pipelines" section of its `AGENTS.md`, whose neutral-wording, no-model and Codex rules
-  contradict this decision for DevFactory's own skills and agents.
-- **9 Plugin layout, Hooks.** The git guard protects the integration branch and every parent
-  branch. It blocks a push and any change to a protected branch: a merge, fast-forward,
-  rebase, hard reset or amend while HEAD is on one, or the same through `git -C` into its
-  worktree. A rebase or merge of a protected branch into an unprotected one is never
-  blocked. A `release` or `coordinate` marker allows everything; a `build` marker allows the
-  fast-forward into a parent branch, which a build session makes with
-  `git -C <parent worktree> merge --ff-only <branch>` from its own worktree; a `grill` marker
-  allows its spec commit and fast-forward onto the integration branch, so `grill` holds its
-  marker through the spec commit and the spec line. This supersedes the guard as the Hooks
-  paragraph above describes it.
-- **9 Plugin layout, markers.** A marker expires after the profile's Marker lifetime, a line
-  of its Hooks section, 12 hours by default; an expired marker counts as no skill running.
-  `begin` refreshes a marker, every skill that holds one across a wait runs `begin` again on
-  resume, and the script's `markers` command lists markers and, with `--clear-stale`,
-  removes expired ones.
-- **9 Plugin layout, repository root.** The script and the hooks find the profile, the
-  markers and the gap ledger under `.devfactory/` at the repository (worktree) root,
-  wherever the shell's working directory is, and the hooks read the profile through the
-  script's `profile` command.
+**The coordinator** names the Claude desktop app's session tools directly and needs the
+desktop app; the card and spec skills run in any Claude Code client.

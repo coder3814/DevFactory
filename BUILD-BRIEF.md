@@ -5,7 +5,7 @@ record; where your task and it disagree, follow it and report the disagreement.
 
 ## Voice and form
 
-- Match the existing card-standard references in `devfactory/references/`: plain prose,
+- Match the existing references in `devfactory/references/`: plain prose,
   wrapped at about 90 columns, present tense, rules stated as what is true or must hold.
 - Rule text names roles ("the requester", "the owner", "the developer", "the coordinator"),
   never people.
@@ -15,8 +15,8 @@ record; where your task and it disagree, follow it and report the disagreement.
   check, a hook for enforcement, `allowed-tools` or `context: fork` in a skill's frontmatter.
   Name no model, except in an agent's frontmatter; a build session's model comes from the
   card's suggested model or the profile.
-- Project-agnostic. Nothing about BottleNote, wine, admin pages, production databases or
-  Azure. When you need an example, invent a neutral one or use a generic shape.
+- Project-agnostic. Nothing about any one project, its domain, its pages, its databases or
+  its cloud. When you need an example, invent a neutral one or use a generic shape.
 - Every skill's `SKILL.md` has YAML frontmatter with `name` and a `description` that says
   what it does and when to use it, as the carried-over skills do. Paths in a skill are
   relative to the skill's directory (`../../references/...`).
