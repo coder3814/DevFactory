@@ -48,8 +48,9 @@ one-line reason.
    missing; when it names neither, ask which. State the class below with its reason, and
    when the refusal reads two ways, ask which is meant.
    - **Fails a stated criterion.** A defect, not a change. Send it back to the build
-     session, or in a parent run to the coordinator, which has it fixed by a new session
-     cut from the parent branch, as its Done findings are. Add a gap entry to that
+     session, or in a parent run to the coordinator, which has it fixed as its Done
+     findings are: by the kept session of the sub-issue it belongs to, or by a new session
+     cut from the parent branch when no sub-issue owns it. Add a gap entry to that
      criterion's spec at stage Acceptance, let through by the Done condition that should
      have caught it, resolved by an amendment that records the fix and its commit and
      changes nothing else. The fix is reviewed and
@@ -58,9 +59,10 @@ one-line reason.
    - **Meets every criterion but is not what was wanted.** A request change. Record the
      requester's words on the card through `add-to-card` in settled mode, the words being
      the acceptance, and let its hand-off to `grill` re-derive bring the spec along for the
-     conditions those criteria feed. The build continues, through review and the Done
-     judge, to a second acceptance: in a parent run, by a new session cut from the parent
-     branch, as a Done finding is built. The gap entry, at stage Acceptance, notes that
+     conditions those criteria feed. The build continues, through review and, in a parent
+     run, the Done judge, to a second acceptance: in a parent run, by the kept session of
+     the sub-issue it belongs to, or by a new session cut from the parent branch when no
+     sub-issue owns it, as a Done finding is built. The gap entry, at stage Acceptance, notes that
      Ready was earned on a spec that did not ground the outcome, names the Ready condition
      that let it through, and is resolved by the re-derivation's amendment.
    - **Wants something the request never asked for.** A new card through `create-card` by

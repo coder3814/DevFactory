@@ -31,11 +31,11 @@ one-line reason.
 2. **Collect every gap entry**: the project ledger `.devfactory/gaps.md`, which holds every
    released spec's entries prefixed with its card's id, and each live `gaps.md` under the
    profile's specs path on the integration branch. Keep each entry's card, its stage and
-   its date, and for a live entry its spec's request types from the spec header.
+   its date, and its request types: from the ledger heading for a released entry, from
+   the spec header for a live one.
 
 3. **Group them** by the condition named in "Let through by", and within each condition by
-   stage, and by request type where the entry's spec still gives it. Note any entry still
-   open.
+   stage, and by request type. Note any entry still open.
 
 4. **Draw the proposals**, each resting on the entries that support it:
    - **Checker emphasis**: a condition that let through more than one entry, and the request

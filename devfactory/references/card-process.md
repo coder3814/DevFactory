@@ -65,7 +65,8 @@ names:
   they accept them or ask for changes.
 - **Settled**: the requester has already answered — a question asked while the
   card is grilled, a question the coordinator relays during a development run,
-  or the requester's words on an acceptance not given. The answer is recorded as
+  the requester's words on an acceptance not given, or a change the requester
+  asks for during a run. The answer is recorded as
   the comment, folded and written without a further round on its wording, the
   write is verified, and the folded text is reported to the requester as done.
   The requester may object afterwards; an objection is a new addition, recorded

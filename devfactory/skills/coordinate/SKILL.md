@@ -131,9 +131,11 @@ one-line reason.
    `references/` folder, the parent card and spec path, each sub-issue's card and spec path,
    the profile path, the base revision (the integration branch commit the parent branch was
    cut from or last rebased onto), the parent branch's head, and a clean checkout at that
-   head, never how the work was built. Each finding is
-   fixed by a session started and briefed as a sub-issue's is, in a worktree cut from the
-   parent branch, reviewed by its change reviewer and merged as step 8 says; a finding that
+   head, never how the work was built. A finding that belongs to one sub-issue goes to
+   that sub-issue's kept session, which fixes it on its branch, rebased onto the parent
+   branch; a finding no single sub-issue owns is fixed by a new session started and
+   briefed as a sub-issue's is, in a worktree cut from the parent branch. Either is
+   reviewed by its change reviewer and merged as step 8 says; a finding that
    is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once the
    findings are merged. After a NOT DONE there are at most two further rounds: when the
    third judgment is still NOT DONE, stop and report it to the requester with its findings,
@@ -141,8 +143,9 @@ one-line reason.
 
 10. **Accept.** Follow `accept` for the parent run; it hands to `release`, and the
     coordinator does not follow `release` itself. A refusal `accept` sorts as a defect or a
-    request change is built by a new session cut from the parent branch, briefed, reviewed
-    and merged as step 9's findings are, and then goes back to `accept`.
+    request change is built as step 9's findings are: by the kept session of the sub-issue
+    it belongs to, or by a new session cut from the parent branch when no sub-issue owns
+    it, reviewed and merged the same way, and then goes back to `accept`.
 
 11. **Stop.** Once `release` has reaped, confirm that every session and agent you started
     has stopped, and that each agent stopped its own. Report anything you cannot confirm has

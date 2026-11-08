@@ -137,9 +137,10 @@ that, every time you commit the spec folder, write the line again with that comm
    noted in step 5, merged where they are the same question, as "Asking the requester" says.
    For each owner step the checker reports without a moment, agree its moment with the
    requester the same way. Fold each answer as "Folding an answer" says. Fix every finding
-   that needs no one's answer, cutting or narrowing text before adding any, and fix each
-   work-order fault on the card through `add-to-card`, settled with no-rederive, recording
-   the checker's finding as what was added. None of these answers is a gap: the spec has not
+   that needs no one's answer, cutting or narrowing text before adding any. Put each
+   work-order fault to the requester with the fix you propose, as a question; their
+   agreement is the answer, and the fix goes through `add-to-card`, settled with
+   no-rederive, recording the fault and the agreed fix. None of these answers is a gap: the spec has not
    yet earned Ready.
 8. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up. Ask the
    requester about whatever it still finds, and fold the answers, without another check.
@@ -158,9 +159,10 @@ that, every time you commit the spec folder, write the line again with that comm
     requester to approve the Ready spec, once, as one question: approve it, or say what to
     change. On approval, set the status to `approved`, commit that change on its own and
     write the spec line with the new commit. A change asked for at approval is a gap, at
-    stage Approval: add its entry to `gaps.md` as Amend step 3 lays it out, fold it as
-    "Folding an answer" says, re-earn Ready through Re-derive for the parts it changed, and
-    ask for approval again.
+    stage Approval, handled through Amend: the requester's words are the answer, the
+    amendment and gap entry are written, the card is folded through `add-to-card` where the
+    change alters observable behaviour or scope, the affected conditions are re-checked as
+    Amend says, and approval is asked again.
 
 ## A parent issue
 
@@ -201,13 +203,15 @@ that, every time you commit the spec folder, write the line again with that comm
    | Work order, or a sub-issue added or removed | 8.2, 9.3 for the parent |
    | Suggested model and effort | none |
 
-   Condition 6.1 is re-derived on every criterion change, never carried over, and 9.2 always
-   re-runs.
+   Condition 6.1 is re-derived on every criterion change, never carried over. Condition 9.2
+   is not applicable in a re-derive check, because the card has changed against the old
+   stamp by definition; the new stamp replaces it.
 4. **Revise** the spec sections those conditions read, as New step 5 says.
 5. **Check.** Dispatch the readiness checker as "Dispatching the checker" says, kind
    re-derive, naming the conditions this re-derivation re-runs; ask, fold and run the one
    follow-up as New steps 7 and 8 say. When the caller runs the readiness check itself, as
-   `check-ready` does, skip this step and leave the check to it.
+   `check-ready` does, skip this step and leave the check to it; the caller passes the
+   branch head its check reported, and the re-stamp records that head.
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
    changed card parts, or the change asked for at approval, that drove it. Re-stamp as "The
    stamp" says, and commit the spec folder on its own on the branch it lives on: the

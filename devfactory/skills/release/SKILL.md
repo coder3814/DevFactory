@@ -61,6 +61,6 @@ one-line reason.
 
 7. **Stop and reap.** Stop every session and agent the work started, the sub-issue
    sessions a parent run kept until acceptance included, remove every worktree and delete
-   every branch it left, the parent's included, as the profile's Branches and merging says;
-   a session cannot remove the worktree it works in, so an agent removes it after the
-   session stops. Report anything you cannot confirm is gone.
+   every branch it left, the parent's included, as the profile's Branches and merging says,
+   stopping each session before its worktree goes, in the way the profile's runtime file
+   says. Report anything you cannot confirm is gone.

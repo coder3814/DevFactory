@@ -444,13 +444,9 @@ Each step lands as its own commit in this repository and is reviewed against thi
 Changes made to the design during the build, by the section they amend. Where a section's
 text above and an entry here disagree, the entry holds.
 
-- **3.2** The spec line is exactly `Spec: <path> @ <commit>`, the last line of the
-  description body, where the commit is the spec folder's own commit; `grill` rewrites it
-  after every commit of the spec folder, and the stamp excludes any line of that form.
-- **3.6** Gaps are recorded from Ready onward, not only after development starts: a
-  question answered before the spec first earns Ready is folded, not a gap. The ledger
-  entry carries the card id and the spec's request types.
-
+- **3.2 The spec.** The spec line is exactly `Spec: <path> @ <commit>`, the last line of
+  the description body, where the commit is the spec folder's own commit; `grill` rewrites
+  it after every commit of the spec folder, and the stamp excludes any line of that form.
 - **3.4 The project profile.** The profile gains a Data access section: each population of
   existing data a card's rules might act on, and how it is read without writing.
   `configure-project` asks for it, and `grill` and the readiness checker run data rules
@@ -458,10 +454,25 @@ text above and an entry here disagree, the entry holds.
   release procedure (the project's steps or the skill it names), under Branches and
   merging, and the design-review procedure (how a wireframe is shown and approved), as a
   Design review line under Wireframe fidelity.
-- **3.6 The gap record.** Gap records survive release. At release, before a spec folder is
-  deleted, its `gaps.md` entries are appended to the project ledger `.devfactory/gaps.md`,
-  each prefixed with the card ID. The readiness checker and `curate` read the ledger and
-  every live `gaps.md`.
+- **3.6 The gap record.** Gaps are recorded from Ready onward, not only after development
+  starts: a question answered before the spec first earns Ready is folded, not a gap. Gap
+  records survive release: before a spec folder is deleted, its `gaps.md` entries are
+  appended to the project ledger `.devfactory/gaps.md`, each prefixed with the card ID and
+  the spec's request types. The readiness checker and `curate` read the ledger and every
+  live `gaps.md`.
+- **4 The lifecycle, loops.** After a review or judge fails, at most two further rounds; a
+  third failure stops the work and reports the findings to the coordinator, or to the
+  requester for a standalone card.
+- **5 Definition of Ready, 9.2.** The stamp's repo commit is the branch head the checker
+  read; the condition holds when the card's revision equals the stamp's and that commit is
+  an ancestor of the current head. It is not applicable at creation, before the stamp
+  exists, and in a re-derive check.
+- **7.2 During development.** Sessions, worktrees and branches are kept until the run is
+  accepted and released. A Done-judge finding or a refusal that belongs to one sub-issue
+  is fixed by that sub-issue's kept session; one no sub-issue owns is fixed by a new
+  session cut from the parent branch.
+- **13 Build order.** Steps 3 to 6 landed in one commit rather than one each, and the
+  review fixes in another; later steps keep to one commit per step.
 - **4 The lifecycle.** Approval's exit is the spec status `approved`, and a build starts
   only on an approved spec: `build` and `coordinate` check the spec status, not the column;
   the card waits in the Approval column until work starts. At Done, merged work sits in the

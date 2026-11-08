@@ -22,8 +22,9 @@ The skill runs in one of two modes, and its caller names which:
   they accept it.
 - **Settled**, named by a skill that hands you an answer the requester has
   already given: a readiness question answered during grilling, a question
-  relayed during a development run, or the requester's words on an acceptance
-  not given. The requester's answer is the acceptance: you write the fold
+  relayed during a development run, the requester's words on an acceptance
+  not given, or a change the requester asks for during a run. The requester's
+  answer is the acceptance: you write the fold
   without a further round on its wording, and the requester may object
   afterwards.
 
@@ -40,9 +41,9 @@ itself. Every other caller leaves step 5 to run.
    and say in the comment what it shows. Recording happens before anything is
    folded in.
 3. **Fold** the addition into the card's parts, if the card is in one of the
-   profile's fold columns; otherwise the user decides, as "Fold" describes, and
-   in settled mode you report to the caller that the card is outside the fold
-   columns instead of folding. If it answers an open question, the question
+   profile's fold columns; otherwise the user decides, as "Fold" describes. In
+   settled mode fold whatever the column, as "Where folding happens" says. If it
+   answers an open question, the question
    leaves open questions and its answer lands where it changes the card. Keep
    every criterion's ID as "Fold" describes. Revise the work order and the
    suggested model and effort where the change calls for it, and apply again
