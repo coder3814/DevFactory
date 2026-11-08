@@ -81,11 +81,16 @@ work order) is a **request question**: the request was not complete, so it is no
 ask. Hand it back to request grilling, as "Handing back a request question" says.
 
 **The request gate.** Before you draft, revise or amend anything for a card, check that it
-meets the Definition of Request. Start the `card-reviewer` agent by name with the Agent
-tool, kind fresh, with every input its definition lists, as "Measure" in
-`working-a-card.md` describes; it runs on its own model, so pass none. Go on only when its
-verdict is that the card meets the Definition of Request. Otherwise do nothing for that
-card: report each breach, question and open question the reviewer found, say the card goes
+meets the Definition of Request. First compare its request receipt: write the card facts
+file from the card as you read it, as step 1 of "Write the request receipt" in
+`working-a-card.md` says, and run `devfactory receipt check <spec dir> --check request
+--card <n> --facts <file>`. When it prints `match`, the card has not changed since a
+reviewer found it meets the definition: go on, starting no reviewer. Otherwise start the
+`card-reviewer` agent by name with the Agent tool, kind fresh, with every input its
+definition lists, as "Measure" in `working-a-card.md` describes; it runs on its own model,
+so pass none. Go on only when its verdict is that the card meets the Definition of Request,
+and then write the request receipt with `devfactory receipt write`, the same arguments; it
+is committed with the spec folder. Otherwise do nothing for that card: report each breach, question and open question the reviewer found, say the card goes
 back to request grilling through `re-evaluate-card`, and stop work on it. Where the card
 sits on the board never matters. For a parent issue, check the parent and every sub-issue
 this run grills.
@@ -229,8 +234,11 @@ that, every time you commit the spec folder, write the line again with that comm
    the spec as "The stamp" says: the Card revision from `devfactory stamp`, the Repo commit
    the follow-up reported, today's date. Set its status to `Ready` when the follow-up found
    nothing open, or when the requester settled everything it found; otherwise it stays
-   `drafting`. When you collected any request question, stamp and commit nothing: hand
-   them back as "Handing back a request question" says, and go to step 12.
+   `drafting`. When the status is `Ready`, write the ready receipt: list, one per line, the
+   folder of every spec the follow-up measured, and run `devfactory receipt write <spec
+   dir> --check ready --specs <file>`. When you collected any request question, stamp and
+   commit nothing: hand them back as "Handing back a request question" says, and go to step
+   12.
 10. **Commit** the spec folder, and nothing else, as its own commit, once the lint "The
     stamp" requires is clean. The commit lands directly on the integration branch when the
     profile's branches and merging allows a direct commit there; otherwise it is made on a
@@ -305,7 +313,8 @@ that, every time you commit the spec folder, write the line again with that comm
    branch head its check reported, and the re-stamp records that head.
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
    changed card parts that drove it. Re-stamp as "The
-   stamp" says, the Card revision from `devfactory stamp`, and commit the spec folder on its own on the branch it lives on: the
+   stamp" says, the Card revision from `devfactory stamp`. When step 5's own check found the
+   spec Ready, write the ready receipt as New step 9 says. Commit the spec folder on its own on the branch it lives on: the
    integration branch before development, landing as New step 10 says, the card's own
    branch during it. Write the spec line with that commit, under the marker. Before
    development, when the re-stamped spec's status is `Ready`, fire `ready` for the card.

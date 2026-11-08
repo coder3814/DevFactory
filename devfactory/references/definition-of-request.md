@@ -25,8 +25,10 @@ user cannot answer yet stays on the card as an open question, and the card does 
 definition until it is answered.
 
 **Specification grilling**, the `grill` skill, checks it first, every time it starts work on a
-card, new or re-derived: it starts the `card-reviewer` on the card as it stands and goes on
-only when the card meets the definition. The check is the gate, not where the card sits on the
+card, new or re-derived: when the card's request receipt matches, the card is unchanged since
+a reviewer found it meets the definition and the check is already made; otherwise it starts
+the `card-reviewer` on the card as it stands. It goes on only when the card meets the
+definition. The check is the gate, not where the card sits on the
 board.
 
 Specification grilling never changes the card. When drafting the spec turns up a question

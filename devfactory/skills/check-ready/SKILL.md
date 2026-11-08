@@ -63,14 +63,21 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
    goes to `grill` new, which earns its Ready before this check continues; for a parent, that
    grills every sub-issue not yet Ready and then the parent, as "A parent issue" in `grill`
    says.
-4. **Check, fresh.** Dispatch the readiness checker as "Dispatching the checker" in `grill`
+4. **Compare the ready receipt.** List, one per line, the folder of every spec gathered, and
+   run `devfactory receipt check <dir> --check ready --specs <file>` from the same checkout,
+   where `<dir>` is the folder of the card this check was run for (the parent's, for a
+   parent issue). When every stamp in step 3 matched and this prints `match`, the specs, the
+   gap sources, the profile, the standard and the code are all as a passing check last
+   found them: skip steps 5 to 7 and start no checker; step 8 reports "nothing open".
+   Otherwise go on.
+5. **Check, fresh.** Dispatch the readiness checker as "Dispatching the checker" in `grill`
    says, linting each spec first and passing every input it lists, kind fresh, over every card
    gathered, at the moment this run is: at creation for a
    parent's creation or an added card, at development start when `coordinate` runs it. Its
    gap sources are the project ledger `.devfactory/gaps.md` and every live `gaps.md` under
    the profile's specs path. Checking the cards together is what finds a gap they share, and
    a work-order fault between them.
-5. **Settle each item with the requester**, one question at a time, with the options and
+6. **Settle each item with the requester**, one question at a time, with the options and
    your recommendation first, as "Asking the requester" in `grill` says; a gap several cards
    share is asked once, as the rule. Every answer for a stamped spec takes one route: `grill`
    amend, given the question, the answer and the condition the checker named. Amend writes the
@@ -84,12 +91,15 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
      `add-to-card` in settled mode with no-rederive, then into the parent's spec through
      `grill` amend, against condition 8.2; so does a change to what one sub-issue waits on
      or which may run alongside it, whenever an answer brings one.
-6. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up, with the
+7. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up, with the
    fresh check's report and the spec versions it measured, over the cards that changed.
-   Settle whatever it still finds with the requester as step 5 says, without another check.
-7. **Report** "nothing open", or what is open and on which card: a question unanswered, an
+   Settle whatever it still finds with the requester as step 6 says, without another check.
+8. **Report** "nothing open", or what is open and on which card: a question unanswered, an
    owner step with no moment, a work-order fault not fixed, a card whose spec is not Ready.
    An owner step scheduled for later in the run is settled, not open. At development start, fire
    `readiness-lost` for each card whose spec status is `Ready` or `approved` and that is
    reported here as not Ready, unless step 3 already fired it for that card. The check is done only
-   when nothing is open.
+   when nothing is open. When a checker ran and nothing is open, write the ready receipt with
+   `devfactory receipt write`, the arguments of step 4, once every amendment is committed,
+   and commit `receipts.md` on its own on the branch the specs live on, as `grill` commits a
+   spec.
