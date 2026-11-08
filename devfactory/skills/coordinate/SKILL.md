@@ -115,7 +115,9 @@ one-line reason.
    requester which
    ones wait and why. The parent stays open until they are done.
 
-2. **Settle readiness.** Follow `check-ready` over the parent, at development start. It ran
+2. **Settle readiness.** First have an agent fire `work-started` for the parent and for
+   each sub-issue this run covers. Then follow `check-ready` over the parent, at
+   development start. It ran
    when the parent was created and each time a card was added, so it should find nothing;
    anything it finds is settled with the requester and folded now. Every read and write it
    calls for is delegated to an agent. No session starts until it reports nothing open.

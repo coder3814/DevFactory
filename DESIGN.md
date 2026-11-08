@@ -205,7 +205,8 @@ the work changes hands, never by where the card sits.
 
 **The board is the project's.** Every skill works a card wherever it sits, and no skill
 moves one. At each hand-off the skill fires an event — `request-met`, `ready`, `approved`,
-`development-started`, `done`, `accepted`, `released` — with `devfactory event`, which runs
+`work-started`, `development-started`, `readiness-lost`, `done`, `refused`, `accepted`,
+`released` — with `devfactory event`, which runs
 the project's hook for it in `.devfactory/hooks/` if there is one and does nothing
 otherwise (`references/events.md`). A project that wants its cards moved, to whatever
 columns its board has, writes those hooks; a failed hook is reported and never holds back

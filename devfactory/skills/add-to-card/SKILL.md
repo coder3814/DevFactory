@@ -90,7 +90,13 @@ forward. Every other caller leaves step 6 to run.
    In either mode, when the criteria changed, the read-back includes
    `devfactory criteria-ids --card <id>` (on a tracker `gh` does not reach,
    `--text` with the card as read back).
-6. **Re-derive the spec.** Skip this step when the caller passed no-rederive.
+6. **Fire `readiness-lost`** when any part of the card changed and its spec line
+   points at a spec whose status is `Ready` or `approved`: the card no longer
+   matches the stamp. Fire it with `devfactory event readiness-lost --card <id>`,
+   as `../../references/events.md` says, whatever the mode; a hook that fails is
+   reported with its output.
+   **Re-derive the spec.** Skip this re-derivation when the caller passed
+   no-rederive.
    Otherwise, if the card has a spec line and any part of the card changed,
    hand off to `grill` in re-derive mode as "Re-derive the spec" describes,
    naming each part that changed, and say when the interface determination or a

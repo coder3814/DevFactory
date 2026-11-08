@@ -64,7 +64,11 @@ one-line reason.
 
 4. **Sort a refusal.** A refusal names the criterion the result fails or the outcome that is
    missing; when it names neither, ask which. State the class below with its reason, and
-   when the refusal reads two ways, ask which is meant.
+   when the refusal reads two ways, ask which is meant. Once it is sorted as a defect
+   or a request change, fire `refused` for the card that owns the refused criterion or
+   outcome, and in a parent run for the parent as well, with `devfactory event refused
+   --card <n>`, as `../../references/events.md` says; a hook that fails is reported
+   with its output. A refusal that becomes a new card fires nothing.
    - **Fails a stated criterion.** A defect, not a change. Send it back to the build
      session, or in a parent run to the coordinator, which has it fixed as its Done
      findings are: by the kept session of the sub-issue it belongs to, or by a new session

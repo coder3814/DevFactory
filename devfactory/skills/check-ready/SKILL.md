@@ -57,8 +57,9 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
 3. **Check each stamp first.** For each card with a spec, run
    `devfactory stamp-check --card <n> --spec <spec dir>` from a checkout of the branch the
    spec lives on. `changed` is reported as "the card changed since Ready", and
-   `not-ancestor` as "the stamped commit is not in this branch's history"; either sends that
-   card to `grill` re-derive, telling it this check runs the readiness check itself. A card with no spec yet is reported as such and
+   `not-ancestor` as "the stamped commit is not in this branch's history"; at development
+   start, fire `readiness-lost` for that card with `devfactory event readiness-lost --card
+   <n>`, as `../../references/events.md` says. Either sends that card to `grill` re-derive, telling it this check runs the readiness check itself. A card with no spec yet is reported as such and
    goes to `grill` new, which earns its Ready before this check continues; for a parent, that
    grills every sub-issue not yet Ready and then the parent, as "A parent issue" in `grill`
    says.
@@ -88,5 +89,7 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
    Settle whatever it still finds with the requester as step 5 says, without another check.
 7. **Report** "nothing open", or what is open and on which card: a question unanswered, an
    owner step with no moment, a work-order fault not fixed, a card whose spec is not Ready.
-   An owner step scheduled for later in the run is settled, not open. The check is done only
+   An owner step scheduled for later in the run is settled, not open. At development start, fire
+   `readiness-lost` for each card whose spec status is `Ready` or `approved` and that is
+   reported here as not Ready, unless step 3 already fired it for that card. The check is done only
    when nothing is open.

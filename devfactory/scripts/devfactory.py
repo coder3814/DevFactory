@@ -863,7 +863,7 @@ def cmd_profile(opts):
 
 # ---------- events ----------
 
-EVENTS = ['request-met', 'ready', 'approved', 'development-started', 'done', 'accepted', 'released']
+EVENTS = ['request-met', 'ready', 'approved', 'work-started', 'development-started', 'readiness-lost', 'done', 'refused', 'accepted', 'released']
 EVENT_TIMEOUT_SECONDS = 300
 
 

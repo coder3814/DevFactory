@@ -35,7 +35,8 @@ def main():
     out = ['DevFactory profile: %s' % os.path.join(root, '.devfactory', 'profile.md')]
 
     hooks_dir = os.path.join(root, '.devfactory', 'hooks')
-    events = {'request-met', 'ready', 'approved', 'development-started', 'done', 'accepted', 'released'}
+    events = {'request-met', 'ready', 'approved', 'work-started', 'development-started', 'readiness-lost',
+              'done', 'refused', 'accepted', 'released'}
     found = sorted(f for f in (os.listdir(hooks_dir) if os.path.isdir(hooks_dir) else [])
                    if os.path.splitext(f)[0].lower() in events)
     out.append('Event hooks in .devfactory/hooks/: %s.' % ', '.join(found) if found

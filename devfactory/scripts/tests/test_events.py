@@ -40,6 +40,12 @@ class EventTest(unittest.TestCase):
         write(os.path.join(d, '.devfactory', 'hooks', 'ready-extra.py'), 'raise SystemExit(5)\n')
         self.assertEqual(run(['event', 'ready', '--card', '1'], d).lines, ['no-hook ready'])
 
+    def test_every_event_is_accepted(self):
+        d = self.repo()
+        for name in ['request-met', 'ready', 'approved', 'work-started', 'development-started',
+                     'readiness-lost', 'done', 'refused', 'accepted', 'released']:
+            self.assertEqual(run(['event', name, '--card', '1'], d).lines, ['no-hook %s' % name])
+
     def test_the_hook_name_matches_without_regard_to_case(self):
         d = self.repo()
         write(os.path.join(d, '.devfactory', 'hooks', 'Ready.py'), 'print("ok")\n')

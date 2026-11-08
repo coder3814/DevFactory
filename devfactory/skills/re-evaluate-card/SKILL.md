@@ -92,6 +92,8 @@ details: the edit is itself the change.
    spec line and it now meets the Definition of Request, as "Request grilling"
    in `working-a-card.md` says. When it does not meet the definition, tell the
    user what keeps it short.
+   **Fire `readiness-lost`** when this re-evaluation changed any part of the card
+   and its spec line points at a spec whose status is `Ready` or `approved`.
    **Re-derive the spec.** If the card has a spec line and any part changed —
    in this re-evaluation, or since the stamp when step 2 found the card ahead
    of it — hand off to `grill` in re-derive mode as "Re-derive the spec"

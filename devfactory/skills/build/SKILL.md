@@ -28,6 +28,7 @@ In a parent issue run the session reports to the coordinator, which its brief na
 question and report goes there, and the coordinator owns merging and every event but
 `development-started`. A standalone card reports to the requester directly and fires its
 own events; after its review passes it hands to `accept`, and `release` merges it once.
+In a parent issue run the coordinator has already fired `work-started` for this card.
 "Report" below means to whichever applies. This skill never moves a card on the board: it
 fires the events in `../../references/events.md` with `devfactory event <name> --card
 <n>`, and the project's hooks move cards as the project wants. A hook that fails is
@@ -66,7 +67,8 @@ directory is.
 1. **Begin, and start from current code.** Run `devfactory begin build`. In a parent issue
    run, rebase this branch onto the parent branch the coordinator named; for a standalone
    card, rebase onto the integration branch. Then load the profile as `working-a-card.md`
-   says, with the binding it names. With no profile, start nothing and report it.
+   says, with the binding it names. With no profile, start nothing and report it. Then,
+   for a standalone card, fire `work-started`, before any check.
 
 2. **Read the card and its spec.** Read the card in full as `working-a-card.md` says. Read
    its spec folder at the path the card's spec line gives: `spec.md` with its amendments,
@@ -77,7 +79,8 @@ directory is.
 3. **Check the status and the stamp.** A build starts only on a spec whose status is
    `approved`, wherever the card sits on the board. Run
    `devfactory stamp-check --card <n> --spec <spec dir>` in this worktree (Ready condition
-   9.2). When the status is not `approved` or the check fails, start nothing: report the
+   9.2). When the status is not `approved` or the check fails, fire `readiness-lost` for
+   the card when its spec status is `Ready` or `approved`, and start nothing: report the
    status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. A stale
    spec is re-derived through `grill`, never worked around.
 
