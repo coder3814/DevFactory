@@ -3,11 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const { spawnSync } = require('child_process');
-
-const HOOK = path.resolve(__dirname, '..', 'session-context.js');
+const { project, runHook } = require('./helpers');
 
 const PROFILE = [
   '# Project profile: Example',
@@ -29,30 +26,14 @@ const PROFILE = [
   '',
 ].join('\n');
 
-function project({ profile = PROFILE, markers = [] } = {}) {
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'devfactory-session-'));
-  if (profile !== null) {
-    fs.mkdirSync(path.join(cwd, '.devfactory', '.active'), { recursive: true });
-    fs.writeFileSync(path.join(cwd, '.devfactory', 'profile.md'), profile);
-    for (const m of markers) {
-      fs.writeFileSync(path.join(cwd, '.devfactory', '.active', m), new Date().toISOString());
-    }
-  }
-  return cwd;
-}
+const run = (cwd) => runHook('session-context.js', { session_id: 'test', cwd, hook_event_name: 'SessionStart', source: 'startup' });
 
-function run(cwd) {
-  const input = { session_id: 'test', cwd, hook_event_name: 'SessionStart', source: 'startup' };
-  const r = spawnSync(process.execPath, [HOOK], { input: JSON.stringify(input), encoding: 'utf8' });
-  assert.strictEqual(r.status, 0, r.stderr);
-  return r.stdout;
-}
-
-test('prints the profile, stages, skills, decision line and markers in under 25 lines', () => {
-  const cwd = project();
+test('prints the profile, stages, skills, decision line and markers in under 25 lines', (t) => {
+  const cwd = project(t, { profile: PROFILE });
   const lines = run(cwd).trimEnd().split('\n');
   assert.ok(lines.length < 25, `${lines.length} lines`);
   assert.strictEqual(lines[0], `DevFactory profile: ${path.join(cwd, '.devfactory', 'profile.md')}`);
+  assert.strictEqual(lines[1], 'Stages (column field: Status):');
   assert.ok(lines.includes('| Stage | Column |'));
   for (const stage of ['Request', 'Grilling', 'Approval', 'Development', 'Done', 'Acceptance', 'Release']) {
     assert.ok(lines.some((l) => l.startsWith(`| ${stage} |`)), stage);
@@ -62,16 +43,24 @@ test('prints the profile, stages, skills, decision line and markers in under 25 
   assert.match(lines[lines.length - 1], /No card skill is running/);
 });
 
-test('names an active marker', () => {
-  const out = run(project({ markers: ['grill'] }));
-  assert.match(out, /Active card skill markers: grill \(\d+ min\)\./);
+test('names an active marker and reports a stale one', (t) => {
+  const out = run(project(t, { profile: PROFILE, markers: ['grill', ['build', 30]] }));
+  assert.match(out, /Active card skill markers: grill \(\d+s\)\./);
+  assert.match(out, /Stale markers, which the guards ignore: build \(1d\); clear them/);
 });
 
-test('no profile means silence', () => {
-  assert.strictEqual(run(project({ profile: null })), '');
+test('reads the profile at the repository root from a subfolder', (t) => {
+  const cwd = project(t, { profile: PROFILE, branch: 'main' });
+  const sub = path.join(cwd, 'src');
+  fs.mkdirSync(sub);
+  assert.match(run(sub), /^DevFactory profile: /);
 });
 
-test('"Session context: off" means silence', () => {
+test('no profile means silence', (t) => {
+  assert.strictEqual(run(project(t, { profile: null })), '');
+});
+
+test('"Session context: off" means silence', (t) => {
   const off = PROFILE.replace('- Session context: on', '- Session context: off');
-  assert.strictEqual(run(project({ profile: off })), '');
+  assert.strictEqual(run(project(t, { profile: off })), '');
 });

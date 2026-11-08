@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
   - Bash(git log *)
   - Bash(git show *)
   - Bash(git ls-tree *)
@@ -18,11 +18,16 @@ gap entry naming the condition that let it through. Curating turns those entries
 proposals, so the next grilling asks up front what this run had to ask mid-build. It writes
 nothing the requester has not accepted.
 
-`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
-in the plugin's `scripts/` folder.
+`devfactory` below means running the plugin's script with `node`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.js` relative to this skill's folder.
 
-**Markers.** Run `devfactory begin curate` as your first action and `devfactory end curate`
-as your last, including when you stop to ask the requester or to report.
+**Markers.** Run `devfactory begin curate` as your first action and
+`devfactory end curate` as your last, including when you stop to ask the requester or to
+report, and `devfactory begin curate` again when you resume. A marker expires after the
+profile's Marker lifetime (12 hours by default), and `begin` refreshes it. Markers and the
+profile are found at the repository (worktree) root, wherever the shell's working
+directory is.
 
 The requester is asked one question at a time, the recommended option first with a
 one-line reason.

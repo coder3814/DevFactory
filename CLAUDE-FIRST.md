@@ -8,12 +8,20 @@ contracts fix the interfaces several files share so authors working in parallel 
 
 - Node, standard library only, no package install. Every script runs as
   `node <plugin>/devfactory/scripts/devfactory.js <command> ...`. Inside a hook or skill the
-  plugin path is `${CLAUDE_PLUGIN_ROOT}`; a skill may also say "the plugin's `scripts/`
-  folder". Scripts exit 0 on success, 1 on a failed check (findings on stdout, one per line,
-  as `<code> <message>`), 2 on usage or environment error (stderr).
-- Markers: `<cwd>/.devfactory/.active/<skill>` holds an ISO timestamp. `begin` writes it,
-  `end` removes it. The hooks treat any marker in that folder as "a card skill is running".
-  `configure-project` adds `.devfactory/.active/` to `.gitignore`.
+  plugin path is `${CLAUDE_PLUGIN_ROOT}`; a skill says once that the script is
+  `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`, or `../../scripts/devfactory.js` relative
+  to the skill's folder when that variable is empty in the shell. Scripts exit 0 on
+  success, 1 on a failed check (findings on stdout, one per line, as `<code> <message>`), 2
+  on usage or environment error (stderr).
+- Repository root: the script and the hooks find `.devfactory/` (the profile, the markers,
+  the gap ledger) at the repository (worktree) root of the working directory, wherever the
+  shell's working directory is inside it.
+- Markers: `<root>/.devfactory/.active/<skill>` holds an ISO timestamp. `begin` writes it,
+  or refreshes it when it exists, and `end` removes it. The hooks treat any marker in that
+  folder younger than the profile's `Marker lifetime` (default 12h) as "a card skill is
+  running"; an older one counts for nothing. A skill that holds a marker across a wait runs
+  `begin <skill>` again on resume. `configure-project` adds `.devfactory/.active/` to
+  `.gitignore`.
 
 ## Script commands (`scripts/devfactory.js`)
 
@@ -21,22 +29,23 @@ contracts fix the interfaces several files share so authors working in parallel 
 |---|---|---|
 | `stamp --card <n> [--repo owner/name]` | Reads the card with `gh issue view <n> --json title,body`, drops every line matching `^Spec: .+ @ [0-9a-f]+$`, normalises line endings to LF, trims trailing LFs, hashes `title + "\n" + body` with SHA-256, prints the lowercase hex. `--text <file>` hashes a file (first line title, rest body) instead, for tests and Azure DevOps. | 0 |
 | `stamp-check --card <n> --spec <dir>` (or `--text <file>`) | Compares `stamp` with the Card revision row in `<dir>/spec.md`; prints `match` or `changed <old> <new>`. Also checks the stamped Repo commit is an ancestor of HEAD in cwd (`git merge-base --is-ancestor`) and prints `ancestor` or `not-ancestor`. | 0 match+ancestor, 1 otherwise |
-| `spec-lint <dir> [--criteria <file>]` | Checks `spec.md`: header rows present (Card, Version, Status, Card revision, Repo commit, Stamped, Request type(s)); status one of drafting, Ready, approved; every required section heading present in order; dispositions table has no blank Disposition cell; evidence plan has a row per criterion ID given in `--criteria` (one ID per line) and no row for an unknown ID; owner-steps rows have a Moment; amendments table has at least one row; `gaps.md`, if present, parses. | 0 clean, 1 findings |
+| `spec-lint <dir> [--criteria <file>]` | Checks `spec.md`: header rows present with non-empty values (Card, Version, Status, Card revision, Repo commit, Stamped, Request type(s)); status set and one of drafting, Ready, approved; each request type one from the spec template's list; when the status is Ready, Card revision a SHA-256 hex and Repo commit a commit hash; every required section heading present in order; the dispositions table has a row for each of the five core concerns and no blank Disposition cell, a cell holding only the template's italic prompt counting as blank; the evidence plan has the six evidence columns, a row per criterion ID given in `--criteria` (one ID per line) and no row for an unknown ID; every owner-step row has a Moment; the amendments table has at least one row; `gaps.md`, if present, parses. | 0 clean, 1 findings |
 | `criteria-ids --card <n>` or `--text <file>` | Prints the criterion IDs found (`C<n>` at the start of a criterion line) and fails on a duplicate, a gap is fine. | 0 / 1 |
 | `gaps add <dir> --stage <s> --question <q> --condition <c> [--resolved <v>]` | Appends an entry to `<dir>/gaps.md` in the spec template's format with today's date. | 0 |
 | `gaps check <dir>` | Fails if any entry has `Resolved by: open`. | 0 / 1 |
 | `gaps ledger <dir> --card <n> --types <t> --ledger <file>` | Appends every entry of `<dir>/gaps.md` to the ledger with heading `## <card> (<types>) — <date> — <stage>`. | 0 |
 | `evidence-check <dir> --criteria <file>` | For each ID, `evidence/<ID>/` exists, is non-empty, and every artifact has a `<name>.txt` sidecar whose single line has `revision:`, `checkpoint:` and `produced by:`. | 0 / 1 |
-| `begin <skill>` / `end <skill>` | Marker write/remove in `<cwd>/.devfactory/.active/`. `begin` lists any other marker present with its age. | 0 |
-| `profile [--section <heading>] [--field <name>]` | Prints the profile (`<cwd>/.devfactory/profile.md`) or one `- Name: value` field by name, so hooks and skills read it the same way. | 0 / 2 |
+| `begin <skill>` / `end <skill>` | Marker write (or refresh)/remove in `<root>/.devfactory/.active/`. `begin` lists any other marker present with its age. | 0 |
+| `markers [--clear-stale]` | Lists each marker in `<root>/.devfactory/.active/` with its age and whether it is past the profile's Marker lifetime; `--clear-stale` removes those past it. | 0 |
+| `profile [--section <heading>] [--field <name>]` | Prints the profile (`<root>/.devfactory/profile.md`); `--section` alone prints that section; `--field` prints one `- Name: value` field's value, within the section when both are given. The hooks read the profile through this command, so hooks and skills read it the same way. | 0 / 2 |
 
 ## Hooks (`hooks/hooks.json`, scripts in `hooks/`)
 
 | Event | Matcher | Script | Behaviour |
 |---|---|---|---|
-| PreToolUse | Bash | `guard-tracker.js` | If the command contains a tracker write (`gh issue edit`, `gh issue comment`, `gh issue create`, `gh project item-edit`, `gh project item-add`, `gh api` with `-X PATCH|POST|PUT|DELETE` on `/issues`, `az boards work-item update|create`, `az boards work-item relation`) and no marker exists, deny with reason "DevFactory: card writes go through the card skills (create-card, add-to-card, re-evaluate-card, grill); none is running." Otherwise allow. No profile → allow. |
-| PreToolUse | Bash | `guard-git.js` | If the command is `git push`, or `git merge`/`git merge --ff-only`/`git rebase` whose target is the profile's integration branch or a branch matching the profile's parent-branch pattern (run from that branch's worktree), and no `release` or `coordinate` marker exists, deny with reason naming the skill. No profile → allow. |
-| UserPromptSubmit | — | `stamp-notice.js` | If the prompt contains `#<n>` or `card <n>` and `<specs path>/<n>/spec.md` exists, run `stamp-check` and print one line: "DevFactory: card <n>'s spec is current (Ready at <commit>)" or "DevFactory: card <n> changed since its spec earned Ready; run grill re-derive before building." Never blocks. |
+| PreToolUse | Bash | `guard-tracker.js` | If the command contains a tracker write (`gh issue edit`, `gh issue comment`, `gh issue create`, `gh project item-edit`, `gh project item-add`, a `gh api graphql` mutation, a `gh api` call with `-f`, `-F`, `--input`, `--method` or a non-GET `-X`, `az boards work-item update|create`, `az boards work-item relation`) and no live marker exists, deny with reason "DevFactory: card writes go through the card skills (create-card, add-to-card, re-evaluate-card, grill); none is running." Otherwise allow. No profile → allow. |
+| PreToolUse | Bash | `guard-git.js` | Protects the profile's integration branch and every branch matching its parent-branch pattern. Blocks `git push`, and any change to a protected branch: a merge, fast-forward, rebase, hard reset or amend while HEAD is on a protected branch, or the same through `git -C` into a protected branch's worktree. A rebase or merge of a protected branch into an unprotected one is never blocked. A live `release` or `coordinate` marker allows everything; a `build` marker allows the fast-forward into a parent branch; a `grill` marker allows its spec commit and fast-forward onto the integration branch. A denial names the skill that would allow it. No profile → allow. |
+| UserPromptSubmit | — | `stamp-notice.js` | For at most two cards the prompt names (`#<n>` or `card <n>`) whose `<specs path>/<n>/spec.md` exists and whose status is not drafting, run `stamp-check` and print one line each: "DevFactory: card <n>'s spec is current (Ready at <commit>)" or "DevFactory: card <n> changed since its spec earned Ready; run grill re-derive before building." Silent on a drafting spec. Never blocks. |
 | SessionStart | — | `session-context.js` | If `<cwd>/.devfactory/profile.md` exists, print: the profile path; the lifecycle stages and their columns; "use create-card / add-to-card / re-evaluate-card for cards, grill for specs, coordinate for a parent issue, build for one card, accept, release"; the decision line in one sentence; and whether any marker is active. Under 25 lines. |
 
 Hook input is the JSON Claude Code sends on stdin (`tool_name`, `tool_input.command`,
@@ -71,6 +80,11 @@ session tools directly (`start_session`, `SendMessage`, `stop_session`,
 - `context: fork` is not used: a forked skill cannot start agents or ask the requester, which is what `check-ready` and `curate` do.
 - `release` has `disable-model-invocation: true`, so `accept` and `coordinate` end by asking the owner to run it; pushing stays the owner's word.
 - The agents' README moved to `references/agents.md`, because plugin validation treats every file in `agents/` as an agent.
+- Git guard semantics: the guard blocks pushes and changes to a protected branch (the integration branch or a parent branch), whether HEAD is on it or `git -C` points into its worktree; it never blocks a rebase or merge of a protected branch into an unprotected one. `release` and `coordinate` allow everything, `build` the fast-forward into a parent branch, and `grill` its spec commit and fast-forward onto the integration branch. So a build session fast-forwards with `git -C <parent worktree> merge --ff-only <branch>` from its own worktree, never by changing into the parent worktree, and `grill` holds its marker through its spec commit and spec line, ending it only after both. The spec commit lands directly on the integration branch when the profile's branching allows a direct commit, else on a branch fast-forwarded under `grill`'s marker.
+- A coordinated build session runs `begin build` first, then rebases onto the parent branch, then follows `build`.
+- Markers expire after the profile's `Marker lifetime` (default 12h), so a marker an interrupted skill left behind stops counting; `begin` refreshes a marker, and every skill that holds one across a wait runs `begin` again on resume. `markers --clear-stale` removes expired ones, from `configure-project`'s troubleshooting and `coordinate`'s final reap.
+- The script and the hooks find `.devfactory/` at the repository (worktree) root, not the shell's working directory, and the hooks read the profile through the script's `profile` command.
+- Skills pre-approve the script as `Bash(node *devfactory.js*)`, with no spaces around the name, and name it as `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`, or `../../scripts/devfactory.js` relative to the skill's folder when that variable is empty in the shell.
 
 ## Verified facts (code.claude.com, 2026-11-07)
 
@@ -93,8 +107,8 @@ session tools directly (`start_session`, `SendMessage`, `stop_session`,
 ## Profile additions (`.devfactory/profile.md`)
 
 - `## Hooks`: `- Tracker guard: on|off`, `- Git guard: on|off`, `- Stamp notice: on|off`,
-  `- Session context: on|off`. Default all on. A hook reads its own line and exits silently
-  when off.
+  `- Session context: on|off`, `- Marker lifetime: <hours>h`. Default all on and 12h. A hook
+  reads its own line and exits silently when off.
 - `## Permissions`: the allowlist entries `configure-project` writes to
   `.claude/settings.json` in the project (read commands only).
 - The Sessions `Runtime` line is removed; the coordinator needs the Claude desktop app and

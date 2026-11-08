@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
 ---
 
 # Coordinate a parent issue
@@ -27,14 +27,18 @@ agents (`readiness-checker`, `change-reviewer`, `done-judge`, `card-reviewer`) a
 by name with the Agent tool and carry their own model; any other subagent is started with
 the Agent tool too.
 
-`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
-in the plugin's `scripts/` folder.
+`devfactory` below means running the plugin's script with `node`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.js` relative to this skill's folder.
 
-**Markers.** Run `devfactory begin coordinate` as your first action and keep the marker for
-the whole run, through every turn and wait: the git guard allows a push, or a merge into the
-integration or the parent branch, only under it or under `release`. Run
-`devfactory end coordinate` as your last action, at step 11, or when you stop and report the
-run abandoned.
+**Markers.** Run `devfactory begin coordinate` as your first action and keep the marker
+for the whole run, through every turn and wait: the git guard allows a push, or a merge
+into the integration or the parent branch, only under it or under `release`. Run
+`devfactory end coordinate` as your last action, at step 11, or when you stop and report
+the run abandoned. A marker expires after the profile's Marker lifetime (12 hours by
+default), and `begin` refreshes it, so run `devfactory begin coordinate` again whenever
+you resume after a wait. Markers and the profile are found at the repository (worktree)
+root, wherever the shell's working directory is.
 
 ## Sessions
 
@@ -65,8 +69,8 @@ The desktop app shapes the run:
 The brief names the card, the parent, the spec path, the parent branch and the sub-issue's
 own branch, named by the profile's Sub-issue branch entry, and says, in this order:
 
-1. Reply "waiting" and end your turn. When messaged to begin, rebase onto the parent branch
-   named here, then follow the `build` skill for this card.
+1. Reply "waiting" and end your turn. When messaged to begin, run `begin build` first, then
+   rebase onto the parent branch named here, then follow the `build` skill for this card.
 2. Move the card to the development column as work starts; leave every other column move
    to the coordinator.
 3. A question the spec and the decision line do not answer: stop and report it to the
@@ -74,9 +78,11 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
 5. When told it is your turn: rebase onto the parent branch, rerun the tests, fast-forward
-   the parent branch from the parent worktree, report, and end your turn. Stay available:
-   you, your worktree and your branch are kept until the run is accepted and released, and
-   the coordinator may message you with a Done-judge finding or an acceptance refusal.
+   the parent branch with `git -C <parent worktree> merge --ff-only <branch>` run from this
+   session's own worktree, never by changing into the parent worktree, report, and end your
+   turn. Stay available: you, your worktree and your branch are kept until the run is
+   accepted and released, and the coordinator may message you with a Done-judge finding or
+   an acceptance refusal.
 
 There is one coordinator per run. It never starts a session that acts as a coordinator; a
 parent issue outside this run, such as one created along the way, is a new run the
@@ -172,9 +178,9 @@ one-line reason.
      that its third review still failed, put the findings to the requester and ask how to
      proceed; the sub-issue does not merge meanwhile.
    - When it is a card's turn, message its session to merge as its brief says: rebase onto
-     the parent branch, rerun the tests, and fast-forward the parent branch from the parent
-     worktree. When the fast-forward refuses, the session stops and reports it, and nothing
-     is forced.
+     the parent branch, rerun the tests, and fast-forward the parent branch with
+     `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. When the
+     fast-forward refuses, the session stops and reports it, and nothing is forced.
    - Keep the session, its worktree and its branch: they stay until `accept` ends in
      acceptance, and `release` reaps them.
    - Then have the sub-issue moved to Done, and a nested parent moved to Done once all its
@@ -209,7 +215,8 @@ one-line reason.
 
 11. **Stop.** Once `release` has reaped, confirm that every session and agent you started
     has stopped, and that each agent stopped its own. Report anything you cannot confirm has
-    stopped, then run `devfactory end coordinate`.
+    stopped. Run `devfactory markers --clear-stale` to remove any marker left behind past
+    its lifetime, then run `devfactory end coordinate`.
 
 ## Throughout
 

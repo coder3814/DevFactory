@@ -1,86 +1,76 @@
 #!/usr/bin/env node
-// PreToolUse (Bash): refuses a tracker write while no card skill is running.
-// Silent (allow) on anything else, on a missing profile, on "Tracker guard: off",
-// and on any error. Never throws; always exits 0.
+// PreToolUse (Bash): refuses a tracker write while no card skill is running. A write is a
+// gh issue edit, comment or create, a gh project item-edit or item-add, an az boards
+// work-item update, create or relation change, a gh api graphql call carrying a mutation
+// (or an --input whose content cannot be seen), and any other gh api call whose method is
+// not GET: an -X or --method other than GET, or a field (-f, -F, --raw-field, --field) or
+// --input with no method, which gh sends as POST. Plain reads pass. Markers older than the
+// profile's marker lifetime do not count. Silent (allow) on anything else, on a missing
+// profile, on "Tracker guard: off", and on any error. Never throws; always exits 0.
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
+const lib = require('./lib');
 
 const REASON =
   'DevFactory: card writes go through the card skills (create-card, add-to-card, ' +
   're-evaluate-card, grill); none is running.';
 
-function readProfile(cwd) {
-  const text = fs.readFileSync(path.join(cwd, '.devfactory', 'profile.md'), 'utf8');
-  const sections = {};
-  let current = null;
-  for (const line of text.split(/\r?\n/)) {
-    const heading = /^##\s+(.+?)\s*$/.exec(line);
-    if (heading) {
-      current = { fields: {}, lines: [] };
-      sections[heading[1].trim().toLowerCase()] = current;
-      continue;
+const FIELD_FLAGS = ['-f', '-F', '--field', '--raw-field', '--input'];
+
+function flagValue(words, i) {
+  const w = words[i];
+  const eq = w.indexOf('=');
+  if (w.startsWith('--')) return eq > 0 ? w.slice(eq + 1) : words[i + 1];
+  // -XPATCH or -X PATCH
+  return w.length > 2 ? w.slice(2).replace(/^=/, '') : words[i + 1];
+}
+
+function isGhApiWrite(args) {
+  if (args[0] === 'graphql' || args.includes('graphql')) {
+    return args.some((a) => /\bmutation\b/.test(a)) ||
+      args.some((a) => a === '--input' || a.startsWith('--input='));
+  }
+  let method = null;
+  let fields = false;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '-X' || a.startsWith('-X') || a === '--method' || a.startsWith('--method=')) {
+      method = (flagValue(args, i) || '').toUpperCase();
+    } else if (FIELD_FLAGS.some((f) => a === f || a.startsWith(f + '=') ||
+      (f.length === 2 && a.startsWith(f) && a.length > 2))) {
+      fields = true;
     }
-    if (!current) continue;
-    current.lines.push(line);
-    const field = /^\s*-\s+([^:]+?):\s*(.*)$/.exec(line);
-    if (field) current.fields[field[1].trim().toLowerCase()] = field[2].trim();
   }
-  return sections;
+  if (method === null) return fields;
+  return method !== 'GET';
 }
 
-function isOff(profile, name) {
-  const hooks = profile.hooks;
-  const value = hooks && hooks.fields[name.toLowerCase()];
-  return typeof value === 'string' && /^`?off\b/i.test(value);
-}
-
-function activeMarkers(cwd) {
-  try {
-    return fs.readdirSync(path.join(cwd, '.devfactory', '.active'))
-      .filter((name) => !name.startsWith('.'));
-  } catch (e) {
-    return [];
+function isTrackerWrite(words) {
+  const [prog, a, b, c, d] = words;
+  if (lib.isProgram(prog, 'gh')) {
+    if (a === 'issue' && ['edit', 'comment', 'create'].includes(b)) return true;
+    if (a === 'project' && ['item-edit', 'item-add'].includes(b)) return true;
+    if (a === 'api') return isGhApiWrite(words.slice(2));
+    return false;
   }
-}
-
-const WRITES = [
-  /\bgh\s+issue\s+(edit|comment|create)\b/,
-  /\bgh\s+project\s+item-(edit|add)\b/,
-  /\baz\s+boards\s+work-item\s+(update|create)\b/,
-  /\baz\s+boards\s+work-item\s+relation\s+(add|remove)\b/,
-];
-
-function isTrackerWrite(command) {
-  if (WRITES.some((re) => re.test(command))) return true;
-  // gh api with an explicit write method on an issues path.
-  return /\bgh\s+api\b/.test(command) &&
-    /(?:^|\s)(?:-X|--method)(?:\s+|=)?['"]?(PATCH|POST|PUT|DELETE)\b/i.test(command) &&
-    /\/issues\b/.test(command);
+  if (lib.isProgram(prog, 'az') && a === 'boards' && b === 'work-item') {
+    if (['update', 'create'].includes(c)) return true;
+    if (c === 'relation' && ['add', 'remove'].includes(d)) return true;
+  }
+  return false;
 }
 
 function main() {
-  const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const input = lib.readInput();
   if (input.tool_name !== 'Bash') return;
   const command = input.tool_input && input.tool_input.command;
-  if (typeof command !== 'string' || !isTrackerWrite(command)) return;
-  const cwd = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  let profile;
-  try {
-    profile = readProfile(cwd);
-  } catch (e) {
-    return; // no profile: silence
-  }
-  if (isOff(profile, 'Tracker guard')) return;
-  if (activeMarkers(cwd).length > 0) return;
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: REASON,
-    },
-  }));
+  if (typeof command !== 'string' || !/\b(gh|az)\b/.test(command)) return;
+  if (!lib.segments(command).some((s) => isTrackerWrite(lib.commandWords(s)))) return;
+  const root = lib.projectRoot(lib.inputCwd(input));
+  if (!lib.hasProfile(root)) return; // no profile: silence
+  if (lib.hookOff(root, 'Tracker guard')) return;
+  if (lib.markers(root).some((m) => !m.stale)) return;
+  lib.deny(REASON);
 }
 
 try {

@@ -332,8 +332,12 @@ skill proposes them from the gap records.
 ```
 DevFactory/
   .claude-plugin/marketplace.json
+  README.md
+  BUILD-BRIEF.md
+  CLAUDE-FIRST.md
+  DESIGN.md
   devfactory/
-    plugin.json
+    .claude-plugin/plugin.json
     skills/
       configure-project/      the profile: board, specs path, test gate, environments, concerns, conventions, hooks, permissions
       create-card/            from card-standard, plus stable criterion IDs and the two core sections
@@ -356,28 +360,37 @@ DevFactory/
       definition-of-ready.md, definition-of-done.md, decision-line.md
       spec-template.md, profile-template.md
       bindings/github-projects.md, bindings/azure-devops.md
+      agents.md               the agents' README: each agent and the skill that starts it
+      examples/work-type-module.md   the work-type starter module, a team module example
     scripts/
       devfactory.js           the machine checks and helpers: stamp, stamp-check, spec-lint, criteria-ids,
-                              gaps add, gaps check, gaps ledger, evidence-check, begin, end, profile
+                              gaps add, gaps check, gaps ledger, evidence-check, begin, end, markers, profile
+      README.md               the commands, their arguments and exit codes
+      test/                   the script's tests
     hooks/
       hooks.json              the four hooks, each switched by its line in the profile's Hooks section
       guard-tracker.js        PreToolUse: refuses a tracker write while no card skill is running
-      guard-git.js            PreToolUse: refuses a push, or a merge or rebase into the integration or a parent
-                              branch, while neither release nor coordinate is running
+      guard-git.js            PreToolUse: refuses a push, or a change to the integration or a parent branch,
+                              except as the running skill's marker allows
       stamp-notice.js         UserPromptSubmit: says whether the spec of a card the prompt names is current
       session-context.js      SessionStart: the profile, the stages, the skills to use and any active marker
-  DESIGN.md
+      test/                   the hooks' tests
 ```
 
 **Hooks.** Four ship in `hooks/hooks.json`, each switched on or off in the profile's Hooks
 section, all on by default. Two guards block: a tracker write (`gh issue edit`, `gh issue
 comment`, `gh project item-edit`, the Azure DevOps equivalents) outside a running card skill,
-and a `git push` or a merge or rebase onto the integration or a parent branch outside
-`coordinate` or `release` (a `build` marker allows the rebase and fast-forward the coordinator
-asks for). Two inform: a prompt that names a card with a spec gets the result of
+and any `git push`, or a change to the integration or a parent branch (a merge,
+fast-forward, rebase, hard reset or amend while on it, or through `git -C` into its
+worktree) outside `coordinate` or `release`; rebasing or merging a protected branch into
+ordinary work is never blocked; a `build` marker allows the fast-forward into a parent branch
+the coordinator asks for, and a `grill` marker its spec commit onto the integration branch.
+Two inform: a prompt that names a card with a spec gets the result of
 `stamp-check`, and a session in a project with a profile gets the lifecycle, the skills and
 the decision line at start. A skill marks itself running with `begin <skill>` and `end
-<skill>`, which write and remove `.devfactory/.active/<skill>`; the guards read that folder.
+<skill>`, which write and remove `.devfactory/.active/<skill>` at the repository root; the
+guards read that folder, ignore a marker older than the profile's Marker lifetime (default
+12 hours), and `begin` refreshes one.
 
 **Scripts.** `scripts/devfactory.js` decides every `[machine]` condition that has a command
 (`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`) and holds
@@ -539,3 +552,22 @@ entry they contradict.
 - **11 What BottleNote keeps.** The BottleNote adoption must also rewrite the "Agents and
   pipelines" section of its `AGENTS.md`, whose neutral-wording, no-model and Codex rules
   contradict this decision for DevFactory's own skills and agents.
+- **9 Plugin layout, Hooks.** The git guard protects the integration branch and every parent
+  branch. It blocks a push and any change to a protected branch: a merge, fast-forward,
+  rebase, hard reset or amend while HEAD is on one, or the same through `git -C` into its
+  worktree. A rebase or merge of a protected branch into an unprotected one is never
+  blocked. A `release` or `coordinate` marker allows everything; a `build` marker allows the
+  fast-forward into a parent branch, which a build session makes with
+  `git -C <parent worktree> merge --ff-only <branch>` from its own worktree; a `grill` marker
+  allows its spec commit and fast-forward onto the integration branch, so `grill` holds its
+  marker through the spec commit and the spec line. This supersedes the guard as the Hooks
+  paragraph above describes it.
+- **9 Plugin layout, markers.** A marker expires after the profile's Marker lifetime, a line
+  of its Hooks section, 12 hours by default; an expired marker counts as no skill running.
+  `begin` refreshes a marker, every skill that holds one across a wait runs `begin` again on
+  resume, and the script's `markers` command lists markers and, with `--clear-stale`,
+  removes expired ones.
+- **9 Plugin layout, repository root.** The script and the hooks find the profile, the
+  markers and the gap ledger under `.devfactory/` at the repository (worktree) root,
+  wherever the shell's working directory is, and the hooks read the profile through the
+  script's `profile` command.

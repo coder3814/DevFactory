@@ -17,15 +17,18 @@ allowed-tools:
 
 # Configure a project
 
-Paths below are relative to this skill's directory. `devfactory` below means
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
-folder.
+Paths below are relative to this skill's directory. `devfactory` below means running the
+plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+this skill's folder.
 
 **Markers.** Run `devfactory begin configure-project` as your first action and
 `devfactory end configure-project` as your last. Whenever you end your turn to wait for
 the owner's answer or acceptance, or stop for any reason, run
 `devfactory end configure-project` first, and `devfactory begin configure-project` again
-when you resume.
+when you resume. A marker expires after the profile's Marker lifetime (12 hours by
+default), and `begin` refreshes it. Markers and the profile are found at the repository
+(worktree) root, wherever the shell's working directory is.
 
 Read these first, in full:
 
@@ -151,8 +154,19 @@ answer, propose it as the first option rather than asking from blank.
 17. **Choose the hooks.** Show the four hooks as the template's "Hooks and
     permissions" describes them — the tracker guard, the git guard, the stamp
     notice and the session context — say that all four are on by default, and
-    ask whether the owner wants any off. Record one `on` or `off` line for each
-    in the Hooks section.
+    ask whether the owner wants any off. Say that the tracker guard covers
+    `gh api graphql` mutations and `gh api` calls with `-f`, `-F`, `--input`,
+    `--method` or a non-GET `-X`, besides the issue, project and board
+    commands. Record one `on` or `off` line for each in the Hooks section. Then
+    ask for the Hooks section's `Marker lifetime`, proposing the default of 12
+    hours: a marker older than that no longer counts as a running skill, and
+    `begin` refreshes it. Record it as the `Marker lifetime` line, `12h` by
+    default. For troubleshooting, tell the owner: a guard that lets a write
+    through while no skill is running points to a marker an interrupted skill
+    left behind, which `devfactory markers` lists with its age and
+    `devfactory markers --clear-stale` removes once past its lifetime; a guard
+    that refuses a running skill's write points to an expired marker, which
+    that skill's `begin` refreshes.
 18. **Choose the permissions.** Propose the allowlist entries for the
     Permissions section, read commands only, in the `Bash(<command> *)`
     spelling: the plugin's script, `Bash(node *devfactory.js*)`; the binding's

@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -19,14 +19,20 @@ allowed-tools:
 
 # Grill a card into a Ready spec
 
-Paths below are relative to this skill's directory. `devfactory` below means
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
-folder.
+Paths below are relative to this skill's directory. `devfactory` below means running the
+plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+this skill's folder.
 
-**Markers.** Run `devfactory begin grill` as your first action and `devfactory end grill` as
-your last. Whenever you end your turn to wait for the requester's answer, or to report, run
-`devfactory end grill` first, and `devfactory begin grill` again when you resume. The card
-guard allows your card writes only while the marker is there.
+**Markers.** Run `devfactory begin grill` as your first action and `devfactory end grill`
+as your last. Whenever you end your turn to wait for the requester's answer, or to report,
+run `devfactory end grill` first, and `devfactory begin grill` again when you resume. The
+tracker guard allows your card writes only while the marker is there, and the git guard
+allows your spec commit onto the integration branch, and its fast-forward there, only
+under it; so hold the marker through each spec commit and the spec line written after it,
+and end it only once both are done. A marker expires after the profile's Marker lifetime
+(12 hours by default), and `begin` refreshes it. Markers and the profile are found at the
+repository (worktree) root, wherever the shell's working directory is.
 
 Read these first, in full:
 
@@ -177,24 +183,30 @@ that, every time you commit the spec folder, write the line again with that comm
    yet earned Ready.
 8. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up. Ask the
    requester about whatever it still finds, and fold the answers, without another check.
-9. **Stamp** the spec as "The stamp" says: the Card revision from `devfactory stamp`, the
-   Repo commit the follow-up reported, today's date. Set
-   its status to `Ready` when the follow-up found nothing open, or when the requester settled
-   everything it found; otherwise it stays `drafting`.
-10. **Commit** the spec folder, and nothing else, as its own commit, landing on the
-    integration branch the way the profile's branches and merging section says work lands
-    there.
+9. **Lint and stamp.** Steps 9 to 11 run in one stretch under the `grill` marker you
+   already hold: lint, stamp, commit, spec line, and only then `end`. Run
+   `devfactory spec-lint <spec dir> --criteria <file>` and fix every finding. Then stamp
+   the spec as "The stamp" says: the Card revision from `devfactory stamp`, the Repo commit
+   the follow-up reported, today's date. Set its status to `Ready` when the follow-up found
+   nothing open, or when the requester settled everything it found; otherwise it stays
+   `drafting`.
+10. **Commit** the spec folder, and nothing else, as its own commit, once the lint "The
+    stamp" requires is clean. The commit lands directly on the integration branch when the
+    profile's branches and merging allows a direct commit there; otherwise it is made on a
+    branch that is then fast-forwarded onto the integration branch, which the git guard
+    allows under `grill`'s marker.
 11. **Point the card at the spec.** When the spec is Ready, write the spec line with that
-    commit, as "The spec line" says.
+    commit, as "The spec line" says. Only now may you run `devfactory end grill` to report
+    or ask.
 12. **Report** that the spec is Ready, with its path and commit and the answers folded into
     the card, or name each thing still open: the question, the owner step without a moment,
     or the failing condition.
 13. **Approval.** Once Ready, move the card to the Approval stage's column and ask the
     requester to approve the Ready spec, once, as one question: approve it, or say what to
-    change. On approval, set the status to `approved`, commit that change on its own and
-    write the spec line with the new commit. A change asked for at approval is a gap, at
-    stage Approval, handled through Amend: the requester's words are the answer, the
-    amendment and gap entry are written, the card is folded through `add-to-card` where the
+    change. On approval, set the status to `approved`, commit that change on its own,
+    landing as step 10 says, and write the spec line with the new commit, under the
+    marker. A change asked for at approval is a gap, at stage Approval, handled through
+    Amend: the requester's words are the answer, the amendment and gap entry are written, the card is folded through `add-to-card` where the
     change alters observable behaviour or scope, the affected conditions are re-checked as
     Amend says, and approval is asked again.
 
@@ -249,8 +261,8 @@ that, every time you commit the spec folder, write the line again with that comm
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
    changed card parts, or the change asked for at approval, that drove it. Re-stamp as "The
    stamp" says, the Card revision from `devfactory stamp`, and commit the spec folder on its own on the branch it lives on: the
-   integration branch before development, the card's own branch during it. Write the spec
-   line with that commit.
+   integration branch before development, landing as New step 10 says, the card's own
+   branch during it. Write the spec line with that commit, under the marker.
 7. **Report** what changed in the spec and whether it is still Ready.
 
 ## Amend

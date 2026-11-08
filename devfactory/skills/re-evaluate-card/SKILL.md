@@ -15,18 +15,21 @@ allowed-tools:
 
 # Re-evaluate a card
 
-Paths below are relative to this skill's directory. `devfactory` below means
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
-folder. Read the tracker with `gh issue view`, `gh project item-list`, `gh api -X GET` or
-`az boards work-item show`, as the profile's binding says; those reads and the script run
-without a permission prompt.
+Paths below are relative to this skill's directory. `devfactory` below means running the
+plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+this skill's folder. Read the tracker with `gh issue view`, `gh project item-list`,
+`gh api -X GET` or `az boards work-item show`, as the profile's binding says; those reads
+and the script run without a permission prompt.
 
 **Markers.** Run `devfactory begin re-evaluate-card` as your first action and
-`devfactory end re-evaluate-card` as your last. Whenever you end your turn to wait for
-the user's answer, decision or acceptance, or stop for any reason, such as finding no
-profile, run `devfactory end re-evaluate-card` first, and
-`devfactory begin re-evaluate-card` again when you resume. The tracker guard allows your
-card writes only while the marker is there.
+`devfactory end re-evaluate-card` as your last. Whenever you end your turn to wait for the
+user's answer, decision or acceptance, or stop for any reason, such as finding no profile,
+run `devfactory end re-evaluate-card` first, and `devfactory begin re-evaluate-card` again
+when you resume. The tracker guard allows your card writes only while the marker is there.
+A marker expires after the profile's Marker lifetime (12 hours by default), and `begin`
+refreshes it. Markers and the profile are found at the repository (worktree) root,
+wherever the shell's working directory is.
 
 Read these first, in full:
 

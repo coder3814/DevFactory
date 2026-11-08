@@ -1,44 +1,17 @@
 #!/usr/bin/env node
-// UserPromptSubmit: for each card the prompt names (#<n> or "card <n>") that has a spec,
-// runs stamp-check and says whether the spec is still current. Never blocks. Silent on a
-// missing profile, on "Stamp notice: off", on a card without a spec, and on any error.
+// UserPromptSubmit: for the first two cards the prompt names (#<n> or "card <n>") that have
+// a spec, runs stamp-check and says whether the spec is still current. Never blocks. Silent
+// on a missing profile, on "Stamp notice: off", on a card without a spec, on a spec with no
+// Card revision yet (still drafting), and on any error. When DEVFACTORY_STAMP_TEXT is set,
+// stamp-check reads the card from that file (--text) instead of the tracker, for tests.
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const lib = require('./lib');
 
-function readProfile(cwd) {
-  const text = fs.readFileSync(path.join(cwd, '.devfactory', 'profile.md'), 'utf8');
-  const sections = {};
-  let current = null;
-  for (const line of text.split(/\r?\n/)) {
-    const heading = /^##\s+(.+?)\s*$/.exec(line);
-    if (heading) {
-      current = { fields: {}, lines: [] };
-      sections[heading[1].trim().toLowerCase()] = current;
-      continue;
-    }
-    if (!current) continue;
-    current.lines.push(line);
-    const field = /^\s*-\s+([^:]+?):\s*(.*)$/.exec(line);
-    if (field) current.fields[field[1].trim().toLowerCase()] = field[2].trim();
-  }
-  return sections;
-}
-
-function isOff(profile, name) {
-  const hooks = profile.hooks;
-  const value = hooks && hooks.fields[name.toLowerCase()];
-  return typeof value === 'string' && /^`?off\b/i.test(value);
-}
-
-function specsPath(profile) {
-  const value = profile.specs && profile.specs.fields.path;
-  if (!value) return 'specs/';
-  const ticked = /`([^`]+)`/.exec(value);
-  return (ticked ? ticked[1] : value.split(/\s+/)[0]) || 'specs/';
-}
+const MAX_CARDS = 2;
+const CHECK_TIMEOUT_MS = 8000;
 
 function cardNumbers(prompt) {
   const found = [];
@@ -47,7 +20,7 @@ function cardNumbers(prompt) {
   while ((m = re.exec(prompt)) !== null) {
     if (!found.includes(m[1])) found.push(m[1]);
   }
-  return found.slice(0, 5);
+  return found;
 }
 
 function repoCommit(specFile) {
@@ -60,21 +33,19 @@ function repoCommit(specFile) {
   }
 }
 
-function notice(cwd, script, specsDir, card) {
+function notice(root, specsDir, card) {
   const dir = path.join(specsDir, card);
   const specFile = path.join(dir, 'spec.md');
   if (!fs.existsSync(specFile)) return null;
-  const run = spawnSync(process.execPath,
-    [script, 'stamp-check', '--card', card, '--spec', dir], {
-      cwd,
-      encoding: 'utf8',
-      timeout: 20000,
-      windowsHide: true,
-    });
+  const source = process.env.DEVFACTORY_STAMP_TEXT
+    ? ['--text', process.env.DEVFACTORY_STAMP_TEXT]
+    : ['--card', card];
+  const run = lib.script(root, ['stamp-check', ...source, '--spec', dir], CHECK_TIMEOUT_MS);
   if (run.error) return null;
   if (run.status !== 0 && run.status !== 1) {
     const why = ((run.stderr || '').split(/\r?\n/).find((l) => l.trim()) || 'the stamp check failed')
       .replace(/^devfactory:\s*/, '');
+    if (/has no Card revision hash/.test(why)) return null; // a drafting spec: nothing to say
     return `DevFactory: could not check card ${card}'s spec against its stamp (${why}); ` +
       'check it before building.';
   }
@@ -95,27 +66,23 @@ function notice(cwd, script, specsDir, card) {
 }
 
 function main() {
-  const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const input = lib.readInput();
   const prompt = input.prompt;
   if (typeof prompt !== 'string') return;
   const cards = cardNumbers(prompt);
   if (cards.length === 0) return;
-  const cwd = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  let profile;
-  try {
-    profile = readProfile(cwd);
-  } catch (e) {
-    return; // no profile: silence
-  }
-  if (isOff(profile, 'Stamp notice')) return;
-  const root = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
-  const script = path.join(root, 'scripts', 'devfactory.js');
-  if (!fs.existsSync(script)) return;
-  const specsDir = path.resolve(cwd, specsPath(profile));
+  const root = lib.projectRoot(lib.inputCwd(input));
+  if (!lib.hasProfile(root)) return; // no profile: silence
+  if (lib.hookOff(root, 'Stamp notice')) return;
+  const specsDir = path.resolve(root, lib.firstToken(lib.profileField(root, 'Specs', 'Path')) || 'specs/');
   const lines = [];
+  let checked = 0;
   for (const card of cards) {
+    if (checked >= MAX_CARDS) break;
+    if (!fs.existsSync(path.join(specsDir, card, 'spec.md'))) continue;
+    checked++;
     try {
-      const line = notice(cwd, script, specsDir, card);
+      const line = notice(root, specsDir, card);
       if (line) lines.push(line);
     } catch (e) {
       // skip this card

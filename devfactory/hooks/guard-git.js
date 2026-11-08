@@ -1,136 +1,38 @@
 #!/usr/bin/env node
-// PreToolUse (Bash): refuses a git push, and a merge or rebase that touches the integration
-// branch or a parent branch, while neither the release nor the coordinate skill is running.
-// A build session may fast-forward a parent branch (git merge --ff-only) and rebase its own
-// card branch, as the coordinator asks; it never pushes. Silent (allow) otherwise, on a
-// missing profile, on "Git guard: off", and on any error. Never throws; always exits 0.
+// PreToolUse (Bash): keeps the integration branch and parent branches from being changed
+// outside the skills that own them, and refuses every push outside release and coordinate.
+//
+// Refused: `git push`; and `git merge`, `git rebase`, `git reset --hard` and
+// `git commit --amend` when the branch they change (HEAD in the effective directory, `cwd`
+// after any `cd <dir>` and `git -C <dir>`, or the branch a rebase names) is protected.
+// Merging or rebasing a protected branch into an unprotected one is never refused.
+// Allowed: everything while a `release` or `coordinate` marker is fresh; under `build`, a
+// `git merge --ff-only` onto a parent branch; under `grill`, a commit, merge or
+// fast-forward onto the integration branch. Markers older than the profile's marker
+// lifetime are ignored. Silent (allow) on a missing profile, on "Git guard: off", and on
+// any error. Never throws; always exits 0.
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-
-function readProfile(cwd) {
-  const text = fs.readFileSync(path.join(cwd, '.devfactory', 'profile.md'), 'utf8');
-  const sections = {};
-  let current = null;
-  for (const line of text.split(/\r?\n/)) {
-    const heading = /^##\s+(.+?)\s*$/.exec(line);
-    if (heading) {
-      current = { fields: {}, lines: [] };
-      sections[heading[1].trim().toLowerCase()] = current;
-      continue;
-    }
-    if (!current) continue;
-    current.lines.push(line);
-    const field = /^\s*-\s+([^:]+?):\s*(.*)$/.exec(line);
-    if (field) current.fields[field[1].trim().toLowerCase()] = field[2].trim();
-  }
-  return sections;
-}
-
-function isOff(profile, name) {
-  const hooks = profile.hooks;
-  const value = hooks && hooks.fields[name.toLowerCase()];
-  return typeof value === 'string' && /^`?off\b/i.test(value);
-}
-
-function activeMarkers(cwd) {
-  try {
-    return fs.readdirSync(path.join(cwd, '.devfactory', '.active'))
-      .filter((name) => !name.startsWith('.'));
-  } catch (e) {
-    return [];
-  }
-}
-
-// The branch name in a profile value: the first backticked token, else the first word.
-function branchToken(value) {
-  if (!value) return '';
-  const ticked = /`([^`]+)`/.exec(value);
-  return (ticked ? ticked[1] : value.split(/\s+/)[0] || '').trim();
-}
-
-// A parent-branch pattern such as parent-<N>: <N> is digits, any other <placeholder> is a
-// run of branch-name characters, everything else is literal.
-function patternRegex(pattern) {
-  if (!pattern) return null;
-  let source = '';
-  const parts = pattern.split(/(<[^>]+>)/);
-  for (const part of parts) {
-    if (!part) continue;
-    if (/^<n>$/i.test(part)) source += '\\d+';
-    else if (/^<[^>]+>$/.test(part)) source += '[A-Za-z0-9._/-]+';
-    else source += part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-  return new RegExp('^' + source + '$');
-}
-
-function normaliseBranch(name) {
-  return String(name)
-    .replace(/^refs\/heads\//, '')
-    .replace(/^refs\/remotes\//, '')
-    .replace(/^origin\//, '');
-}
-
-// Splits a command line into segments at unquoted ; & | and newlines, and each segment into
-// words, honouring single and double quotes and backslash escapes.
-function segments(command) {
-  const result = [];
-  let words = [];
-  let word = '';
-  let inWord = false;
-  let quote = null;
-  const endWord = () => {
-    if (inWord) words.push(word);
-    word = '';
-    inWord = false;
-  };
-  const endSegment = () => {
-    endWord();
-    if (words.length) result.push(words);
-    words = [];
-  };
-  for (let i = 0; i < command.length; i++) {
-    const c = command[i];
-    if (quote) {
-      if (c === quote) quote = null;
-      else if (c === '\\' && quote === '"' && i + 1 < command.length) word += command[++i];
-      else word += c;
-      continue;
-    }
-    if (c === "'" || c === '"') {
-      quote = c;
-      inWord = true;
-    } else if (c === '\\' && i + 1 < command.length) {
-      word += command[++i];
-      inWord = true;
-    } else if (c === ';' || c === '&' || c === '|' || c === '\n' || c === '\r') {
-      endSegment();
-    } else if (c === ' ' || c === '\t') {
-      endWord();
-    } else {
-      word += c;
-      inWord = true;
-    }
-  }
-  endSegment();
-  return result;
-}
+const lib = require('./lib');
 
 const GLOBAL_WITH_VALUE = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace',
   '--exec-path', '--config-env']);
 const VALUE_OPTIONS = {
   merge: new Set(['-m', '-s', '-X', '-F', '--strategy', '--strategy-option', '--file',
     '--message', '--into-name', '--cleanup']),
-  rebase: new Set(['-s', '-X', '-x', '--exec', '--strategy', '--strategy-option']),
+  rebase: new Set(['-s', '-X', '-x', '--exec', '--strategy', '--strategy-option', '--onto']),
+  reset: new Set([]),
+  commit: new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--reuse-message',
+    '--reedit-message', '--template', '--author', '--date', '--fixup', '--squash',
+    '--cleanup', '--trailer']),
 };
 
-// Parses one segment into { sub, args, flags, dir } when it runs git, else null.
+// Parses one segment's command words into { sub, args, flags, dir } when it runs git.
 function parseGit(words, dir) {
-  const at = words.findIndex((w) => /(^|[\\/])git(\.exe)?$/i.test(w));
-  if (at < 0) return null;
-  let i = at + 1;
+  if (!lib.isProgram(words[0], 'git')) return null;
+  let i = 1;
   let gitDir = dir;
   while (i < words.length && words[i].startsWith('-')) {
     const opt = words[i];
@@ -150,11 +52,8 @@ function parseGit(words, dir) {
   const flags = [];
   for (let j = i + 1; j < words.length; j++) {
     const w = words[j];
-    if (w === '--onto' && j + 1 < words.length) {
-      args.push(words[++j]);
-    } else if (w.startsWith('--onto=')) {
-      args.push(w.slice('--onto='.length));
-    } else if (w.startsWith('-')) {
+    if (w === '--') continue;
+    if (w.startsWith('-')) {
       flags.push(w.split('=')[0]);
       if (takesValue.has(w)) j++;
     } else {
@@ -164,99 +63,151 @@ function parseGit(words, dir) {
   return { sub, args, flags, dir: gitDir };
 }
 
+// What a git invocation would do to a branch: { kind, dir, branch|null } or null when it
+// changes no branch the guard cares about. A null branch means HEAD in dir.
+function classify(git) {
+  const has = (f) => git.flags.includes(f);
+  switch (git.sub) {
+    case 'push':
+      return { kind: 'push', dir: git.dir, branch: null };
+    case 'merge':
+      if (has('--abort') || has('--quit')) return null;
+      return { kind: has('--ff-only') ? 'fast-forward' : 'merge', dir: git.dir, branch: null };
+    case 'rebase': {
+      if (['--abort', '--quit', '--edit-todo', '--show-current-patch'].some(has)) return null;
+      // `git rebase <upstream> <branch>` (or `--root <branch>`) rebases the branch it names.
+      const named = has('--root') ? git.args[0] : git.args[1];
+      return { kind: 'rebase', dir: git.dir, branch: named || null };
+    }
+    case 'reset':
+      return has('--hard') ? { kind: 'reset --hard', dir: git.dir, branch: null } : null;
+    case 'commit':
+      return has('--amend') ? { kind: 'commit --amend', dir: git.dir, branch: null } : null;
+    default:
+      return null;
+  }
+}
+
 function currentBranch(dir) {
   try {
-    return execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+    const b = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
       cwd: dir,
       encoding: 'utf8',
       timeout: 5000,
       stdio: ['ignore', 'pipe', 'ignore'],
       windowsHide: true,
     }).trim();
+    return b === 'HEAD' ? '' : b;
   } catch (e) {
     return '';
   }
 }
 
-function deny(reason) {
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: reason,
-    },
-  }));
+// A parent-branch pattern such as parent-<N>: <N> is digits, any other <placeholder> is a
+// run of branch-name characters, everything else is literal.
+function patternRegex(pattern) {
+  if (!pattern) return null;
+  let source = '';
+  for (const part of pattern.split(/(<[^>]+>)/)) {
+    if (!part) continue;
+    if (/^<n>$/i.test(part)) source += '\\d+';
+    else if (/^<[^>]+>$/.test(part)) source += '[A-Za-z0-9._/-]+';
+    else source += part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp('^' + source + '$');
+}
+
+function normaliseBranch(name) {
+  return String(name)
+    .replace(/^refs\/heads\//, '')
+    .replace(/^refs\/remotes\//, '')
+    .replace(/^origin\//, '');
+}
+
+// The guard's view of one project root: whether it is on, and its protected branches.
+function guardFor(root, cache) {
+  if (cache.has(root)) return cache.get(root);
+  let guard = null;
+  if (lib.hasProfile(root) && !lib.hookOff(root, 'Git guard')) {
+    const integration = lib.firstToken(lib.profileField(root, 'Branches and merging', 'Integration branch'));
+    const parentRe = patternRegex(lib.firstToken(lib.profileField(root, 'Branches and merging', 'Parent branch')));
+    guard = {
+      integration,
+      isIntegration: (b) => !!integration && !!b && normaliseBranch(b) === integration,
+      isParent: (b) => !!parentRe && !!b && parentRe.test(normaliseBranch(b)),
+    };
+  }
+  cache.set(root, guard);
+  return guard;
+}
+
+function freshMarkers(roots, cache) {
+  const names = new Set();
+  for (const root of roots) {
+    if (!cache.has(root)) cache.set(root, lib.markers(root).filter((m) => !m.stale).map((m) => m.name));
+    for (const n of cache.get(root)) names.add(n);
+  }
+  return names;
+}
+
+function decide(op, guard, active) {
+  if (active.has('release') || active.has('coordinate')) return null;
+  if (op.kind === 'push') {
+    return active.has('build')
+      ? 'DevFactory: a build session never pushes; a push is the release, which goes through ' +
+        'the release skill.'
+      : 'DevFactory: a push goes through the release skill, or coordinate for a parent issue; ' +
+        'neither is running.';
+  }
+  const branch = op.branch ? normaliseBranch(op.branch) : currentBranch(op.dir);
+  const integration = guard.isIntegration(branch);
+  const parent = !integration && guard.isParent(branch);
+  if (!integration && !parent) return null;
+  if (active.has('build') && parent && op.kind === 'fast-forward') return null;
+  if (active.has('grill') && integration &&
+    ['merge', 'fast-forward', 'commit --amend'].includes(op.kind)) return null;
+  const which = integration ? 'the integration branch' : 'a parent branch';
+  return `DevFactory: this git ${op.kind} changes ${branch}, ${which}, which only release or ` +
+    'coordinate may change; a build session may only fast-forward a parent branch ' +
+    '(git merge --ff-only), and grill may only commit or merge its spec onto the ' +
+    'integration branch.';
 }
 
 function main() {
-  const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const input = lib.readInput();
   if (input.tool_name !== 'Bash') return;
   const command = input.tool_input && input.tool_input.command;
   if (typeof command !== 'string' || !/\bgit\b/.test(command)) return;
-  const cwd = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  let profile;
-  try {
-    profile = readProfile(cwd);
-  } catch (e) {
-    return; // no profile: silence
-  }
-  if (isOff(profile, 'Git guard')) return;
+  const cwd = lib.inputCwd(input);
 
-  const markers = activeMarkers(cwd);
-  if (markers.includes('release') || markers.includes('coordinate')) return;
-  const building = markers.includes('build');
-
-  const branches = (profile['branches and merging'] || { fields: {} }).fields;
-  const integration = branchToken(branches['integration branch']);
-  const parentRe = patternRegex(branchToken(branches['parent branch']));
-  const isIntegration = (b) => !!integration && normaliseBranch(b) === integration;
-  const isParent = (b) => !!parentRe && parentRe.test(normaliseBranch(b));
-  const isProtected = (b) => isIntegration(b) || isParent(b);
-
+  const ops = [];
   let dir = cwd;
-  for (const words of segments(command)) {
-    if (words[0] === 'cd' && words[1]) {
+  for (const segment of lib.segments(command)) {
+    const words = lib.commandWords(segment);
+    if ((words[0] === 'cd' || words[0] === 'pushd') && words[1]) {
       dir = path.resolve(dir, words[1]);
       continue;
     }
     const git = parseGit(words, dir);
-    if (!git) continue;
+    const op = git && classify(git);
+    if (op) ops.push(op);
+  }
+  if (ops.length === 0) return;
 
-    if (git.sub === 'push') {
-      deny(building
-        ? 'DevFactory: a build session never pushes; a push is the release, which goes ' +
-          'through the release skill.'
-        : 'DevFactory: a push goes through the release skill, or coordinate for a parent ' +
-          'issue; neither is running.');
+  const sessionRoot = lib.projectRoot(cwd);
+  const guards = new Map();
+  const markerCache = new Map();
+  for (const op of ops) {
+    const root = lib.projectRoot(op.dir);
+    const guard = guardFor(root, guards);
+    if (!guard) continue;
+    // A marker counts in the target's root or the session's own (a build session's marker
+    // lives in its worktree while it fast-forwards the parent's).
+    const reason = decide(op, guard, freshMarkers([root, sessionRoot], markerCache));
+    if (reason) {
+      lib.deny(reason);
       return;
     }
-
-    if (git.sub !== 'merge' && git.sub !== 'rebase') continue;
-    if (git.flags.some((f) => f === '--abort' || f === '--quit')) continue;
-
-    const hitArgs = git.args.filter(isProtected);
-    const head = currentBranch(git.dir);
-    const headProtected = !!head && head !== 'HEAD' && isProtected(head);
-    if (hitArgs.length === 0 && !headProtected) continue;
-
-    if (building) {
-      const touchesIntegration = isIntegration(head) || git.args.some(isIntegration);
-      if (git.sub === 'merge' && git.flags.includes('--ff-only') && !touchesIntegration) {
-        continue; // the fast-forward of a parent branch the coordinator asks for
-      }
-      if (git.sub === 'rebase' && !headProtected) {
-        continue; // rebasing the card's own branch onto the parent or integration branch
-      }
-    }
-
-    const named = Array.from(new Set(hitArgs.concat(headProtected ? [head] : [])));
-    deny(building
-      ? `DevFactory: a build session may only fast-forward a parent branch with git merge ` +
-        `--ff-only and rebase its own branch; this ${git.sub} touches ${named.join(', ')}, ` +
-        `which goes through the release skill or coordinate.`
-      : `DevFactory: a ${git.sub} touching ${named.join(', ')} goes through the release ` +
-        `skill, or coordinate for a parent issue; neither is running.`);
-    return;
   }
 }
 

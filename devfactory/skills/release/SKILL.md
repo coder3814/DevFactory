@@ -6,7 +6,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -29,13 +29,18 @@ parent branch, or a standalone card's own branch, which `build` left unmerged. U
 coordinator, every command, write and board move below is done by a session or a subagent
 it starts, as `coordinate` says. Only the requester starts this skill.
 
-`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
-in the plugin's `scripts/` folder.
+`devfactory` below means running the plugin's script with `node`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.js` relative to this skill's folder.
 
-**Markers.** Run `devfactory begin release` as your first action and keep the marker for the
-whole release, through every wait and question: the git guard allows the push, and the merge
-onto the integration branch, only while it is there. Run `devfactory end release` as your
-last action, after step 7, or when you stop and report with the release abandoned.
+**Markers.** Run `devfactory begin release` as your first action and keep the marker for
+the whole release, through every wait and question: the git guard allows the push, and the
+merge onto the integration branch, only while it is there. Run `devfactory end release` as
+your last action, after step 7, or when you stop and report with the release abandoned. A
+marker expires after the profile's Marker lifetime (12 hours by default), and `begin`
+refreshes it, so run `devfactory begin release` again whenever you resume after a wait.
+Markers and the profile are found at the repository (worktree) root, wherever the shell's
+working directory is.
 
 The requester is asked one question at a time, the recommended option first with a
 one-line reason.

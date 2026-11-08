@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -30,15 +30,20 @@ the move to Development. A standalone card reports to the requester directly and
 its own card; after its review passes it hands to `accept`, and `release` merges it once.
 "Report" below means to whichever applies.
 
-`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
-in the plugin's `scripts/` folder.
+`devfactory` below means running the plugin's script with `node`: the script is
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`; if that variable is empty in your shell, it
+is `../../scripts/devfactory.js` relative to this skill's folder.
 
-**Markers.** Run `devfactory begin build` as your first action, and keep the marker for the
-whole build: through every question, wait, review round and the merge, since the git guard
-allows the parent branch's fast-forward only under it. Run `devfactory end build` as your
-last action: in a parent issue run after the merge is reported, and for a standalone card
-once you hand to `accept`, or when you stop with nothing left to do. When you are messaged
-again to fix a finding or a refusal, run `devfactory begin build` before the first change.
+**Markers.** Run `devfactory begin build` as your first action, and keep the marker for
+the whole build: through every question, wait, review round and the merge, since the git
+guard allows the parent branch's fast-forward only under it. Run `devfactory end build` as
+your last action: in a parent issue run after the merge is reported, and for a standalone
+card once you hand to `accept`, or when you stop with nothing left to do. A marker expires
+after the profile's Marker lifetime (12 hours by default), and `begin` refreshes it, so
+run `devfactory begin build` again whenever you resume after a wait, and when you are
+messaged again to fix a finding or a refusal, before the first change. Markers and the
+profile are found at the repository (worktree) root, wherever the shell's working
+directory is.
 
 ## Read these first, in full
 

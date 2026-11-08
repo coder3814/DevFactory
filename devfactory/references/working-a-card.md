@@ -10,9 +10,12 @@ Read the project profile, `.devfactory/profile.md` at the project's root, as
 `profile-template.md` beside this file describes, with every team module its
 board section names, from `.devfactory/modules/`. Read the binding the profile's
 board section names, such as `bindings/azure-devops.md` beside this file, and
-reach the tracker exactly as that section's access entry says. The plugin's script reads
-the profile the same way the hooks do: `profile` prints it, and `profile --field <name>`
-prints one entry, run as `node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`.
+reach the tracker exactly as that section's access entry says. The plugin's script,
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`, reads the profile, and the hooks read
+it through the script's `profile` command, so both read it the same way: `profile` prints
+it, `profile --section <heading>` prints one section, and `profile --field <name>` prints
+one entry. The script finds the profile at the repository (worktree) root, wherever the
+shell's working directory is.
 
 If the project has no profile, touch no tracker: tell the user, and offer to run
 `configure-project` first.

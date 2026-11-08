@@ -5,7 +5,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-  - Bash(node *devfactory.js *)
+  - Bash(node *devfactory.js*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
   - Bash(az boards work-item show *)
@@ -17,13 +17,17 @@ allowed-tools:
 
 # Check readiness
 
-Paths below are relative to this skill's directory. `devfactory` below means
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
-folder.
+Paths below are relative to this skill's directory. `devfactory` below means running the
+plugin's script with `node`: the script is `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`;
+if that variable is empty in your shell, it is `../../scripts/devfactory.js` relative to
+this skill's folder.
 
 **Markers.** Run `devfactory begin check-ready` as your first action and
 `devfactory end check-ready` as your last, including when you stop to ask the requester or
-to report.
+to report, and `devfactory begin check-ready` again when you resume. A marker expires
+after the profile's Marker lifetime (12 hours by default), and `begin` refreshes it.
+Markers and the profile are found at the repository (worktree) root, wherever the shell's
+working directory is.
 
 Read these first, in full:
 

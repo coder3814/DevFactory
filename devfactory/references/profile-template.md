@@ -108,6 +108,7 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - Git guard: <on / off>
 - Stamp notice: <on / off>
 - Session context: <on / off>
+- Marker lifetime: <hours>h
 
 ## Permissions
 - <an allowlist entry, for example `Bash(gh issue view *)`>
