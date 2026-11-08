@@ -37,7 +37,8 @@ restructure it. Otherwise create one from scratch.
    profile's team modules recommend. Leave out what you do not know rather than
    inventing it.
 4. Measure the draft as "Measure" describes: one fresh review, grilling the
-   user for each question it raises, then at most one follow-up. During
+   user for each question it raises, then at most one follow-up. Start each
+   reviewer on the profile's default model and effort. During
    creation nothing is recorded as comments; answers go straight into the
    draft.
 5. Show the user the whole card, with each team field's value and reason, the
@@ -66,7 +67,7 @@ restructure it. Otherwise create one from scratch.
    card is in. Apply the profile's team modules to the reshaped card.
 3. Measure the reshaped card as "Measure" describes: one fresh review,
    grilling the user for each question it raises, then at most one follow-up.
-   Each question you ask and the user's answer are new additions to an
+   Start each reviewer on the profile's default model and effort. Each question you ask and the user's answer are new additions to an
    existing card: record the question and the answer, in the user's own words,
    as a comment on the card, then fold the answer in.
 4. Show the user the rewritten card, with each team field's value and reason,

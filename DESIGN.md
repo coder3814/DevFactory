@@ -1,9 +1,9 @@
 # DevFactory design
 
-> Status: **draft for the owner's acceptance**. Nothing below is built. Once accepted, this
-> document is the brief the plugin is built from, and it stays the design of record: when the
-> built plugin and this document disagree, one of them is wrong and the disagreement is a
-> finding.
+> Status: **accepted 2026-11-07; amended during the build as the Amendments section
+> records**. This document is the brief the plugin is built from, and it stays the design of
+> record: when the built plugin and this document disagree, one of them is wrong and the
+> disagreement is a finding.
 
 DevFactory is one plugin that carries a change from a request to an accepted result with an
 agent doing the work unattended. It owns the request (a card on a board), grills the request
@@ -438,3 +438,44 @@ Each step lands as its own commit in this repository and is reviewed against thi
 7. Hooks, when the owner chooses them (deferred, see 12.5).
 8. First adopter: BottleNote's profile, removal of the replaced skills and rules, and one
    parent issue run end to end as the acceptance test of the plugin.
+
+## Amendments
+
+Changes made to the design during the build, by the section they amend. Where a section's
+text above and an entry here disagree, the entry holds.
+
+- **3.2** The spec line is exactly `Spec: <path> @ <commit>`, the last line of the
+  description body, where the commit is the spec folder's own commit; `grill` rewrites it
+  after every commit of the spec folder, and the stamp excludes any line of that form.
+- **3.6** Gaps are recorded from Ready onward, not only after development starts: a
+  question answered before the spec first earns Ready is folded, not a gap. The ledger
+  entry carries the card id and the spec's request types.
+
+- **3.4 The project profile.** The profile gains a Data access section: each population of
+  existing data a card's rules might act on, and how it is read without writing.
+  `configure-project` asks for it, and `grill` and the readiness checker run data rules
+  through it. It also gains three entries: the sub-issue branch name pattern and the
+  release procedure (the project's steps or the skill it names), under Branches and
+  merging, and the design-review procedure (how a wireframe is shown and approved), as a
+  Design review line under Wireframe fidelity.
+- **3.6 The gap record.** Gap records survive release. At release, before a spec folder is
+  deleted, its `gaps.md` entries are appended to the project ledger `.devfactory/gaps.md`,
+  each prefixed with the card ID. The readiness checker and `curate` read the ledger and
+  every live `gaps.md`.
+- **4 The lifecycle.** Approval's exit is the spec status `approved`, and a build starts
+  only on an approved spec: `build` and `coordinate` check the spec status, not the column;
+  the card waits in the Approval column until work starts. At Done, merged work sits in the
+  Done column, and a standalone card's passing change review is its Done verdict; the card
+  is not merged then, and `release` merges it once after acceptance. Results merge in
+  finish order, a card that waits on another after the card it waits on. A card moves to
+  the Acceptance column when acceptance begins and to the Release column when released.
+- **9 Plugin layout.** The agents folder holds `README.md`, `readiness-checker.md`,
+  `change-reviewer.md` and `done-judge.md`. The card reviewer is not an agent definition:
+  it stays a brief at `references/card-reviewer.md` that the card skills hand to a
+  read-only agent, and the README says why.
+- **12.1 Fold acceptance.** Restated: acceptance of the rewritten wording stays for
+  interactive additions made outside grilling and outside a run; the requester's answer is
+  the acceptance everywhere else. `add-to-card` has two modes, named by its caller:
+  interactive (the default) and settled (the requester has already answered).
+- **12.5 Hooks.** Deferred: the first version ships no hooks and no hooks folder. The owner
+  has not yet decided; this remains open.

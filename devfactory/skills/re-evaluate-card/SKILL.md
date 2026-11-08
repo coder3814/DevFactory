@@ -28,7 +28,8 @@ details: the edit is itself the change.
    has changed since its spec was stamped Ready.
 2. **Measure** it against the standard, including whether the description and
    criteria carry what in the comments changes the outcome and contradict none
-   of them. This first review is fresh. If it finds no breach, no question and
+   of them. This first review is fresh, and like the follow-up in step 5 its
+   reviewer starts on the profile's default model and effort. If it finds no breach, no question and
    no decision for the user, tell the user the card meets the standard, with
    any suggestions it made, change nothing on the card, and go to step 8.
    Otherwise carry on with the steps below.

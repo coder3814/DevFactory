@@ -111,10 +111,15 @@ the comments record.
 
 ## The spec line
 
-Once a card has a spec, the card carries one line pointing at it: the spec's
-path and the commit at which it earned Ready. The line belongs to the spec, not
-to any part of the card; the `grill` skill writes and keeps it, and this standard
-does not measure it.
+Once a card has a spec, the card carries exactly one line pointing at it, as the
+last line of the description body, in the form `Spec: <path> @ <commit>`, where
+the path is the spec folder's and the commit is the spec folder's own commit.
+The line belongs to the spec, not to any part of the card. The `grill` skill
+writes it directly, straight after committing the spec; that write is not an
+addition, so no comment is recorded for it, and no other skill writes the line.
+The card revision in the spec's stamp leaves out any line in this form, so
+writing or updating it never makes the stamp stale. This standard does not
+measure it.
 
 ## Why the standard is shaped this way
 

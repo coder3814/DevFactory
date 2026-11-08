@@ -48,7 +48,9 @@ this order:
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
 5. When told it is your turn: rebase onto the parent branch, rerun the tests, fast-forward
-   the parent branch from the parent worktree, report, and end your turn.
+   the parent branch from the parent worktree, report, and end your turn. Stay available:
+   you, your worktree and your branch are kept until the run is accepted and released, and
+   the coordinator may message you with a Done-judge finding or an acceptance refusal.
 
 ## Notes a coordinator should know
 

@@ -1,6 +1,6 @@
 ---
 name: curate
-description: Read the project's gap records across its specs, including those deleted in the last release, group the misses by the Ready or Done condition that let them through, and propose checker emphasis, standing answers, missing profile entries and decision-line misses, writing to the profile only what the requester accepts. Use after a release, or when the requester asks what the gap records show.
+description: Read the project's gap records, the ledger of released specs' gaps and every live spec's record, group the misses by the Ready or Done condition that let them through, and propose checker emphasis, standing answers, missing profile entries and decision-line misses, writing to the profile only what the requester accepts. Use after a release, or when the requester asks what the gap records show.
 ---
 
 # Curate the gap records
@@ -21,20 +21,21 @@ one-line reason.
   [`../../references/definition-of-done.md`](../../references/definition-of-done.md): the
   conditions entries name.
 - [`../../references/decision-line.md`](../../references/decision-line.md).
-- [`../../references/profile-template.md`](../../references/profile-template.md): Standing
-  answers and the rule that a question answered twice becomes one.
+- [`../../references/profile-template.md`](../../references/profile-template.md): the gap
+  ledger, Standing answers and the rule that a question answered twice becomes one.
 
 ## Steps
 
 1. **Load the profile** and the project's Standing answers.
 
-2. **Collect every gap entry**: each `gaps.md` under the profile's specs path on the
-   integration branch, and each one the last release deleted, read from history at the
-   commit before its deletion. Keep each entry's spec, its request types from the spec
-   header, its stage and its date.
+2. **Collect every gap entry**: the project ledger `.devfactory/gaps.md`, which holds every
+   released spec's entries prefixed with its card's id, and each live `gaps.md` under the
+   profile's specs path on the integration branch. Keep each entry's card, its stage and
+   its date, and for a live entry its spec's request types from the spec header.
 
 3. **Group them** by the condition named in "Let through by", and within each condition by
-   request type and stage. Note any entry still open.
+   stage, and by request type where the entry's spec still gives it. Note any entry still
+   open.
 
 4. **Draw the proposals**, each resting on the entries that support it:
    - **Checker emphasis**: a condition that let through more than one entry, and the request
@@ -54,4 +55,4 @@ one-line reason.
    ask whether to write it. On acceptance, write a standing answer to the profile's
    Standing answers with where it came from, and a profile entry to the section it belongs
    in. Checker emphasis and decision-line misses are reported, not written: the readiness
-   checker reads the gap records itself.
+   checker reads the ledger and every live gap record itself.

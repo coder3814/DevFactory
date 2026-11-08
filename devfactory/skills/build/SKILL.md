@@ -1,6 +1,6 @@
 ---
 name: build
-description: Build one card in one session from its Ready spec — check the stamp, make the delegated calls up front, build to the criteria with the tests and evidence the spec requires, stop on a question the spec does not answer, and have a separate reviewer pass the result before reporting. Use when a session is briefed to build a card, as a sub-issue in a parent issue run or as a standalone card.
+description: Build one card in one session from its approved spec — check the stamp, make the delegated calls up front, build to the criteria with the tests and evidence the spec requires, stop on a question the spec does not answer, and have a separate reviewer pass the result before reporting. Use when a session is briefed to build a card, as a sub-issue in a parent issue run or as a standalone card.
 ---
 
 # Build a card
@@ -12,8 +12,9 @@ accepts it.
 
 In a parent issue run the session reports to the coordinator, which its brief names; every
 question and report goes there, and the coordinator owns merging and every column move but
-the move to Development. A standalone card reports to the requester directly and finishes
-the card itself. "Report" below means to whichever applies.
+the move to Development. A standalone card reports to the requester directly and moves
+its own card; after its review passes it hands to `accept`, and `release` merges it once.
+"Report" below means to whichever applies.
 
 ## Read these first, in full
 
@@ -39,11 +40,12 @@ the card itself. "Report" below means to whichever applies.
    spec's Project bindings used names, and the recorded decisions where the profile says
    they are.
 
-3. **Check the stamp.** Recompute the card's revision as "The stamp" in
-   [`../grill/SKILL.md`](../grill/SKILL.md) says and compare it with the spec's stamp
-   (Ready condition 9.2). When they differ, or the spec's status is not Ready or approved,
-   start nothing: report the card's current revision, the stamp's, and what differs, and
-   wait. A stale spec is re-derived through `grill`, never worked around.
+3. **Check the status and the stamp.** A build starts only on a spec whose status is
+   `approved`, whatever column the card is in. Recompute the card's revision as "The stamp"
+   in `spec-template.md` says and compare it with the spec's stamp (Ready condition 9.2).
+   When the status is not `approved` or the stamp does not match, start nothing: report the
+   status, the card's current revision, the stamp's, and what differs, and wait. A stale
+   spec is re-derived through `grill`, never worked around.
 
 4. **Move the card to Development**, the column the profile's Stages map that stage to,
    through the binding, before the first change.
@@ -55,7 +57,8 @@ the card itself. "Report" below means to whichever applies.
    is made and logged the same way when it arises. The log is committed with the work.
 
 6. **Build to the criteria.** Work in this session's worktree, on the branch the profile's
-   Branches and merging names, and commit as each piece is done.
+   Branches and merging names (its Sub-issue branch entry in a parent issue run), and
+   commit as each piece is done.
    - Build what the criteria and the spec ask for and nothing beyond them (Done 5.1).
    - Write the tests the request types require (Done 1.2). Each test cites the criterion ID
      it exercises and asserts an observable outcome (Done 2.2).
@@ -81,18 +84,23 @@ the card itself. "Report" below means to whichever applies.
    3. When the answer arrives, run `grill` in amend mode with the question, the answer word
       for word and the Ready condition that failed. It writes the spec amendment and the
       gap entry on this card's branch, and, when the answer changes observable behaviour
-      or scope, the card through `add-to-card`, with the answer as the acceptance. Report
+      or scope, the card through `add-to-card` in settled mode, the answer being the
+      requester's acceptance. Report
       whether the amendment changes what another card depends on, then continue from the
       amended spec.
 
 8. **Review.** When the card is built, start a separate reviewer agent following
    [`../../agents/change-reviewer.md`](../../agents/change-reviewer.md), on read-only tools
-   where you can limit them. Give it the path to the plugin's `references/` folder, the
-   card with its criteria, the spec path, the profile path, the base revision (the commit
-   this branch was cut from), the revision under review, and a clean checkout at that
-   revision; never how the work was built or what you think of it. Fix each finding,
-   commit, and start a fresh review of the new revision, until it returns PASS. A finding
-   that needs a decision the spec does not record is a question, handled as step 7 says.
+   where you can limit them, with the model and effort the card's Suggested model and
+   effort names, or the profile's default under Sessions when it names none. Give it the
+   path to the plugin's `references/` folder, the card with its criteria, the spec path, the
+   profile path, the base revision (the merge-base of this branch with the parent branch,
+   or with the integration branch for a standalone card, computed at review time), the
+   revision under review, and a clean checkout at that revision; never how the work was
+   built or what you think of it. Fix each finding, commit, and start a fresh review of the
+   new revision. After a FAIL there are at most two further rounds: when the third review
+   still fails, stop and report it with its findings, and wait. A finding that needs a
+   decision the spec does not record is a question, handled as step 7 says.
 
 9. **Report**: what was built, by criterion ID; the review verdict and how many rounds it
    took; the delegated calls made, from the log; the gaps raised, with their amendments;
@@ -101,10 +109,12 @@ the card itself. "Report" below means to whichever applies.
 10. **Finish.**
     - **In a parent issue run**, wait. Merge only when the coordinator says it is this
       card's turn, exactly as the brief says. Move the card to no other column, never merge
-      into the integration branch, and never push.
+      into the integration branch, and never push. After the merge, report and wait again:
+      this session, its worktree and its branch stay until `release` reaps them after
+      acceptance.
     - **A standalone card**: the review's PASS is its Done verdict, since the change
       reviewer applies every Definition of Done condition but 6, which only a parent issue
-      has. Move the card to Done, merge as the profile's Branches and merging says, and
-      follow `accept`.
+      has. Move the card to Done and stop building without merging: follow `accept`, which
+      hands to `release`, and `release` merges the work once.
 
 Stop every agent you started before you finish, and tell each to stop its own.

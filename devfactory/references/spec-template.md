@@ -126,18 +126,22 @@ exclusion or a delegation.*
 The stamp is three header rows of `spec.md`:
 
 - **Card revision**: the SHA-256 of the card's text, as lowercase hexadecimal. The text is
-  the title, a line feed, then the description body as the tracker returns it, with the spec
-  line removed, every line ending normalised to a single line feed (a carriage return and
-  line feed pair, or a lone carriage return, becomes a line feed) and trailing line feeds
-  removed. Where the profile writes a part to a field other than the description, that
+  the title, a line feed, then the description body as the tracker returns it, with every
+  line matching the spec line's form, `Spec: <path> @ <commit>` (see "The spec line" in
+  [`card-standard.md`](card-standard.md)), removed, every line ending normalised to a
+  single line feed (a carriage return and line feed pair, or a lone carriage return,
+  becomes a line feed) and trailing line feeds removed. Where the profile writes a part to a field other than the description, that
   field's content follows, each preceded by a line feed, in the card standard's part order.
   Comments, attachments, the column and team fields are not part of the text, so recording a
   comment or moving the card leaves the stamp matching.
-- **Repo commit**: the commit of the branch the spec lives on that the spec was checked
-  against.
+- **Repo commit**: kept by an amendment, which runs no check; the head of the branch the
+  spec lives on, as the readiness checker read
+  it.
 - **Stamped**: the date.
 
-Stamp only after the last write to the card, since every fold changes the text.
+Stamp only after the last write to the card, since every fold changes the text. The spec
+line is the exception: `grill` writes it after stamping and committing the spec, and the
+card revision leaves it out.
 Every skill and agent that compares a card with its stamp computes the card revision this
 way, so a mismatch means the card's text changed, never that two readers hashed differently.
 
@@ -152,9 +156,10 @@ screens may share one file or take one each, named under Interface surface.
 
 ### `gaps.md`
 
-The gap record: one entry per question asked after Ready, per refused acceptance, and per
-Done-check miss. The readiness checker reads every spec's gap record before grilling, and
-`curate` reads them across specs. Entries are appended, newest last:
+The gap record. Gaps start at Ready: a question answered before the spec first earns Ready
+is folded into the card or the spec, not recorded as a gap. From Ready onward, every
+question asked, every refused acceptance and every Done-check miss is an entry. Entries are
+appended, newest last:
 
 ```markdown
 ## <date> — <stage>
@@ -164,8 +169,14 @@ Done-check miss. The readiness checker reads every spec's gap record before gril
 - **Resolved by:** <amendment version, or "open">
 ```
 
-The stage is one of the lifecycle stages: Development, Done or Acceptance. Done condition 4.2
-requires every entry to name its resolving amendment.
+The stage is the card's lifecycle stage when the entry is made: Approval, Development, Done
+or Acceptance. Done condition 4.2 requires every entry to name its resolving amendment.
+
+Gap records survive release. At release, before the spec folder is deleted, its `gaps.md`
+entries are appended to the project's ledger, `.devfactory/gaps.md`, each heading prefixed
+with the card ID and the spec's request types (`## <card> (<types>) — <date> — <stage>`),
+so `curate` can still group by request type after the spec is gone. The readiness checker reads the ledger and
+every live spec's `gaps.md` before grilling, and `curate` reads the same set.
 
 ### `evidence/`
 

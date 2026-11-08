@@ -12,6 +12,7 @@ One folder per project, `.devfactory/` at the repository root:
 
 - `profile.md`: the profile, laid out below.
 - `modules/`: the team modules the profile names.
+- `gaps.md`: the gap ledger, the gap records of released cards, which `release` appends to.
 
 Recorded decisions are not here. They stay where the project keeps them, and the profile says
 where, so the readiness checker can read them.
@@ -85,12 +86,15 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 
 ## Wireframe fidelity
 - <wireframe, or the fidelity the project's design review works at>
+- Design review: <how a wireframe is shown to the requester and approved>
 
 ## Branches and merging
 - Integration branch: <branch>
 - Worktree layout: <where a session's worktree goes and how it is named>
 - Parent branch: <how a parent issue's branch is named>
+- Sub-issue branch: <how a sub-issue's branch is named>
 - Merging: <who merges what into which branch, and when>
+- Release: <the project's release steps, or the skill that holds them>
 
 ## Sessions
 - Runtime: `runtime/<file>.md`
@@ -139,10 +143,16 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - **Owner-step types** names the kinds of step only the requester can take in this project,
   so a spec can schedule one by its type.
 - **Wireframe fidelity** is what an approved wireframe fixes. The default is a wireframe:
-  structure, fields, states and interaction, not aesthetics.
-- **Branches and merging** is how work moves into the integration branch: where worktrees
-  go, how a parent branch is named, and who merges and when. `coordinate`, `build` and
-  `release` follow it.
+  structure, fields, states and interaction, not aesthetics. Its **Design review** line is
+  how a wireframe is shown to the requester and approved, in the project's steps or the
+  skill that holds them; `grill` follows it when the interface determination is
+  non-trivial.
+- **Branches and merging** is how work moves into the integration branch and out to
+  release: where worktrees go, how a parent branch and a sub-issue branch are named, who
+  merges and when, and the release procedure, in the project's steps or the skill that
+  holds them. `coordinate`, `build` and `release` follow it. The change reviewer's base
+  revision is the merge-base of the card's branch with the parent branch, or with the
+  integration branch for a standalone card, at the time of the review.
 - **Sessions** names the file in [`runtime/`](runtime/) the coordinator follows to start,
   message and stop sessions, and the model and effort used when a card suggests none.
 

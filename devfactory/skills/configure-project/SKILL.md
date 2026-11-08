@@ -1,6 +1,6 @@
 ---
 name: configure-project
-description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one, the columns in which additions are folded, and the column each lifecycle stage maps to), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, concern extensions, owner-step types, wireframe fidelity, branches and merging, the sessions runtime and default model and effort, and the standing answers. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
+description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one, the columns in which additions are folded, and the column each lifecycle stage maps to), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the sessions runtime and default model and effort, and the standing answers. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
 ---
 
 # Configure a project
@@ -88,31 +88,44 @@ repository suggests an answer, propose it rather than asking from blank.
    deploy workflow and the targets it deploys to. Ask which environments exist,
    and for each, what a checkpoint there can show, what it cannot, and how it
    is reached, in the project's words, one environment at a time.
-10. **Extend the concerns.** Show the core fixed concerns and ask whether the
+10. **Name the data access.** Propose the populations of existing data a card's
+    rules might act on from what the repository reveals, such as a database
+    schema, migrations, data files or seed data, and ask which exist. For each,
+    one population at a time, ask how it is read without writing and who may
+    read it, in the project's words. Say that a population with no entry leaves
+    Ready condition 5 unchecked for any card whose rules act on it. None is a
+    valid answer for a project whose cards never act on existing data.
+11. **Extend the concerns.** Show the core fixed concerns and ask whether the
     project adds any, proposing any that its recorded decisions or contributor
     rules make recurring. For each, record what its disposition must answer.
     None is a valid answer.
-11. **Name the owner-step types.** Ask what kinds of step only the requester
+12. **Name the owner-step types.** Ask what kinds of step only the requester
     can take in this project, proposing any the contributor rules or recorded
     decisions name, such as approving a mock-up or running something in a
     protected environment. For each, record what it is and who takes it.
-12. **Set the wireframe fidelity.** Say that the default is a wireframe, which
-    fixes structure, fields, states and interaction but not aesthetics, and ask
-    whether the project's design review works at another fidelity.
-13. **Set branches and merging.** Read the project's contributor rules, if any,
+13. **Set the wireframe fidelity and design review.** Say that the default is a
+    wireframe, which fixes structure, fields, states and interaction but not
+    aesthetics, and ask whether the project's design review works at another
+    fidelity. Then ask how a wireframe is shown to the requester and approved,
+    proposing any procedure or skill the contributor rules name, and record it
+    as the Design review line.
+14. **Set branches and merging.** Read the project's contributor rules, if any,
     such as a contributing guide or agent instructions, and propose the
     integration branch, the worktree layout, how a parent issue's branch is
-    named, and who merges what into which branch and when. Where the rules are
-    silent, read the repository's branches and ask.
-14. **Choose the sessions runtime.** List the files in `../../references/runtime/`
+    named, how a sub-issue's branch is named, who merges what into which branch
+    and when, and the release procedure: the project's own steps, or the skill
+    or document it names, for pushing, releasing and closing finished work.
+    Where the rules are silent, read the repository's branches and its deploy
+    workflows and ask.
+15. **Choose the sessions runtime.** List the files in `../../references/runtime/`
     and offer them as the runtime the coordinator follows. Then ask for the
     default model and effort level (Low, Medium or High) used when a card
     suggests none.
-15. **Record standing answers.** Explain what a standing answer is and the rule
+16. **Record standing answers.** Explain what a standing answer is and the rule
     that a question answered twice in gap records becomes one, as the template
     says. Start the section empty unless the owner has answers to record now;
     record each as the question, its answer and where the answer came from.
-16. **Accept and write.** Show the profile and every team module in full and get
+17. **Accept and write.** Show the profile and every team module in full and get
     the owner's acceptance or changes. Once accepted, write them to
     `.devfactory/profile.md` and `.devfactory/modules/`, carry out any migration
     the owner agreed to in step 1, and tell the owner to commit them so the

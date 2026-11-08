@@ -71,7 +71,7 @@ whatever the column — and for a rewrite, also any comments you will post with
 it, the criteria with their IDs as they stand on the card now, and the highest
 criterion ID the card has ever carried. The reviewer only
 reads and changes nothing; where you can limit its tools, give it read access
-only, and where you can choose its model, choose the most capable one. Never
+only. Start it on the default model and effort under Sessions in the profile. Never
 measure a card you drafted yourself; the reviewer is always a separate agent.
 
 A review is one of two kinds, and you tell the reviewer which:
@@ -116,9 +116,11 @@ against the profile's fold columns. Outside them, follow "Where folding happens"
 in `card-process.md`: the addition stays recorded, you tell the user the card is
 in a column where folding does not happen, and they decide whether to fold it
 anyway or raise a new card. Record a decision not to fold as a comment, naming
-any new card. Restructuring folds whatever the column.
+any new card. Restructuring folds whatever the column, and so does a settled
+addition.
 
-Rewrite the affected sections so they say what the card asks for now: new
+Fold the same way in either mode; the mode changes only what follows the fold,
+as "Accept" says. Rewrite the affected sections so they say what the card asks for now: new
 information to the section it belongs in, an answered open question out of open
 questions and into the sections it changes. Where a new case lands in a
 criterion, prefer restating the criterion more generally to adding a clause for
@@ -133,25 +135,30 @@ the requester agrees; if you do not know whether they do, ask the user.
 
 ## Accept
 
-Show the user what you propose to write, in full in the conversation — the
-whole card when creating it, with the files to be attached, and the rewritten
-sections when changing one, with any comments to be posted with them, and each
-team field's value with its reason — and ask them to accept it or ask for
-changes. Where the skill you are running measures
-the card, give the verdict, anything the follow-up review still found, and the
-suggestions you left.
-Outside a development run, write nothing to the card's parts or team fields
-until they accept. Requested changes are folded in; where the skill you are running
-records additions as comments, a requested change that carries new information
-is recorded first. Requested changes do not reopen the review: show the
-changed card to the user again.
+What happens here depends on the update's mode, interactive or settled, which
+whoever asked for the update names, as "Updating a card" in `card-process.md`
+says. Interactive is the default, and creating or restructuring a card is always
+interactive.
 
-Inside a development run, when you fold the requester's answer relayed by the
-coordinator, that answer is the acceptance, as "Updating a card" in
-`card-process.md` says: write the fold without asking, then show the rewritten
-sections to the requester as done, with the verdict and anything the review
-still found where the skill measures the card, and say they may object. An
-objection is a new addition: record it and fold it like any other.
+In interactive mode, show the user what you propose to write, in full in the
+conversation — the whole card when creating it, with the files to be attached,
+and the rewritten sections when changing one, with any comments to be posted
+with them, and each team field's value with its reason — and ask them to accept
+it or ask for changes. Where the skill you are running measures the card, give
+the verdict, anything the follow-up review still found, and the suggestions you
+left. Write nothing to the card's parts or team fields until they accept.
+Requested changes are folded in; where the skill you are running records
+additions as comments, a requested change that carries new information is
+recorded first. Requested changes do not reopen the review: show the changed
+card to the user again.
+
+In settled mode the requester has already answered — a grilling question, a
+question relayed during a run, or an acceptance not given — and that answer is
+the acceptance: record it as the comment, write the fold without asking, verify
+it, then report the folded text to the requester as done, with the verdict and
+anything the review still found where the skill measures the card, and say they
+may object. An objection is a new addition: record it and fold it like any
+other.
 
 If the card's scope looks like several separately deliverable changes, or a file
 might not be suitable to attach, say so and let the user decide; neither is
@@ -159,7 +166,7 @@ yours to decide.
 
 ## Write and verify
 
-Write exactly what the user accepted, or inside a development run the fold the
+Write exactly what the user accepted, or in settled mode the fold the
 requester's answer accepted. Anything that must change on the way goes
 back to the user to accept again before it is written. Write each part to the
 field the profile maps it to — parts that share a field in the standard's order,
@@ -178,4 +185,9 @@ re-derivation for the conditions the changed part feeds, or for the whole spec
 when the interface determination or a scope boundary changed, so the spec is
 re-stamped with the card's new revision, and report to the user what changed in
 the spec. When only a comment was added and no part changed, do nothing to the
-spec. A card with no spec has nothing to re-derive.
+spec. A card with no spec has nothing to re-derive. When the caller passes
+`no-rederive`, as `grill` does because it is already deriving the spec, skip
+this step.
+
+Never write the spec line: `grill` writes it directly, as "The spec line" in
+`card-standard.md` says.
