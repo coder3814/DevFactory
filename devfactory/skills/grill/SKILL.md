@@ -234,11 +234,11 @@ that, every time you commit the spec folder, write the line again with that comm
    the spec as "The stamp" says: the Card revision from `devfactory stamp`, the Repo commit
    the follow-up reported, today's date. Set its status to `Ready` when the follow-up found
    nothing open, or when the requester settled everything it found; otherwise it stays
-   `drafting`. When the status is `Ready`, write the ready receipt: list, one per line, the
-   folder of every spec the follow-up measured, and run `devfactory receipt write <spec
-   dir> --check ready --specs <file>`. When you collected any request question, stamp and
-   commit nothing: hand them back as "Handing back a request question" says, and go to step
-   12.
+   `drafting`. When you collected any request question, stamp and commit nothing: hand
+   them back as "Handing back a request question" says, and go to step 12. Otherwise, when
+   the status is `Ready`, write the ready receipt: list, one per line, the folder of every
+   spec the follow-up measured, and run `devfactory receipt write <spec dir> --check ready
+   --specs <file>`.
 10. **Commit** the spec folder, and nothing else, as its own commit, once the lint "The
     stamp" requires is clean. The commit lands directly on the integration branch when the
     profile's branches and merging allows a direct commit there; otherwise it is made on a

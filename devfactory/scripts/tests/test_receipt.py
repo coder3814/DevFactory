@@ -45,6 +45,15 @@ class RequestReceiptTest(unittest.TestCase):
         write(os.path.join(d, 'facts.txt'), '  field Work type:   Feature\r\n\r\ncomment 2026-11-01 pat\n')
         self.assertEqual(run(['receipt', 'check', 'specs/12'] + REQUEST, d).code, 0)
 
+    def test_sub_issue_order_matters(self):
+        d = repo(self)
+        write(os.path.join(d, 'facts.txt'), 'sub-issue 13\nsub-issue 14\n')
+        run(['receipt', 'write', 'specs/12'] + REQUEST, d)
+        write(os.path.join(d, 'facts.txt'), 'sub-issue 14\nsub-issue 13\n')
+        r = run(['receipt', 'check', 'specs/12'] + REQUEST, d)
+        self.assertEqual(r.code, 1)
+        self.assertTrue(r.lines[0].startswith('differs Card facts '))
+
     def test_a_new_comment_a_card_edit_or_a_profile_edit_each_differ(self):
         d = repo(self)
         run(['receipt', 'write', 'specs/12'] + REQUEST, d)

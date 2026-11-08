@@ -203,13 +203,16 @@ it; nobody edits it by hand.
 - **Request**, written by whichever card skill or `grill` gate finds that the card meets the
   Definition of Request: `receipt write <dir> --check request --card <n>` (or `--text
   <file>`) `--facts <file>`. Its fields are the Card revision, as "The stamp" defines it;
-  the Card facts, a hash of the facts file; the Standard, the plugin's version; and the
+  the Card facts, a hash of the facts file; the Standard, the plugin's version with a hash of
+  its references and agents, so an edit to them changes it even without a version bump; and the
   Profile, a hash of the profile and its team modules. The facts file holds, one per line,
   everything else the card reviewer read about the card, as raw values from the tracker:
-  `field <name>: <value>` for each team field, `comment <date> <author>` for each comment,
-  `attachment <name>` for each attachment, `parent <id>` or `sub-issue <id>` for its
-  standing, and `related <what>: <value>` for each piece of related data a team module
-  names. Order and spacing do not matter. A card's first passing review creates this folder
+  `field <name>: <value>` for each team field, `comment <date> <author>: <text>` for each
+  comment with its whole text on the one line, `attachment <name> <size> <date>` for each
+  attachment, `parent <id>` for its parent and `sub-issue <id>` for each sub-issue in the
+  tracker's order, and `related <what>: <value>` for each piece of related data a team
+  module names. Order and spacing do not matter, except among the sub-issue lines, whose
+  order is the one the work order is judged against. A card's first passing review creates this folder
   to hold the receipt, so the folder exists before `spec.md` does; a folder without
   `spec.md` is not a spec.
 - **Ready**, written by `grill` when its last check finds the spec Ready, and by

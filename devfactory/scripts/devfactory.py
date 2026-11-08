@@ -678,11 +678,20 @@ STATUS_ROW = rx(r'^(\|\s*\*\*Status\*\*\s*\|).*$', re.M)
 
 
 def standard_version():
-    file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.claude-plugin', 'plugin.json')
+    """The plugin's version and a hash of the references and agents the checks judge by, so an
+    edit to them changes the receipt even without a version bump."""
+    plugin = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
     try:
-        return str(json.loads(read_text(file)).get('version') or 'unknown')
+        version = str(json.loads(read_text(os.path.join(plugin, '.claude-plugin', 'plugin.json'))).get('version') or 'unknown')
     except (OSError, ValueError, AttributeError):
-        return 'unknown'
+        version = 'unknown'
+    files = []
+    for sub in ('references', 'agents'):
+        d = os.path.join(plugin, sub)
+        if os.path.isdir(d):
+            for f in sorted(list_files(d)):
+                files.append((sub + '/' + f, read_text(os.path.join(d, f))))
+    return '%s %s' % (version, hash_files(files))
 
 
 def hash_files(files):
@@ -706,8 +715,13 @@ def profile_hash(root):
 
 
 def facts_hash(file):
+    """Order and spacing do not matter, except that sub-issue lines keep their order, which is
+    the tracker's sub-issue order the work order is judged against."""
     lines = [re.sub(r'\s+', ' ', l).strip() for l in read_text(file).split('\n')]
-    return sha256('\n'.join(sorted(l for l in lines if l)))
+    lines = [l for l in lines if l]
+    subs = [l for l in lines if l.startswith('sub-issue ')]
+    rest = sorted(l for l in lines if not l.startswith('sub-issue '))
+    return sha256('\n'.join(rest + subs))
 
 
 def specs_path(root):
