@@ -2,7 +2,8 @@
 // PreToolUse (Bash): refuses a tracker write while no card skill is running. A write is a
 // gh issue edit, comment or create, a gh project item-edit or item-add, an az boards
 // work-item update, create or relation change, a gh api graphql call carrying a mutation
-// (or an --input whose content cannot be seen), and any other gh api call whose method is
+// or taking its query or variables from a file (--input, or -f/-F <key>=@<file>, whose
+// content cannot be seen), and any other gh api call whose method is
 // not GET: an -X or --method other than GET, or a field (-f, -F, --raw-field, --field) or
 // --input with no method, which gh sends as POST. Plain reads pass. Markers older than the
 // profile's marker lifetime do not count. Silent (allow) on anything else, on a missing
@@ -25,11 +26,37 @@ function flagValue(words, i) {
   return w.length > 2 ? w.slice(2).replace(/^=/, '') : words[i + 1];
 }
 
-function isGhApiWrite(args) {
-  if (args[0] === 'graphql' || args.includes('graphql')) {
-    return args.some((a) => /\bmutation\b/.test(a)) ||
-      args.some((a) => a === '--input' || a.startsWith('--input='));
+// The key=value of a field flag at args[i] (-f, -F, --field, --raw-field, in the
+// -fkey=v, -f key=v, --field=key=v and --field key=v forms), or null when it is not one.
+function fieldValue(args, i) {
+  const a = args[i];
+  for (const f of ['-f', '-F']) {
+    if (a === f) return args[i + 1] || '';
+    if (a.startsWith(f)) return a.slice(2);
   }
+  for (const f of ['--field', '--raw-field']) {
+    if (a === f) return args[i + 1] || '';
+    if (a.startsWith(f + '=')) return a.slice(f.length + 1);
+  }
+  return null;
+}
+
+// A GraphQL call is a write when it carries a mutation, or when its query or variables come
+// from a file or stdin (--input, or a field whose value is @<file>): that content cannot be
+// seen, so it may be a mutation.
+function isGraphqlWrite(args) {
+  if (args.some((a) => /\bmutation\b/.test(a))) return true;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--input' || a.startsWith('--input=')) return true;
+    const v = fieldValue(args, i);
+    if (v !== null && /^[^=]*=@/.test(v)) return true;
+  }
+  return false;
+}
+
+function isGhApiWrite(args) {
+  if (args[0] === 'graphql' || args.includes('graphql')) return isGraphqlWrite(args);
   let method = null;
   let fields = false;
   for (let i = 0; i < args.length; i++) {

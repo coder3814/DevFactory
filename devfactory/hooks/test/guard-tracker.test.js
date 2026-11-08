@@ -64,6 +64,22 @@ test('gh api writes are denied without a marker', (t) => {
   }
 });
 
+test('a gh api graphql call whose query or variables come from a file is denied', (t) => {
+  const cwd = project(t, { profile: PROFILE });
+  for (const c of [
+    'gh api graphql -F query=@query.graphql',
+    'gh api graphql -f query=@query.graphql',
+    'gh api graphql -Fquery=@query.graphql',
+    'gh api graphql --field=query=@query.graphql',
+    'gh api graphql --raw-field query=@-',
+    "gh api graphql -f query='query($n: Int!) { viewer { login } }' -F vars=@vars.json",
+    'gh api graphql --input=query.json',
+  ]) {
+    denied(run(cwd, c));
+  }
+  assert.strictEqual(run(project(t, { profile: PROFILE, markers: ['grill'] }), 'gh api graphql -F query=@q.graphql'), '');
+});
+
 test('gh api reads are allowed silently', (t) => {
   const cwd = project(t, { profile: PROFILE });
   for (const c of [
@@ -71,6 +87,7 @@ test('gh api reads are allowed silently', (t) => {
     'gh api -X GET search/issues -f q=repo:o/r',
     'gh api --method GET repos/o/r/issues -F per_page=100',
     "gh api graphql -f query='query { viewer { login } }'",
+    "gh api graphql -F owner=o -f query='query($owner: String!) { user(login: $owner) { email } }'",
     'gh api repos/o/r/issues --paginate --jq ".[].title"',
   ]) {
     assert.strictEqual(run(cwd, c), '', c);

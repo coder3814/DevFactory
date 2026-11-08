@@ -20,7 +20,7 @@ const PROFILE = [
   '',
 ].join('\n');
 
-function spec(revision, commit) {
+function spec(revision, commit, status = revision ? 'Ready' : 'drafting') {
   return [
     '# Spec: Add export',
     '',
@@ -28,7 +28,7 @@ function spec(revision, commit) {
     '|---|---|',
     '| **Card** | #12 |',
     '| **Version** | 1 |',
-    `| **Status** | ${revision ? 'Ready' : 'drafting'} |`,
+    `| **Status** | ${status} |`,
     `| **Card revision** | ${revision} |`,
     `| **Repo commit** | ${commit} |`,
     '| **Stamped** | 2026-11-07 |',
@@ -71,6 +71,16 @@ test('a drafting spec with no Card revision is silence; another stamp error is r
   assert.deepStrictEqual(notice(cwd, 'grill #12', card), []);
   writeSpec('13', spec(revision, ''));
   assert.match(notice(cwd, 'grill #13', card)[0], /^DevFactory: could not check card 13's spec .*has no Repo commit/);
+});
+
+test('a drafting spec is silence even when it carries stamp rows', (t) => {
+  const { cwd, head, card, revision, writeSpec } = setup(t);
+  writeSpec('12', spec(revision, head, 'drafting'));
+  writeSpec('13', spec(revision, '', '`drafting`'));
+  fs.writeFileSync(card, 'Add export\n- **C1.** It exports as CSV.\n');
+  assert.deepStrictEqual(notice(cwd, 'grill #12 and #13', card), []);
+  writeSpec('12', spec(revision, head, 'approved'));
+  assert.match(notice(cwd, 'grill #12', card)[0], /^DevFactory: card 12 changed since its spec earned Ready/);
 });
 
 test('at most two cards are checked, and a card without a spec is skipped', (t) => {

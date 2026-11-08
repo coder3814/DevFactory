@@ -69,8 +69,9 @@ The desktop app shapes the run:
 The brief names the card, the parent, the spec path, the parent branch and the sub-issue's
 own branch, named by the profile's Sub-issue branch entry, and says, in this order:
 
-1. Reply "waiting" and end your turn. When messaged to begin, run `begin build` first, then
-   rebase onto the parent branch named here, then follow the `build` skill for this card.
+1. Reply "waiting" and end your turn. When messaged to begin, load the `build` skill for this
+   card and follow it from its first step, which marks the session as building before
+   anything else; its second step is the rebase onto the parent branch named here.
 2. Move the card to the development column as work starts; leave every other column move
    to the coordinator.
 3. A question the spec and the decision line do not answer: stop and report it to the

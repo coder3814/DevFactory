@@ -2,15 +2,16 @@
 // PreToolUse (Bash): keeps the integration branch and parent branches from being changed
 // outside the skills that own them, and refuses every push outside release and coordinate.
 //
-// Refused: `git push`; and `git merge`, `git rebase`, `git reset --hard` and
-// `git commit --amend` when the branch they change (HEAD in the effective directory, `cwd`
-// after any `cd <dir>` and `git -C <dir>`, or the branch a rebase names) is protected.
-// Merging or rebasing a protected branch into an unprotected one is never refused.
+// Refused: `git push`; and `git merge`, `git pull`, `git rebase`, `git cherry-pick`,
+// `git reset --hard`, `git commit --amend` and `git branch -f` when the branch they change
+// (HEAD in the effective directory, `cwd` after any `cd <dir>` and `git -C <dir>`, the
+// branch a rebase names, or the branch `git branch -f` moves) is protected. Merging,
+// pulling or rebasing a protected branch into an unprotected one is never refused.
 // Allowed: everything while a `release` or `coordinate` marker is fresh; under `build`, a
-// `git merge --ff-only` onto a parent branch; under `grill`, a commit, merge or
-// fast-forward onto the integration branch. Markers older than the profile's marker
-// lifetime are ignored. Silent (allow) on a missing profile, on "Git guard: off", and on
-// any error. Never throws; always exits 0.
+// `git merge --ff-only` onto a parent branch; under `grill`, a `git merge --ff-only` onto
+// the integration branch (a plain `git commit` is never refused). Markers older than the
+// profile's marker lifetime are ignored. Silent (allow) on a missing profile, on
+// "Git guard: off", and on any error. Never throws; always exits 0.
 'use strict';
 
 const path = require('path');
@@ -23,6 +24,13 @@ const VALUE_OPTIONS = {
   merge: new Set(['-m', '-s', '-X', '-F', '--strategy', '--strategy-option', '--file',
     '--message', '--into-name', '--cleanup']),
   rebase: new Set(['-s', '-X', '-x', '--exec', '--strategy', '--strategy-option', '--onto']),
+  pull: new Set(['-s', '-X', '-j', '-o', '--strategy', '--strategy-option', '--depth',
+    '--deepen', '--shallow-since', '--shallow-exclude', '--jobs', '--upload-pack',
+    '--server-option', '--negotiation-tip']),
+  'cherry-pick': new Set(['-m', '-X', '-s', '--mainline', '--strategy', '--strategy-option',
+    '--cleanup']),
+  branch: new Set(['-u', '--set-upstream-to', '--sort', '--format', '--points-at',
+    '--contains', '--no-contains', '--merged', '--no-merged']),
   reset: new Set([]),
   commit: new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--reuse-message',
     '--reedit-message', '--template', '--author', '--date', '--fixup', '--squash',
@@ -50,17 +58,35 @@ function parseGit(words, dir) {
   const takesValue = VALUE_OPTIONS[sub] || new Set();
   const args = [];
   const flags = [];
+  const raw = [];
   for (let j = i + 1; j < words.length; j++) {
     const w = words[j];
     if (w === '--') continue;
     if (w.startsWith('-')) {
       flags.push(w.split('=')[0]);
+      raw.push(w);
       if (takesValue.has(w)) j++;
     } else {
       args.push(w);
     }
   }
-  return { sub, args, flags, dir: gitDir };
+  return { sub, args, flags, raw, dir: gitDir };
+}
+
+// Whether a short-option word such as -f or -fq carries the letter.
+function hasShort(git, letter) {
+  return git.raw.some((w) => /^-[A-Za-z]+$/.test(w) && w.includes(letter));
+}
+
+// Whether a pull rebases: -r or --rebase[=<mode>], unless the last word says otherwise.
+function pullRebases(git) {
+  let rebase = false;
+  for (const w of git.raw) {
+    if (w === '-r' || w === '--rebase') rebase = true;
+    else if (w.startsWith('--rebase=')) rebase = !/^--rebase=(false|no|off|0)$/i.test(w);
+    else if (w === '--no-rebase') rebase = false;
+  }
+  return rebase;
 }
 
 // What a git invocation would do to a branch: { kind, dir, branch|null } or null when it
@@ -73,6 +99,21 @@ function classify(git) {
     case 'merge':
       if (has('--abort') || has('--quit')) return null;
       return { kind: has('--ff-only') ? 'fast-forward' : 'merge', dir: git.dir, branch: null };
+    case 'pull': {
+      // A pull merges, fast-forwards or rebases onto HEAD; it is never the plain fast-forward
+      // a build or grill marker allows, which is `git merge --ff-only`.
+      let kind = 'pull';
+      if (pullRebases(git)) kind = 'pull --rebase';
+      else if (has('--ff-only')) kind = 'pull --ff-only';
+      return { kind, dir: git.dir, branch: null };
+    }
+    case 'cherry-pick':
+      if (has('--abort') || has('--quit')) return null;
+      return { kind: 'cherry-pick', dir: git.dir, branch: null };
+    case 'branch':
+      // `git branch -f <name> [<start>]` moves the branch it names.
+      if (!(has('--force') || hasShort(git, 'f')) || !git.args[0]) return null;
+      return { kind: 'branch -f', dir: git.dir, branch: git.args[0] };
     case 'rebase': {
       if (['--abort', '--quit', '--edit-todo', '--show-current-patch'].some(has)) return null;
       // `git rebase <upstream> <branch>` (or `--root <branch>`) rebases the branch it names.
@@ -164,13 +205,12 @@ function decide(op, guard, active) {
   const parent = !integration && guard.isParent(branch);
   if (!integration && !parent) return null;
   if (active.has('build') && parent && op.kind === 'fast-forward') return null;
-  if (active.has('grill') && integration &&
-    ['merge', 'fast-forward', 'commit --amend'].includes(op.kind)) return null;
+  if (active.has('grill') && integration && op.kind === 'fast-forward') return null;
   const which = integration ? 'the integration branch' : 'a parent branch';
   return `DevFactory: this git ${op.kind} changes ${branch}, ${which}, which only release or ` +
     'coordinate may change; a build session may only fast-forward a parent branch ' +
-    '(git merge --ff-only), and grill may only commit or merge its spec onto the ' +
-    'integration branch.';
+    '(git merge --ff-only), and grill may only commit its spec (git commit, without ' +
+    '--amend) or fast-forward it (git merge --ff-only) onto the integration branch.';
 }
 
 function main() {

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // UserPromptSubmit: for the first two cards the prompt names (#<n> or "card <n>") that have
 // a spec, runs stamp-check and says whether the spec is still current. Never blocks. Silent
-// on a missing profile, on "Stamp notice: off", on a card without a spec, on a spec with no
-// Card revision yet (still drafting), and on any error. When DEVFACTORY_STAMP_TEXT is set,
-// stamp-check reads the card from that file (--text) instead of the tracker, for tests.
+// on a missing profile, on "Stamp notice: off", on a card without a spec, on a spec whose
+// Status is drafting, on a spec with no Card revision yet, and on any error. When
+// DEVFACTORY_STAMP_TEXT is set, stamp-check reads the card from that file (--text) instead
+// of the tracker, for tests.
 'use strict';
 
 const fs = require('fs');
@@ -23,11 +24,12 @@ function cardNumbers(prompt) {
   return found;
 }
 
-function repoCommit(specFile) {
+// One header row's value (`| **Name** | value |`), without backticks, or ''.
+function headerValue(specFile, name) {
   try {
     const text = fs.readFileSync(specFile, 'utf8');
-    const m = /\|\s*\*\*Repo commit\*\*\s*\|\s*([^|\r\n]*?)\s*\|/.exec(text);
-    return m ? m[1] : '';
+    const m = new RegExp(`\\|\\s*\\*\\*${name}\\*\\*\\s*\\|\\s*([^|\\r\\n]*?)\\s*\\|`).exec(text);
+    return m ? m[1].replace(/`/g, '').trim() : '';
   } catch (e) {
     return '';
   }
@@ -37,6 +39,7 @@ function notice(root, specsDir, card) {
   const dir = path.join(specsDir, card);
   const specFile = path.join(dir, 'spec.md');
   if (!fs.existsSync(specFile)) return null;
+  if (/^drafting$/i.test(headerValue(specFile, 'Status'))) return null; // nothing stamped yet
   const source = process.env.DEVFACTORY_STAMP_TEXT
     ? ['--text', process.env.DEVFACTORY_STAMP_TEXT]
     : ['--card', card];
@@ -45,12 +48,12 @@ function notice(root, specsDir, card) {
   if (run.status !== 0 && run.status !== 1) {
     const why = ((run.stderr || '').split(/\r?\n/).find((l) => l.trim()) || 'the stamp check failed')
       .replace(/^devfactory:\s*/, '');
-    if (/has no Card revision hash/.test(why)) return null; // a drafting spec: nothing to say
+    if (/has no Card revision hash/.test(why)) return null; // not stamped yet: nothing to say
     return `DevFactory: could not check card ${card}'s spec against its stamp (${why}); ` +
       'check it before building.';
   }
   const out = run.stdout || '';
-  const commit = repoCommit(specFile);
+  const commit = headerValue(specFile, 'Repo commit');
   if (run.status === 0 && /^match\b/m.test(out)) {
     return `DevFactory: card ${card}'s spec is current (Ready at ${commit || 'its stamped commit'})`;
   }

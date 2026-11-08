@@ -374,6 +374,7 @@ DevFactory/
                               except as the running skill's marker allows
       stamp-notice.js         UserPromptSubmit: says whether the spec of a card the prompt names is current
       session-context.js      SessionStart: the profile, the stages, the skills to use and any active marker
+      lib.js                  shared by the hooks: stdin, repository root, command tokens, profile and markers through the script
       test/                   the hooks' tests
 ```
 

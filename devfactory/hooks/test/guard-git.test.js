@@ -86,14 +86,48 @@ test('build may fast-forward a parent branch, also from its own worktree, but no
   assertDeny(run(on(t, 'parent-12', ['build']), 'git reset --hard HEAD'));
 });
 
-test('grill may commit, merge or fast-forward onto the integration branch, nothing else', (t) => {
+test('grill may only commit or fast-forward onto the integration branch', (t) => {
   const cwd = on(t, 'main', ['grill']);
+  assert.strictEqual(run(cwd, 'git commit -m "spec for #12"'), '');
   assert.strictEqual(run(cwd, 'git merge --ff-only spec-12'), '');
-  assert.strictEqual(run(cwd, 'git merge spec-12'), '');
-  assert.strictEqual(run(cwd, 'git commit --amend --no-edit'), '');
-  assertDeny(run(cwd, 'git reset --hard HEAD~1'));
-  assertDeny(run(cwd, 'git rebase card-7'));
+  for (const c of ['git merge spec-12', 'git merge --no-ff spec-12', 'git commit --amend --no-edit',
+    'git reset --hard HEAD~1', 'git rebase card-7', 'git pull --ff-only', 'git cherry-pick abc1234']) {
+    assertDeny(run(cwd, c), /grill may only commit its spec/);
+  }
   assertDeny(run(on(t, 'parent-12', ['grill']), 'git merge --ff-only spec-12'));
+});
+
+test('git pull onto a protected branch is denied, onto a feature branch allowed', (t) => {
+  const cwd = on(t, 'main');
+  for (const c of ['git pull', 'git pull origin main', 'git pull --ff-only', 'git pull --rebase',
+    'git pull -r origin main', 'git pull --rebase=merges']) {
+    assertDeny(run(cwd, c), /integration branch/);
+  }
+  assertDeny(run(cwd, 'git pull --no-rebase'), /git pull changes main/);
+  assertDeny(run(cwd, 'git pull -r'), /git pull --rebase changes main/);
+  assertDeny(run(on(t, 'parent-12'), 'git pull'), /parent branch/);
+  assert.strictEqual(run(on(t, 'card-7'), 'git pull origin main'), '');
+  assert.strictEqual(run(on(t, 'card-7'), 'git pull --rebase origin parent-12'), '');
+});
+
+test('git cherry-pick onto a protected branch is denied, its abort allowed', (t) => {
+  const cwd = on(t, 'main');
+  assertDeny(run(cwd, 'git cherry-pick abc1234'), /cherry-pick changes main/);
+  assertDeny(run(cwd, 'git cherry-pick -x -m 1 abc1234'));
+  assertDeny(run(cwd, 'git cherry-pick --continue'));
+  assert.strictEqual(run(cwd, 'git cherry-pick --abort'), '');
+  assert.strictEqual(run(on(t, 'card-7'), 'git cherry-pick abc1234'), '');
+});
+
+test('git branch -f that moves a protected branch is denied wherever HEAD is', (t) => {
+  const cwd = on(t, 'card-7');
+  assertDeny(run(cwd, 'git branch -f main card-7'), /branch -f changes main, the integration branch/);
+  assertDeny(run(cwd, 'git branch --force parent-12 HEAD'), /parent branch/);
+  assert.strictEqual(run(cwd, 'git branch -f card-8 main'), '');
+  assert.strictEqual(run(cwd, 'git branch card-9 main'), '');
+  assert.strictEqual(run(on(t, 'main'), 'git branch --list'), '');
+  assertDeny(run(on(t, 'card-7', ['build']), 'git branch -f parent-12 card-7'));
+  assert.strictEqual(run(on(t, 'card-7', ['coordinate']), 'git branch -f main card-7'), '');
 });
 
 test('release or coordinate allows changing a protected branch', (t) => {

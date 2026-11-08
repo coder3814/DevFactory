@@ -60,8 +60,10 @@ directory is.
 
 ## Steps
 
-1. **Load the profile** as `working-a-card.md` says, with the binding it names. With no
-   profile, start nothing and report it.
+1. **Begin, and start from current code.** Run `devfactory begin build`. In a parent issue
+   run, rebase this branch onto the parent branch the coordinator named; for a standalone
+   card, rebase onto the integration branch. Then load the profile as `working-a-card.md`
+   says, with the binding it names. With no profile, start nothing and report it.
 
 2. **Read the card and its spec.** Read the card in full as `working-a-card.md` says. Read
    its spec folder at the path the card's spec line gives: `spec.md` with its amendments,

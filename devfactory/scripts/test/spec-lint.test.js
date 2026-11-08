@@ -88,29 +88,43 @@ test('a core concern with no Dispositions row is reported', (t) => {
   assert.deepStrictEqual(r.lines, ['disposition-missing Security has no row']);
 });
 
-test('an empty header value is reported', (t) => {
-  const header = [
+function blankStamp(status, version = '1') {
+  return [
     ['Card', '#12'],
-    ['Version', ''],
-    ['Status', 'drafting'],
+    ['Version', version],
+    ['Status', status],
     ['Card revision', ''],
     ['Repo commit', ''],
     ['Stamped', ''],
     ['Request type(s)', 'feature'],
   ];
-  const r = lint(t, specText({ header }));
-  assert.strictEqual(r.code, 1);
-  assert.deepStrictEqual(r.lines, ['header-empty Version', 'header-empty Card revision', 'header-empty Repo commit', 'header-empty Stamped']);
+}
+
+test('a drafting spec with blank Card revision, Repo commit and Stamped passes', (t) => {
+  const r = lint(t, specText({ header: blankStamp('drafting') }));
+  assert.strictEqual(r.code, 0, r.stdout);
+  assert.deepStrictEqual(r.lines, []);
 });
 
-function header({ status = 'Ready', revision = 'a'.repeat(64), commit = 'abc1234', types = 'feature' } = {}) {
+test('an empty header value is reported; a drafting spec is excused only the stamp rows', (t) => {
+  const drafting = lint(t, specText({ header: blankStamp('drafting', '') }));
+  assert.strictEqual(drafting.code, 1);
+  assert.deepStrictEqual(drafting.lines, ['header-empty Version']);
+  for (const status of ['Ready', 'approved']) {
+    const r = lint(t, specText({ header: blankStamp(status) }));
+    assert.strictEqual(r.code, 1);
+    assert.deepStrictEqual(r.lines, ['header-empty Card revision', 'header-empty Repo commit', 'header-empty Stamped']);
+  }
+});
+
+function header({ status = 'Ready', revision = 'a'.repeat(64), commit = 'abc1234', stamped = '2026-11-07', types = 'feature' } = {}) {
   return [
     ['Card', '#12'],
     ['Version', '1'],
     ['Status', status],
     ['Card revision', revision],
     ['Repo commit', commit],
-    ['Stamped', '2026-11-07'],
+    ['Stamped', stamped],
     ['Request type(s)', types],
   ];
 }
@@ -124,11 +138,11 @@ test('request types are each one of the five', (t) => {
   assert.match(r.lines[0], /"chore"/);
 });
 
-test('a Ready or approved spec needs a full card revision and a hex repo commit', (t) => {
+test('a Ready or approved spec needs a full card revision, a hex repo commit and a stamp date', (t) => {
   for (const status of ['Ready', 'approved']) {
-    const r = lint(t, specText({ header: header({ status, revision: 'A'.repeat(64), commit: 'abc12' }) }));
+    const r = lint(t, specText({ header: header({ status, revision: 'A'.repeat(64), commit: 'abc12', stamped: 'today' }) }));
     assert.strictEqual(r.code, 1);
-    assert.deepStrictEqual(codes(r), ['card-revision-invalid', 'repo-commit-invalid']);
+    assert.deepStrictEqual(codes(r), ['card-revision-invalid', 'repo-commit-invalid', 'stamped-invalid']);
   }
   const long = lint(t, specText({ header: header({ commit: 'f'.repeat(40) }) }));
   assert.strictEqual(long.code, 0, long.stdout);
