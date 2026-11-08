@@ -1,0 +1,8 @@
+{
+  "name": "devfactory",
+  "description": "Marketplace for the DevFactory plugin, which lives in this repository's devfactory folder.",
+  "owner": { "name": "Chad Myers" },
+  "plugins": [
+    { "name": "devfactory", "source": "./devfactory" }
+  ]
+}

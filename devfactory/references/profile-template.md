@@ -1,0 +1,175 @@
+# Project profile
+
+How a project configures DevFactory: its board, where its specs live, how its work is proven,
+where it can be shown, and the answers it has already settled. The `configure-project` skill
+writes the profile by reading the board and the repository and asking the project's owner;
+every other skill reads it first, before touching a card, a spec or a branch. The plugin
+holds the process; everything that varies by project is here and nowhere else.
+
+## Where it lives
+
+One folder per project, `.devfactory/` at the repository root:
+
+- `profile.md`: the profile, laid out below.
+- `modules/`: the team modules the profile names.
+
+Recorded decisions are not here. They stay where the project keeps them, and the profile says
+where, so the readiness checker can read them.
+
+## What it holds
+
+```markdown
+# Project profile: <project name>
+
+## Tracker
+- Binding: <binding name, for example azure-devops>
+- <the entries the binding names, one per line>
+
+## Where each part is written
+| Part | Field |
+|---|---|
+| Title | <title field> |
+| Summary | <description field> |
+| The issue or request | <description field> |
+| What needs to be achieved | <description field> |
+| Scope | <description field> |
+| Supporting information | <description field> |
+| Open questions | <description field> |
+| Acceptance criteria | <description field> |
+| Work order | <description field> |
+| Suggested model and effort | <description field> |
+
+## Additional fields
+| Field or fields | Team module |
+|---|---|
+| <field>, … | `modules/<module>.md` |
+
+## Folding
+Fold additions while the card is in: <column>, <column>, … (or: none)
+
+## Stages
+- Column field: <the tracker field that holds the column>
+| Stage | Column |
+|---|---|
+| Request | <column> |
+| Grilling | <column> |
+| Approval | <column> |
+| Development | <column> |
+| Done | <column> |
+| Acceptance | <column> |
+| Release | <column> |
+
+## Specs
+- Path: <specs/, or another path>
+
+## Recorded decisions
+- Path: <where the project keeps its decisions>
+
+## Test gate
+- Command: <the command that proves existing behaviour>
+
+## Environments
+### <name>
+- Can show: <what a checkpoint here can demonstrate>
+- Cannot show: <what it cannot>
+- Reached by: <how a checkpoint here is reached, in the project's words>
+
+## Concern extensions
+- <concern>: <what a disposition of it must answer>
+
+## Owner-step types
+- <type>: <what the step is and who takes it>
+
+## Wireframe fidelity
+- <wireframe, or the fidelity the project's design review works at>
+
+## Branches and merging
+- Integration branch: <branch>
+- Worktree layout: <where a session's worktree goes and how it is named>
+- Parent branch: <how a parent issue's branch is named>
+- Merging: <who merges what into which branch, and when>
+
+## Sessions
+- Runtime: `runtime/<file>.md`
+- Default model and effort: <used when a card suggests none>
+
+## Standing answers
+- **<the question, as it was asked>** <the answer, and where it came from>
+```
+
+### The board
+
+- **Tracker** names the binding, a file in [`bindings/`](bindings/) that says how the card
+  standard maps onto that tracker, and the entries that binding asks for. The bindings are
+  [`azure-devops.md`](bindings/azure-devops.md) and
+  [`github-projects.md`](bindings/github-projects.md).
+- **Where each part is written** lists every core module. The defaults, and the rules for
+  moving a part into another field, are in [`card-standard.md`](card-standard.md).
+- **Additional fields** is optional: none, or as many entries as the team wants. Each names
+  the field or fields and the team module that works them. One module may cover several
+  fields.
+- **Folding** lists the board columns in which an addition is folded into the card: any
+  number of them, all or none. Every profile has this section. A project that develops
+  cards through `coordinate` and `build` includes its Development column, because an
+  answer relayed during a run is folded into the card as it arrives.
+- **Stages** maps each of the seven lifecycle stages to the column a card sits in during it.
+  A board with fewer columns maps several stages to one; every stage has a column. A skill
+  moves a card by its stage and reads the column from here.
+
+### The work
+
+- **Specs** is where each card's spec folder goes, as `<path><card>/`; the default is
+  `specs/`. The folder's layout is in [`spec-template.md`](spec-template.md).
+- **Recorded decisions** is where the readiness checker reads the decisions that already
+  answer a question.
+- **Test gate** is the command that proves existing behaviour. Done condition 1.1 runs it at
+  the revision under evaluation.
+- **Environments** lists every place a checkpoint can be captured. A spec's evidence row
+  names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
+  the row promises. "Reached by" is in the project's words: a command, a deploy, a sign-in.
+- **Concern extensions** adds to the core list of fixed concerns in
+  [`definition-of-ready.md`](definition-of-ready.md), condition 4.1. Every spec in the
+  project then disposes of each one. Optional.
+- **Owner-step types** names the kinds of step only the requester can take in this project,
+  so a spec can schedule one by its type.
+- **Wireframe fidelity** is what an approved wireframe fixes. The default is a wireframe:
+  structure, fields, states and interaction, not aesthetics.
+- **Branches and merging** is how work moves into the integration branch: where worktrees
+  go, how a parent branch is named, and who merges and when. `coordinate`, `build` and
+  `release` follow it.
+- **Sessions** names the file in [`runtime/`](runtime/) the coordinator follows to start,
+  message and stop sessions, and the model and effort used when a card suggests none.
+
+### Standing answers
+
+A standing answer is a question the project has settled once that would otherwise be asked
+every run, such as where post-release checks run or what a push carries. Each entry is the
+question as it was asked and its answer, with where the answer came from (a gap entry, a
+decision, the owner).
+
+The plugin ships no answers; it ships the rule: **a question answered twice in gap records
+becomes an entry.** `curate` proposes entries from the gap records, and the owner accepts
+them. A spec that relies on an entry names it under Project bindings used.
+
+## Team modules
+
+A team module is a Markdown file the team owns and may tune at will. It has the same sections
+as a core module:
+
+- **Holds:** what the field carries; for a module covering several fields, what each one
+  carries.
+- **Rules:** what it must and must not be.
+- **Examples:** where they help.
+- **Related data:** optional — anything outside the card the module decides from, such as
+  the card's epic and that epic's fields.
+- **Choosing a value:** for a field with set values only — the allowed values and how to
+  choose between them, in the team's words.
+
+The agent working a card applies a team module to the card as a whole, with the related data
+the module names, and recommends a value, with a one-line reason, for the user to accept. A
+team module never writes to the tracker itself.
+
+The plugin ships one example module, [`work-type-module.md`](examples/work-type-module.md), a
+Work Type field. `configure-project` offers it as the draft when a team wants a matching
+field, and copies it into the project's `.devfactory/modules/`, where it becomes the team's
+to change. Only the team's copy is ever applied.
