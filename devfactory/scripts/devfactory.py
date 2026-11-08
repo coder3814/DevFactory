@@ -666,6 +666,195 @@ def cmd_evidence_check(opts):
                 out.append('sidecar-invalid evidence/%s/%s needs "revision: … | checkpoint: … | produced by: …"' % (i, side))
     return out, 1 if out else 0
 
+# ---------- receipts ----------
+
+RECEIPTS = 'receipts.md'
+RECEIPT_CHECKS = {'request': 'Request', 'ready': 'Ready'}
+RECEIPT_FIELDS = {
+    'request': ['Card revision', 'Card facts', 'Standard', 'Profile'],
+    'ready': ['Specs', 'Specs content', 'Gap sources', 'Standard', 'Profile', 'Repo commit'],
+}
+STATUS_ROW = rx(r'^(\|\s*\*\*Status\*\*\s*\|).*$', re.M)
+
+
+def standard_version():
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.claude-plugin', 'plugin.json')
+    try:
+        return str(json.loads(read_text(file)).get('version') or 'unknown')
+    except (OSError, ValueError, AttributeError):
+        return 'unknown'
+
+
+def hash_files(files):
+    """One hash over (name, content) pairs, content with LF line endings."""
+    parts = []
+    for name, content in files:
+        parts.append('%s\n%d\n%s' % (name, len(content), content))
+    return sha256('\n'.join(parts))
+
+
+def profile_hash(root):
+    files = []
+    pf = profile_file(root)
+    if os.path.exists(pf):
+        files.append(('profile.md', read_text(pf)))
+    mods = os.path.join(root, '.devfactory', 'modules')
+    if os.path.isdir(mods):
+        for f in sorted(list_files(mods)):
+            files.append(('modules/' + f, read_text(os.path.join(mods, f))))
+    return hash_files(files)
+
+
+def facts_hash(file):
+    lines = [re.sub(r'\s+', ' ', l).strip() for l in read_text(file).split('\n')]
+    return sha256('\n'.join(sorted(l for l in lines if l)))
+
+
+def specs_path(root):
+    try:
+        p = profile_field(read_profile(root), 'Specs', 'Path')
+    except UsageError:
+        p = None
+    p = (p or 'specs/').strip().strip('`').strip() or 'specs/'
+    return p.replace('\\', '/').strip('/')
+
+
+def specs_content_hash(root, dirs):
+    files = []
+    for d in dirs:
+        full = os.path.join(root, d)
+        if not os.path.isdir(full):
+            raise UsageError('no spec folder %s' % d)
+        for f in sorted(list_files(full)):
+            if f == RECEIPTS:
+                continue
+            content = read_text(os.path.join(full, f))
+            if f == 'spec.md':
+                content = STATUS_ROW.sub(r'\1 |', content)
+            files.append((d + '/' + f, content))
+    return hash_files(files)
+
+
+def gap_sources_hash(root):
+    files = []
+    ledger = os.path.join(root, '.devfactory', 'gaps.md')
+    if os.path.exists(ledger):
+        files.append(('.devfactory/gaps.md', read_text(ledger)))
+    sp = os.path.join(root, specs_path(root))
+    if os.path.isdir(sp):
+        for f in sorted(list_files(sp)):
+            if f == 'gaps.md' or f.endswith('/gaps.md'):
+                files.append((f, read_text(os.path.join(sp, f))))
+    return hash_files(files)
+
+
+def git_head(root):
+    r = run_process(['git', 'rev-parse', 'HEAD'], cwd=root)
+    if r.returncode != 0:
+        raise UsageError('git rev-parse HEAD failed: %s' % decode(r.stderr).strip())
+    return decode(r.stdout).strip()
+
+
+def code_unchanged(root, commit):
+    """True when HEAD descends from commit and nothing outside the specs path and .devfactory/
+    differs between them; those are fingerprinted on their own."""
+    r = run_process(['git', 'merge-base', '--is-ancestor', commit, 'HEAD'], cwd=root)
+    if r.returncode != 0:
+        return False
+    r = run_process(['git', 'diff', '--quiet', commit, 'HEAD', '--', '.',
+                     ':(exclude)%s' % specs_path(root), ':(exclude).devfactory'], cwd=root)
+    return r.returncode == 0
+
+
+def read_spec_list(root, file):
+    dirs = [l.strip().replace('\\', '/').strip('/') for l in read_text(file).split('\n') if l.strip()]
+    if not dirs:
+        raise UsageError('%s names no spec folder' % file)
+    out = []
+    for d in dirs:
+        full = os.path.abspath(os.path.join(os.getcwd(), d))
+        out.append(os.path.relpath(full, root).replace(os.sep, '/'))
+    return sorted(set(out))
+
+
+def receipt_fingerprint(check, opts, root):
+    if check == 'request':
+        if not opts.get('facts'):
+            raise UsageError('give --facts <file>')
+        card = read_card(opts)
+        return {'Card revision': card_revision(card['title'], card['body']),
+                'Card facts': facts_hash(opts['facts']),
+                'Standard': standard_version(),
+                'Profile': profile_hash(root)}
+    if not opts.get('specs'):
+        raise UsageError('give --specs <file>')
+    dirs = read_spec_list(root, opts['specs'])
+    return {'Specs': ', '.join(dirs),
+            'Specs content': specs_content_hash(root, dirs),
+            'Gap sources': gap_sources_hash(root),
+            'Standard': standard_version(),
+            'Profile': profile_hash(root),
+            'Repo commit': git_head(root)}
+
+
+def parse_receipts(text):
+    out = {}
+    current = None
+    for line in to_lf(text).split('\n'):
+        m = rx(r'^##\s+(.+?)\s*\Z').match(line)
+        if m:
+            current = m.group(1)
+            out[current] = {}
+            continue
+        f = profile_field_line(line)
+        if current and f:
+            out[current][f['name']] = f['value']
+    return out
+
+
+def format_receipts(receipts):
+    blocks = ['# Receipts\n\nEach passing check\'s fingerprint of what it read; `devfactory receipt check` '
+              'compares it before a later stage judges again.']
+    for check in ('request', 'ready'):
+        title = RECEIPT_CHECKS[check]
+        if title in receipts:
+            r = receipts[title]
+            names = RECEIPT_FIELDS[check] + ['Checked']
+            blocks.append('## %s\n\n' % title + '\n'.join('- %s: %s' % (n, r.get(n, '')) for n in names))
+    return '\n\n'.join(blocks) + '\n'
+
+
+def cmd_receipt(opts):
+    sub = opts['_'][0] if opts['_'] else None
+    d = opts['_'][1] if len(opts['_']) > 1 else None
+    if sub not in ('write', 'check') or not d:
+        raise UsageError('give receipt write|check <spec dir> --check request|ready')
+    check = opts.get('check')
+    if check not in RECEIPT_CHECKS:
+        raise UsageError('--check must be request or ready')
+    root = project_root()
+    file = os.path.join(d, RECEIPTS)
+    receipts = parse_receipts(read_text(file)) if os.path.exists(file) else {}
+    now = receipt_fingerprint(check, opts, root)
+    title = RECEIPT_CHECKS[check]
+    if sub == 'write':
+        os.makedirs(d, exist_ok=True)
+        receipts[title] = dict(now, Checked=today())
+        with open(file, 'wb') as f:
+            f.write(utf8(format_receipts(receipts)))
+        return ['wrote %s %s' % (check, file)], 0
+    old = receipts.get(title)
+    if not old:
+        return ['no-receipt %s' % check], 1
+    out = []
+    for name in RECEIPT_FIELDS[check]:
+        if name == 'Repo commit':
+            if not code_unchanged(root, old.get(name, '')):
+                out.append('differs Repo commit %s %s' % (old.get(name, ''), now[name]))
+        elif old.get(name, '') != now[name]:
+            out.append('differs %s %s %s' % (name, old.get(name, ''), now[name]))
+    return (out, 1) if out else (['match %s' % check], 0)
+
 # ---------- the project root, profile and markers ----------
 
 
@@ -972,6 +1161,7 @@ COMMANDS = {
     'markers': cmd_markers,
     'profile': cmd_profile,
     'event': cmd_event,
+    'receipt': cmd_receipt,
 }
 
 
