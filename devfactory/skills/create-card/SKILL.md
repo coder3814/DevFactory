@@ -86,9 +86,10 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    tracker `gh` does not reach, `--text` with the card as read back). A new
    sub-issue of an existing parent changes that parent's work order: make that
    change through `add-to-card` on the parent.
-7. If the card meets the Definition of Request, fire `request-met` as "Request
-   grilling" in `working-a-card.md` says, and tell the user the next step is
-   `grill`; do not run it. Otherwise tell the user what keeps it short.
+7. If the card meets the Definition of Request, write the request receipt as
+   "Write the request receipt" in `working-a-card.md` says, fire `request-met` as
+   "Request grilling" there says, and tell the user the next step is `grill`; do
+   not run it. Otherwise tell the user what keeps it short.
 8. Run `devfactory end create-card`.
 
 ## From an existing card
@@ -120,8 +121,9 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    any field a part has moved out of; attach any files the user provided, and
    verify it by reading it back, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs.
-6. If the card has no spec line and now meets the Definition of Request, fire
-   `request-met` as "Request grilling" in `working-a-card.md` says. When it does
+6. If the card now meets the Definition of Request, write the request receipt as
+   "Write the request receipt" in `working-a-card.md` says. If it also has no
+   spec line, fire `request-met` as "Request grilling" there says. When it does
    not meet the definition, tell the user what keeps it short.
 7. If the card has a spec line whose spec status is `Ready` or `approved` and
    any part changed, fire `readiness-lost` for it, as `../../references/events.md`

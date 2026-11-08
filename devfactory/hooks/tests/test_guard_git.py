@@ -92,6 +92,13 @@ class GuardGitTest(unittest.TestCase):
                 self.deny(self.run_guard(cwd, c), r'grill may only commit its spec')
         self.deny(self.run_guard(self.on('parent-12', ['grill']), 'git merge --ff-only spec-12'))
 
+    def test_card_skills_may_fast_forward_a_receipt_onto_the_integration_branch(self):
+        for skill in ['create-card', 're-evaluate-card']:
+            with self.subTest(skill=skill):
+                cwd = self.on('main', [skill])
+                self.assertEqual(self.run_guard(cwd, 'git merge --ff-only receipt-12'), '')
+                self.deny(self.run_guard(cwd, 'git merge receipt-12'))
+
     def test_git_pull_onto_a_protected_branch_is_denied_onto_a_feature_branch_allowed(self):
         cwd = self.on('main')
         for c in ['git pull', 'git pull origin main', 'git pull --ff-only', 'git pull --rebase',

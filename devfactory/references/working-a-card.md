@@ -123,6 +123,28 @@ fails is reported to the user with its output. Never move the card yourself.
 Whether each answer is recorded as a comment depends on where you are in the
 process — see the skill you are running.
 
+## Write the request receipt
+
+A card is judged against the Definition of Request once. When a card reviewer
+finds the card meets it, record that verdict so `grill` can trust it instead of
+judging again, as "`receipts.md`" in `spec-template.md` describes. Write it only
+when the card as written and read back is exactly what that review measured: if
+anything changed after the review, the user's own changes at acceptance
+included, write no receipt, and `grill` judges the card itself.
+
+1. Write the card facts file to a scratch file, one line per fact, from the card
+   as read back: each team field, each comment, each attachment, its parent or
+   sub-issue standing and each piece of related data a team module names, in
+   the forms `spec-template.md` gives.
+2. Run `devfactory receipt write <spec dir> --check request --card <id> --facts
+   <file>` (on a tracker `gh` does not reach, `--text` with the card as read
+   back), where `<spec dir>` is the card's folder under the profile's specs
+   path. The command creates the folder when it does not exist yet.
+3. Commit `receipts.md`, and nothing else, as its own commit, the way `grill`
+   commits a spec: directly on the integration branch when the profile's
+   branches and merging allows a direct commit there, otherwise on a branch then
+   fast-forwarded onto it, which the git guard allows under this skill's marker.
+
 ## Fold
 
 An addition is folded wherever the card sits on the board. Fold the same way in either mode; the mode changes only what follows the fold,

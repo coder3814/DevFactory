@@ -66,7 +66,8 @@ details: the edit is itself the change.
    is a second `card-reviewer`; each runs on its own model, so pass none. If it
    finds no breach, no question and no open question, tell the user the card
    meets the standard and the Definition of Request, with any suggestions it
-   made, change nothing on the card, and go to step 9. Otherwise carry on with
+   made, change nothing on the card, write the request receipt as "Write the
+   request receipt" in `working-a-card.md` says, and go to step 9. Otherwise carry on with
    the steps below.
 4. **Fold in** any comment whose outcome-changing content is missing. The
    comment is already the record, so add no comment of your own for it. Keep
@@ -88,7 +89,10 @@ details: the edit is itself the change.
 8. **Write and verify.** Once accepted, write the sections and read the card back
    to confirm every write landed, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs when the criteria changed.
-9. **Fire `request-met`** when this re-evaluation changed the card, it has no
+9. **Write the request receipt** when the card now meets the Definition of
+   Request and this re-evaluation changed it, as "Write the request receipt" in
+   `working-a-card.md` says.
+   **Fire `request-met`** when this re-evaluation changed the card, it has no
    spec line and it now meets the Definition of Request, as "Request grilling"
    in `working-a-card.md` says. When it does not meet the definition, tell the
    user what keeps it short.

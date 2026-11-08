@@ -8,7 +8,8 @@ Refused: `git push`; and `git merge`, `git pull`, `git rebase`, `git cherry-pick
 rebase names, or the branch `git branch -f` moves) is protected. Merging, pulling or rebasing
 a protected branch into an unprotected one is never refused. Allowed: everything while a
 `release` or `coordinate` marker is fresh; under `build`, a `git merge --ff-only` onto a
-parent branch; under `grill`, a `git merge --ff-only` onto the integration branch (a plain
+parent branch; under `grill`, `create-card` or `re-evaluate-card`, a `git merge --ff-only`
+onto the integration branch, which lands a spec or a receipt (a plain
 `git commit` is never refused). Markers older than the profile's marker lifetime are ignored.
 Silent (allow) on a missing profile, on "Git guard: off", and on any error. Never raises;
 always exits 0.
@@ -224,13 +225,14 @@ def decide(o, guard, active):
         return None
     if 'build' in active and parent and o['kind'] == 'fast-forward':
         return None
-    if 'grill' in active and integration and o['kind'] == 'fast-forward':
+    if active & {'grill', 'create-card', 're-evaluate-card'} and integration and o['kind'] == 'fast-forward':
         return None
     which = 'the integration branch' if integration else 'a parent branch'
     return ('DevFactory: this git %s changes %s, %s, which only release or '
             'coordinate may change; a build session may only fast-forward a parent branch '
             '(git merge --ff-only), and grill may only commit its spec (git commit, without '
-            '--amend) or fast-forward it (git merge --ff-only) onto the integration branch.' % (o['kind'], branch, which))
+            '--amend) or fast-forward it (git merge --ff-only) onto the integration branch, as '
+            'create-card and re-evaluate-card may their receipt.' % (o['kind'], branch, which))
 
 
 def main():
