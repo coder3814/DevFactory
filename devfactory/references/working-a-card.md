@@ -113,9 +113,10 @@ with an assumption; where the user does not know yet, the gap becomes an open
 question on the card, and the card does not meet the Definition of Request
 until it is answered. Say so at acceptance.
 
-When the card is written and verified and meets the Definition of Request — the
-last review found no breach, no question and no open question, and nothing
-written since added one — fire the `request-met` event with
+When this skill created or changed the card, the card has no spec line, and it
+is written, verified and meets the Definition of Request — the last review found
+no breach, no question and no open question, and nothing written since added
+one — fire the `request-met` event with
 `devfactory event request-met --card <id>`, as `events.md` says. A hook that
 fails is reported to the user with its output. Never move the card yourself.
 
@@ -157,8 +158,8 @@ additions as comments, a requested change that carries new information is
 recorded first. Requested changes do not reopen the review: show the changed
 card to the user again.
 
-In settled mode the requester has already answered — a grilling question, a
-question relayed during a run, or an acceptance not given — and that answer is
+In settled mode the requester has already answered — a question relayed during
+a run, or an acceptance not given — and that answer is
 the acceptance: record it as the comment, write the fold without asking, verify
 it, then report the folded text to the requester as done, with the verdict and
 anything the review still found where the skill measures the card, and say they
@@ -191,8 +192,8 @@ when the interface determination or a scope boundary changed, so the spec is
 re-stamped with the card's new revision, and report to the user what changed in
 the spec. When only a comment was added and no part changed, do nothing to the
 spec. A card with no spec has nothing to re-derive. When the caller passes
-`no-rederive`, as `grill` does because it is already deriving the spec, skip
-this step.
+`no-rederive`, because it has `grill` amend the spec for the same answer next,
+skip this step.
 
 Never write the spec line: `grill` writes it directly, as "The spec line" in
 `card-standard.md` says.

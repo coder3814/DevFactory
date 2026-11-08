@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from .helpers import git, read, run, temp_dir, write
+from .helpers import git, load_script, read, run, temp_dir, write
 
 
 class EventTest(unittest.TestCase):
@@ -39,6 +39,36 @@ class EventTest(unittest.TestCase):
         d = self.repo()
         write(os.path.join(d, '.devfactory', 'hooks', 'ready-extra.py'), 'raise SystemExit(5)\n')
         self.assertEqual(run(['event', 'ready', '--card', '1'], d).lines, ['no-hook ready'])
+
+    def test_the_hook_name_matches_without_regard_to_case(self):
+        d = self.repo()
+        write(os.path.join(d, '.devfactory', 'hooks', 'Ready.py'), 'print("ok")\n')
+        self.assertEqual(run(['event', 'ready', '--card', '1'], d).lines, ['ok', 'ran Ready.py'])
+
+    def test_a_hook_of_an_unknown_type_is_a_failed_hook(self):
+        d = self.repo()
+        write(os.path.join(d, '.devfactory', 'hooks', 'ready.txt'), 'move it\n')
+        r = run(['event', 'ready', '--card', '1'], d)
+        self.assertEqual(r.code, 1)
+        self.assertRegex(r.lines[-1], r'^hook-failed ready\.txt could not start: no runner for "\.txt" files')
+
+    @unittest.skipUnless(os.name == 'nt', 'cmd runs only on Windows')
+    def test_a_cmd_hook_runs_with_the_card(self):
+        d = self.repo()
+        write(os.path.join(d, '.devfactory', 'hooks', 'done.cmd'), '@echo card %1\r\n')
+        self.assertEqual(run(['event', 'done', '--card', '9'], d).lines, ['card 9', 'ran done.cmd'])
+
+    def test_a_hook_past_its_time_is_stopped_and_fails(self):
+        d = self.repo()
+        write(os.path.join(d, '.devfactory', 'hooks', 'done.py'), 'import time\ntime.sleep(30)\n')
+        script = load_script()
+        script.EVENT_TIMEOUT_SECONDS = 1
+        cwd = os.getcwd()
+        os.chdir(d)
+        self.addCleanup(os.chdir, cwd)
+        out, code = script.cmd_event({'_': ['done'], 'card': '3'})
+        self.assertEqual(code, 1)
+        self.assertEqual(out, ['hook-failed done.py timed out after 1s'])
 
     def test_an_unknown_event_two_hooks_or_no_card_is_a_usage_error(self):
         d = self.repo()

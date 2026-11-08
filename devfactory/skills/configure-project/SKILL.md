@@ -105,7 +105,9 @@ answer, propose it as the first option rather than asking from blank.
    adds a hook for that event in `.devfactory/hooks/`. Ask whether the owner
    wants any hook now; write each one they ask for, as `events.md` says, with
    the tracker's own CLI and the column names they give, and show it before
-   writing it in step 19.
+   writing it in step 19. Say that the Permissions entry for the plugin's script
+   also lets `devfactory event` run these hooks without a prompt, so each hook
+   writes to the tracker unattended.
 7. **Place specs and recorded decisions.** Propose `specs/` as the specs path,
    or another path outside any documentation system the project runs where
    `specs/` would sit inside one, and ask. Look for where the project already

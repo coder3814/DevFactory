@@ -18,7 +18,6 @@ file's. The profile's board section records it, and the agent follows it.
 | Project | The project the cards are in |
 | Team | The team whose board the profile is for |
 | Board | That team's board, for example Stories |
-
 | Work item type | The type cards are created as, for example User Story |
 | Area path | The area path new cards are created under |
 | Access | How the agent reaches Azure DevOps, in the team's words |

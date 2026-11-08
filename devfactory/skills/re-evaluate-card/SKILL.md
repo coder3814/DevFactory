@@ -79,7 +79,7 @@ details: the edit is itself the change.
    `card-reviewer`, with whatever it still finds going to the user at
    acceptance.
 7. **Accept.** Show the user the rewritten sections, any changed team field
-   with its reason, the review's decisions for the user, the verdict, anything
+   with its reason, the verdict, anything
    the follow-up still found and the suggestions you left, and get their
    acceptance or changes. A change they ask for that carries new information is
    a new addition: record it as a comment, then fold it in. Changes the user
@@ -88,9 +88,10 @@ details: the edit is itself the change.
 8. **Write and verify.** Once accepted, write the sections and read the card back
    to confirm every write landed, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs when the criteria changed.
-9. **Fire `request-met`** when the card meets the Definition of Request, as
-   "Request grilling" in `working-a-card.md` says; otherwise tell the user what
-   keeps it short.
+9. **Fire `request-met`** when this re-evaluation changed the card, it has no
+   spec line and it now meets the Definition of Request, as "Request grilling"
+   in `working-a-card.md` says. When it does not meet the definition, tell the
+   user what keeps it short.
    **Re-derive the spec.** If the card has a spec line and any part changed —
    in this re-evaluation, or since the stamp when step 2 found the card ahead
    of it — hand off to `grill` in re-derive mode as "Re-derive the spec"

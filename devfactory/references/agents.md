@@ -5,8 +5,9 @@ inputs, procedure, rules, report format and checklist inline. A skill starts one
 `name` with the Agent tool and puts every input the definition lists in the prompt; nothing
 else briefs it.
 
-- `card-reviewer` measures one card against the card standard; started by `create-card`
-  and `re-evaluate-card` in their Measure step.
+- `card-reviewer` measures one card against the card standard and the Definition of
+  Request; started by `create-card` and `re-evaluate-card` in their Measure step, and by
+  `grill` at its request gate.
 - `readiness-checker` applies the Definition of Ready; started by `grill` and
   `check-ready`.
 - `change-reviewer` applies Definition of Done conditions 1 to 5 to one card's change;

@@ -35,7 +35,9 @@ def main():
     out = ['DevFactory profile: %s' % os.path.join(root, '.devfactory', 'profile.md')]
 
     hooks_dir = os.path.join(root, '.devfactory', 'hooks')
-    found = sorted(os.listdir(hooks_dir)) if os.path.isdir(hooks_dir) else []
+    events = {'request-met', 'ready', 'approved', 'development-started', 'done', 'accepted', 'released'}
+    found = sorted(f for f in (os.listdir(hooks_dir) if os.path.isdir(hooks_dir) else [])
+                   if os.path.splitext(f)[0].lower() in events)
     out.append('Event hooks in .devfactory/hooks/: %s.' % ', '.join(found) if found
                else 'Event hooks: none in .devfactory/hooks/; the plugin moves no card on the board.')
 

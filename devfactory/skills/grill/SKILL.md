@@ -93,9 +93,9 @@ this run grills.
 **Handing back a request question.** Collect every request question you meet; ask none and
 fold none. Instead of stamping, leave the spec `drafting` and uncommitted, report each
 request question with the options you know and your recommendation, and say that request
-grilling settles them: the user answers them through `re-evaluate-card`, or through
-`add-to-card` when they already have the answer, and then runs `grill` again on the changed
-card.
+grilling settles them: the user answers them through `re-evaluate-card`, which records and
+folds each answer, re-measures the card and fires `request-met` once it meets the
+Definition of Request, and then runs `grill` again on the changed card.
 
 **Firing an event.** Fire each event `events.md` gives this skill with
 `devfactory event <name> --card <id>`, for each card it applies to, at the moment it says.
@@ -108,8 +108,8 @@ never converge. Never measure a spec yourself.
 
 **The criteria file.** The scripts that check criteria take them as a file of IDs, one per
 line. Write it with `devfactory criteria-ids --card <n>` into a file outside the
-repository; a non-zero exit means a duplicate criterion ID, which you fix on the card before
-going on.
+repository; a non-zero exit means a duplicate criterion ID, a breach of the card standard:
+stop work on that card and send it back to request grilling, as the request gate does.
 
 **The card revision.** A card's revision is what `devfactory stamp --card <n>` prints,
 never a hash you compute or a reading of the card. For a card the script cannot read with
@@ -126,7 +126,9 @@ tools and model. Pass every input that definition requires:
 - the repository path, the branch to read and its head commit: the integration branch
   before development, the card's own branch during it;
 - for each card checked, its ID, its current text as the tracker holds it, its revision
-  from `devfactory stamp`, and its stage; for a parent issue, the parent and every
+  from `devfactory stamp`, and its stage, which is the point the work is at (Grilling before
+  approval, Development during a build), never its board column; for a parent issue, the
+  parent and every
   sub-issue, saying which are released;
 - each card's spec folder path, and the profile path;
 - the gap sources to read first: the project ledger `.devfactory/gaps.md` and every live
@@ -139,8 +141,8 @@ tools and model. Pass every input that definition requires:
 **Asking the requester.** Ask one question at a time. Each question says what you need to
 know and why the spec needs it, gives the options, and puts your recommendation first with a
 one-line reason. When several cards share a gap, ask for the rule once, not the case per card.
-Never invent an answer. A question the requester cannot answer yet becomes an open question
-on the card, which keeps the spec short of Ready (condition 2.3).
+Never invent an answer. A question the requester cannot answer yet stays open in your report
+and keeps the spec `drafting`; it is never written onto the card.
 
 **Folding an answer.** Every answer you take goes into the spec section it settles, and
 only there. You ask only questions whose answers leave the card as it is: edge behaviour the
@@ -247,10 +249,10 @@ that, every time you commit the spec folder, write the line again with that comm
     gap, at stage Approval. When it changes only the spec, handle it through Amend: the
     requester's words are the answer, the amendment and gap entry are written, the affected
     conditions are re-checked as Amend says, and approval is asked again. When it would
-    change the card, it is a request question: end your marker, put the requester's words
-    on the card through `add-to-card` in settled mode with no-rederive, as request
-    grilling's fold, then run Amend for it, which applies the request gate to the changed
-    card, and ask for approval again.
+    change the card, it is a request question: write nothing, end this run, and report it
+    with the requester's words, saying that request grilling folds it into the card
+    through `re-evaluate-card`, after which `grill` re-derives the spec from the changed
+    card and asks for approval again.
 
 ## A parent issue
 
@@ -302,10 +304,12 @@ that, every time you commit the spec folder, write the line again with that comm
    `check-ready` does, skip this step and leave the check to it; the caller passes the
    branch head its check reported, and the re-stamp records that head.
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
-   changed card parts, or the change asked for at approval, that drove it. Re-stamp as "The
+   changed card parts that drove it. Re-stamp as "The
    stamp" says, the Card revision from `devfactory stamp`, and commit the spec folder on its own on the branch it lives on: the
    integration branch before development, landing as New step 10 says, the card's own
-   branch during it. Write the spec line with that commit, under the marker.
+   branch during it. Write the spec line with that commit, under the marker. Before
+   development, when the re-stamped spec's status is `Ready`, fire `ready` for the card.
+   During development fire nothing: the work has not changed hands.
 7. **Report** what changed in the spec and whether it is still Ready.
 
 ## Amend

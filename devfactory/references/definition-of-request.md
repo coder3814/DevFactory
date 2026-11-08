@@ -39,6 +39,6 @@ moment or a delegated call, is answered into the spec alone.
 ## Where the card sits
 
 This definition never reads the board. A card is worked and checked wherever it sits, and the
-plugin moves no card between columns. When a card first meets the definition, the card skill
-fires the `request-met` event ([`events.md`](events.md)), which a project can use to move the
+plugin moves no card between columns. When a card skill has created or changed a card that has
+no spec yet and it now meets the definition, the skill fires the `request-met` event ([`events.md`](events.md)), which a project can use to move the
 card to whatever column it keeps for complete requests.

@@ -475,8 +475,8 @@ DevFactory/
       guard_git.py          PreToolUse: refuses a push, or a change to a protected branch,
                             except as the running skill's marker allows
       stamp_notice.py       UserPromptSubmit: says whether a named card's spec is current
-      session_context.py    SessionStart: the profile, the stages, the skills to use and
-                            any active marker
+      session_context.py    SessionStart: the profile, the event hooks, the skills to use
+                            and any active marker
       hooks_lib.py          shared by the hooks: input, repository root, command tokens,
                             profile and markers through the script
       tests/                the hooks' tests
@@ -484,7 +484,8 @@ DevFactory/
 
 **Scripts.** `scripts/devfactory.py` decides every `[machine]` condition that has a command
 (`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), holds the
-markers (`begin`, `end`, `markers`) and is the one profile reader (`profile`). Every script
+markers (`begin`, `end`, `markers`), is the one profile reader (`profile`), and fires the
+events (`event`). Every script
 and hook is Python 3, standard library only, run with `python`, and tested with `unittest`;
 the plugin has no Node dependency. In the owner's words (the owner, 2026-11-07): "I'm much
 more comfortable using Python scripts than Node for anything." The script and the hooks find
@@ -521,7 +522,7 @@ its line says off, and on any error of its own.
 - The **stamp notice** gives a prompt that names a card with a spec the result of
   `stamp-check`. It never blocks.
 - The **session context** gives a session in a project with a profile the profile's
-  location, the stages and their columns, the skills, the decision line and any active
+  location, the project's event hooks, the skills, the decision line and any active
   marker.
 
 **Agents** carry their whole definition inline (character, inputs, rules, report format,

@@ -31,7 +31,7 @@ class SessionContextTest(unittest.TestCase):
         cwd = project(self, profile=PROFILE)
         hooks = os.path.join(cwd, '.devfactory', 'hooks')
         os.makedirs(hooks)
-        for name in ['ready.ps1', 'done.py']:
+        for name in ['ready.ps1', 'done.py', 'README.md']:
             open(os.path.join(hooks, name), 'w').close()
         lines = self.run_context(cwd).rstrip().split('\n')
         self.assertEqual(lines[1], 'Event hooks in .devfactory/hooks/: done.py, ready.ps1.')

@@ -23,7 +23,8 @@ The prompt that started you gives you all of these. If any is missing, say which
 - **The repository path**, the branch you are to read it at and that branch's head commit.
 - **The cards**: for each card its id, its current text as the tracker holds it (every part,
   the acceptance criteria with their IDs, open questions, comments with their dates), its
-  current revision as the dispatching skill computes it, and its stage. For a parent issue:
+  current revision as the dispatching skill computes it, and its stage, the point the work
+  is at as the dispatching skill names it, never a board column. For a parent issue:
   the parent and every sub-issue, saying which are released.
 - **The spec paths**: one spec folder per card checked.
 - **The profile path**: `.devfactory/profile.md`.

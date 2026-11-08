@@ -20,11 +20,11 @@ on.
 
 | Event | Fired when | Fired by |
 |---|---|---|
-| `request-met` | The card has been written and meets the Definition of Request. | `create-card`, `re-evaluate-card` |
-| `ready` | The spec is stamped Ready, committed, and the card's spec line written. | `grill` |
+| `request-met` | The skill has created or changed the card, it now meets the Definition of Request, and it has no spec line yet. A card with a spec has passed this hand-off already. | `create-card`, `re-evaluate-card` |
+| `ready` | The spec is stamped Ready, committed, and the card's spec line written, by a new spec or a re-derivation before development. | `grill` |
 | `approved` | The requester has approved the Ready spec and the status change is committed. | `grill` |
 | `development-started` | A build session starts work on the card; for a parent issue, when its first sub-issue's session starts. | `build`, `coordinate` for a parent |
-| `done` | The card's change meets the Definition of Done: the change reviewer's PASS for a standalone card; for a sub-issue, its PASS once the coordinator has checked the report and merged it; the Done judge's DONE for a parent issue. | `build` for a standalone card, `coordinate` otherwise |
+| `done` | The card's change meets the Definition of Done: the change reviewer's PASS for a standalone card; for a sub-issue, its PASS once the coordinator has checked the report and merged it; the Done judge's DONE for a parent issue, and for each nested parent in it. | `build` for a standalone card, `coordinate` otherwise |
 | `accepted` | The requester has accepted the card, and the acceptance is recorded. | `accept` |
 | `released` | The card's change is released by the project's release procedure. | `release` |
 
@@ -35,8 +35,9 @@ and `released` for each card accepted or released.
 ## Writing a hook
 
 A hook is one file in `.devfactory/hooks/` at the repository root, named for its event, with
-an extension that says how to run it: `ready.py`, `ready.ps1`, `ready.cmd`, `ready.sh`, or
-`ready` with no extension for bash. It runs from the repository root, with the card ID as its
+an extension that says how to run it: `ready.py`, `ready.ps1`, `ready.cmd` or `ready.bat`,
+`ready.sh`, or `ready` with no extension for bash. The name is matched without regard to
+case. A file of any other type is reported as a failed hook. It runs from the repository root, with the card ID as its
 one argument and in the variables `DEVFACTORY_CARD` and `DEVFACTORY_EVENT`, for at most 300
 seconds. Exit 0 means it worked.
 

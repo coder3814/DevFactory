@@ -79,7 +79,7 @@ one-line reason.
    rebase, rerun the test gate, merge into the integration branch, and ship. When the
    project's conventions ask the requester something at this point, the recorded acceptance
    answers it where the profile says so; otherwise ask. Work held rather than released
-   keeps its cards in Acceptance until the held release goes out.
+   keeps its cards accepted and open until the held release goes out.
 
 5. **Close and fire.** Once the release is live, close each released card and fire
    `released` for it with `devfactory event released --card <n>`, as

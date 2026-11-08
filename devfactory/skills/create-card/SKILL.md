@@ -120,9 +120,9 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    any field a part has moved out of; attach any files the user provided, and
    verify it by reading it back, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs.
-6. If the card meets the Definition of Request, fire `request-met` as "Request
-   grilling" in `working-a-card.md` says; otherwise tell the user what keeps it
-   short.
+6. If the card has no spec line and now meets the Definition of Request, fire
+   `request-met` as "Request grilling" in `working-a-card.md` says. When it does
+   not meet the definition, tell the user what keeps it short.
 7. If the card has a spec line, re-derive the spec as "Re-derive the spec"
    describes, naming each part that changed. Otherwise, when it meets the
    Definition of Request, tell the user the next step is `grill`; do not run it.

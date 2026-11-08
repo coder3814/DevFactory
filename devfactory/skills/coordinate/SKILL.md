@@ -187,8 +187,7 @@ one-line reason.
      fast-forward refuses, the session stops and reports it, and nothing is forced.
    - Keep the session, its worktree and its branch: they stay until `accept` ends in
      acceptance, and `release` reaps them.
-   - Then have an agent fire `done` for the sub-issue, and for a nested parent once every
-     one of its sub-issues is merged.
+   - Then have an agent fire `done` for the sub-issue.
 
 9. **Judge the combined result.** When every sub-issue this run builds is merged, start the
    `done-judge` agent by name with the Agent tool; it carries its own definition
@@ -207,7 +206,8 @@ one-line reason.
    is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once the
    findings are merged. After a NOT DONE there are at most two further rounds: when the
    third judgment is still NOT DONE, stop and report it to the requester with its findings,
-   and wait. On DONE, have an agent fire `done` for the parent.
+   and wait. On DONE, have an agent fire `done` for the parent and for each nested
+   parent in it.
 
 10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester to start
     `release`, which only the requester can start; it runs in this session, under this

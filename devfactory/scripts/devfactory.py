@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 
@@ -875,8 +876,26 @@ def event_runner(file):
     if ext in ('.cmd', '.bat'):
         return ['cmd', '/c', file]
     if ext in ('', '.sh'):
-        return ['bash', file]
-    raise UsageError('hook %s: no runner for "%s" files (use .py, .ps1, .cmd, .bat, .sh or none)' % (file, ext))
+        return [find_bash(), file]
+    raise OSError('no runner for "%s" files (use .py, .ps1, .cmd, .bat, .sh or none)' % ext)
+
+
+def find_bash():
+    """bash on PATH; on Windows, never System32's WSL launcher, which cannot take a Windows path."""
+    system32 = os.path.normcase(os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32'))
+    for d in os.environ.get('PATH', '').split(os.pathsep):
+        for name in (['bash.exe'] if os.name == 'nt' else ['bash']):
+            f = os.path.join(d, name)
+            if os.path.isfile(f) and not (os.name == 'nt' and os.path.normcase(os.path.dirname(f)) == system32):
+                return f
+    raise OSError('no bash found on PATH')
+
+
+def kill_tree(proc):
+    if os.name == 'nt':
+        subprocess.run(['taskkill', '/T', '/F', '/PID', str(proc.pid)], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, creationflags=NO_WINDOW)
+    proc.kill()
 
 
 def cmd_event(opts):
@@ -889,24 +908,29 @@ def cmd_event(opts):
     root = project_root()
     d = os.path.join(root, '.devfactory', 'hooks')
     found = sorted(f for f in (os.listdir(d) if os.path.isdir(d) else [])
-                   if os.path.splitext(f)[0] == name and os.path.isfile(os.path.join(d, f)))
+                   if os.path.splitext(f)[0].lower() == name and os.path.isfile(os.path.join(d, f)))
     if not found:
         return ['no-hook %s' % name], 0
     if len(found) > 1:
         raise UsageError('more than one hook for %s: %s' % (name, ', '.join(found)))
     file = os.path.join(d, found[0])
     env = dict(os.environ, DEVFACTORY_EVENT=name, DEVFACTORY_CARD=card)
-    try:
-        r = subprocess.run(event_runner(file) + [card], cwd=root, env=env, stdin=subprocess.DEVNULL,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=EVENT_TIMEOUT_SECONDS,
-                           creationflags=NO_WINDOW)
-    except subprocess.TimeoutExpired:
-        return ['hook-failed %s timed out after %ds' % (found[0], EVENT_TIMEOUT_SECONDS)], 1
-    except OSError as e:
-        return ['hook-failed %s could not start: %s' % (found[0], e)], 1
-    out = [l for l in (decode(r.stdout) + decode(r.stderr)).replace('\r\n', '\n').split('\n') if l]
-    out.append(('ran %s' if r.returncode == 0 else 'hook-failed %s exit ' + str(r.returncode)) % found[0])
-    return out, 0 if r.returncode == 0 else 1
+    # Output goes to a file, not a pipe, so a killed hook's children cannot hold the wait open.
+    with tempfile.TemporaryFile() as log:
+        try:
+            proc = subprocess.Popen(event_runner(file) + [card], cwd=root, env=env, stdin=subprocess.DEVNULL,
+                                    stdout=log, stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
+        except OSError as e:
+            return ['hook-failed %s could not start: %s' % (found[0], e)], 1
+        try:
+            code = proc.wait(timeout=EVENT_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            kill_tree(proc)
+            return ['hook-failed %s timed out after %ds' % (found[0], EVENT_TIMEOUT_SECONDS)], 1
+        log.seek(0)
+        out = [l for l in decode(log.read()).replace('\r\n', '\n').split('\n') if l]
+    out.append('ran %s' % found[0] if code == 0 else 'hook-failed %s exit %d' % (found[0], code))
+    return out, 0 if code == 0 else 1
 
 # ---------- entry point ----------
 
