@@ -1,6 +1,6 @@
 ---
 name: card-reviewer
-description: Fresh-context reviewer of one card against the card standard, in the card skills' Measure step, reporting a verdict with every breach, question for the user, decision for the user and suggestion it finds. It is given the paths to the card standard and the project profile with its team modules, the card's full content (each part with its field, team fields, related data, comments, attachments, parent or sub-issue standing, column and whether folding applies, and for a rewrite the criteria with their IDs as they stand now and the highest ID ever carried), and whether the review is fresh or a follow-up. It judges the card only, never its spec. Read-only; it changes nothing and starts no agents. Started by the create-card and re-evaluate-card skills.
+description: Fresh-context reviewer of one card against the card standard, in the card skills' Measure step, reporting a verdict, whether the card meets the Definition of Request, and every breach, question for the user, open question and suggestion it finds. It is given the paths to the card standard and the project profile with its team modules, the card's full content (each part with its field, team fields, related data, comments, attachments, parent or sub-issue standing, and for a rewrite the criteria with their IDs as they stand now and the highest ID ever carried), and whether the review is fresh or a follow-up. It judges the card only, never its spec. Read-only; it changes nothing and starts no agents. Started by the create-card and re-evaluate-card skills, and by grill at its request gate.
 tools: Read, Glob, Grep, Bash
 model: opus
 ---
@@ -25,8 +25,7 @@ The prompt that started you gives you:
   field's value, the related data any team module names, its comments with
   their dates, the names of its attachments, whether it is a parent issue or a
   sub-issue and of which parent, for a parent issue its sub-issues in the
-  tracker's order, and, for an existing card, its current column and whether
-  folding applies to it (for a card not yet created, the draft and the names of
+  tracker's order (for a card not yet created, the draft and the names of
   the files to be attached; for a rewrite of an existing card, also any
   comments to be posted with it, the criteria with their IDs as they stand on
   the card now, and the highest criterion ID the card has ever carried);
@@ -147,11 +146,7 @@ Check, in the standard's order, then placement and team fields:
     restated on the card. Name each comment that is contradicted or whose
     outcome-changing content is missing, by a short paraphrase, with its date
     once posted. A card not yet created has no comments to be posted; any it
-    comes with is a breach. A comment the comments record the user chose not to
-    fold, because the card was in a column where folding does not happen, is no
-    breach. Where you are told folding does not apply to the card, a comment
-    that is contradicted or whose outcome-changing content is missing is not a
-    breach either: report it under Decisions for the user.
+    comes with is a breach.
 13. **Placement** — each part is in the field the profile maps it to; parts
     that share a field are in the standard's order, each under its heading, and
     a part in a field of its own carries no heading. A part in the wrong field
@@ -178,6 +173,10 @@ Return a report, as your final response, in these parts:
 
 - **Verdict:** meets the standard when there is no breach and no question for
   the user; otherwise does not.
+- **Definition of Request:** met when the card meets the standard and carries
+  no open question; otherwise not met, naming each open question still on the
+  card. The Definition of Request is
+  `definition-of-request.md`, beside `card-standard.md`.
 - **Earlier findings** (follow-up only): each breach and question from the
   previous report, resolved or not, and any fix that overshot.
 - **Breaches:** each one, naming the part of the card, quoting the text at
@@ -185,9 +184,6 @@ Return a report, as your final response, in these parts:
   content here.
 - **Questions for the user:** each gap that cannot be closed from the card's own
   content, phrased as the question to ask.
-- **Decisions for the user:** each comment, by a short paraphrase and its date,
-  that the card contradicts or whose outcome-changing content is not on the
-  card, while folding does not apply to it. These never fail the card.
 - **Suggestions:** each one, quoting the text and saying what might be better.
 
 Quote the card exactly when you cite it. Do not propose new requirements, widen

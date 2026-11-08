@@ -24,8 +24,7 @@ If the project has no profile, touch no tracker: tell the user, and offer to run
 
 Read the whole card before judging it: every field the profile writes a part
 to, every additional field it names, every comment with its date and author, the
-names of its attachments, the column it is in on the profile's board, whether
-it is a parent issue or a sub-issue and of which parent, as the binding says to
+names of its attachments, whether it is a parent issue or a sub-issue and of which parent, as the binding says to
 read it, the spec line if it has one, and the related data any team module
 names. Note the highest criterion ID the card has ever carried, from its
 criteria, its comments and, where the tracker keeps one, its revision history;
@@ -72,9 +71,7 @@ its team modules, and the card's full content — each part with the field it is
 will be written to, each team field's value, the related data any team module
 names, whether the card is a parent issue or a sub-issue and of which parent,
 for a parent issue its sub-issues in the tracker's order, and for a draft, the
-names of the files to be attached; for an existing card, the card's current column and
-whether folding applies to it — always yes for a restructure, which folds
-whatever the column — and for a rewrite, also any comments you will post with
+names of the files to be attached; for a rewrite, also any comments you will post with
 it, the criteria with their IDs as they stand on the card now, and the highest
 criterion ID the card has ever carried. The reviewer only
 reads and changes nothing. Never measure a card you drafted yourself; the
@@ -87,13 +84,14 @@ A review is one of two kinds, and you tell the reviewer which:
 - **Follow-up:** the reviewer also gets the previous review's report and the
   version of the card that review measured.
 
-The review returns its verdict, the breaches it found, the questions that need
-the user, and suggestions. Then:
+The review returns its verdict, whether the card meets the Definition of
+Request (`definition-of-request.md`), the breaches it found, the questions that
+need the user, and suggestions. Then:
 
-1. The first review is fresh. If it finds no breach and no question, the card
-   passes as it stands, and is ready for acceptance.
-2. Otherwise ask the user every question the review raised, as "Grill"
-   describes. Fold the answers in, and fix each breach by removing or narrowing
+1. The first review is fresh. If it finds no breach, no question and no open
+   question, the card passes as it stands, and is ready for acceptance.
+2. Otherwise ask the user every question the review raised and every open
+   question on the card, as "Request grilling" describes. Fold the answers in, and fix each breach by removing or narrowing
    text, or by restating a criterion more generally, wherever that closes it;
    add text only when nothing else does. Take or
    leave each suggestion.
@@ -103,29 +101,30 @@ the user, and suggestions. Then:
 There are no further reviews: the user decides on anything the follow-up still
 finds. Keep the suggestions you left, for the user at acceptance.
 
-## Grill
+## Request grilling
 
-Ask the user about each gap the review found, one question at a time, until the
-card has what it needs. Ask before anything goes to another review: another
-review never closes a gap only the user can fill. Each question is specific and
-answerable: what you need to know, and why the card needs it. Do not invent an
-answer or fill a gap with an assumption; where the user does not know, the gap becomes an open question on the
-card.
+Request grilling brings the card to the Definition of Request. Ask the user
+about each gap the review found and each open question on the card, one
+question at a time, until the card has what it needs and no open question is
+left. Ask before anything goes to another review: another review never closes a
+gap only the user can fill. Each question is specific and answerable: what you
+need to know, and why the card needs it. Do not invent an answer or fill a gap
+with an assumption; where the user does not know yet, the gap becomes an open
+question on the card, and the card does not meet the Definition of Request
+until it is answered. Say so at acceptance.
+
+When the card is written and verified and meets the Definition of Request — the
+last review found no breach, no question and no open question, and nothing
+written since added one — fire the `request-met` event with
+`devfactory event request-met --card <id>`, as `events.md` says. A hook that
+fails is reported to the user with its output. Never move the card yourself.
 
 Whether each answer is recorded as a comment depends on where you are in the
 process — see the skill you are running.
 
 ## Fold
 
-Before folding an addition into an existing card, check the card's column
-against the profile's fold columns. Outside them, follow "Where folding happens"
-in `card-process.md`: the addition stays recorded, you tell the user the card is
-in a column where folding does not happen, and they decide whether to fold it
-anyway or raise a new card. Record a decision not to fold as a comment, naming
-any new card. Restructuring folds whatever the column, and so does a settled
-addition.
-
-Fold the same way in either mode; the mode changes only what follows the fold,
+An addition is folded wherever the card sits on the board. Fold the same way in either mode; the mode changes only what follows the fold,
 as "Accept" says. Rewrite the affected sections so they say what the card asks for now: new
 information to the section it belongs in, an answered open question out of open
 questions and into the sections it changes. Where a new case lands in a

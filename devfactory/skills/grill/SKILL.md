@@ -1,6 +1,6 @@
 ---
 name: grill
-description: Turn a card into a Ready spec — draft the specification folder from the card, the code, the recorded decisions and the data population, have the readiness checker measure it, ask the requester each open question once, stamp and commit it and point the card at it; for a parent issue, every sub-issue not yet Ready and then the parent itself — or bring an existing spec back in line after the card changed, or amend it for a question answered after Ready. Use when a card needs its spec, when a card with a spec has changed or its stamp no longer matches, and when a dispatcher hands over an answered question for a Ready spec.
+description: Specification grilling. Turn a card that meets the Definition of Request into a Ready spec without changing the card — check the card against the Definition of Request first, draft the specification folder from the card, the code, the recorded decisions and the data population, have the readiness checker measure it, ask the requester each question that only the spec settles, hand back any that would change the card, stamp and commit it, point the card at it and fire the ready and approved events; for a parent issue, every sub-issue not yet Ready and then the parent itself — or bring an existing spec back in line after the card changed, or amend it for a question answered after Ready. Use when a card needs its spec, when a card with a spec has changed or its stamp no longer matches, and when a dispatcher hands over an answered question for a Ready spec.
 allowed-tools:
   - Read
   - Glob
@@ -36,7 +36,12 @@ repository (worktree) root, wherever the shell's working directory is.
 
 Read these first, in full:
 
+- `../../references/definition-of-request.md` — what the card must meet before you start,
+  and why you never change it.
 - `../../references/definition-of-ready.md` — the conditions the spec must meet.
+- `../../references/events.md` — the events you fire.
+- `../../agents/card-reviewer.md` — the `card-reviewer` agent you start at the request
+  gate, its inputs and its report.
 - `../../references/decision-line.md` — who decides what; it sorts every decision you meet.
 - `../../references/spec-template.md` — the folder you write, the stamp and the gap entry.
 - `../../references/profile-template.md` — what the profile holds and where.
@@ -47,7 +52,8 @@ Read these first, in full:
 - `../../agents/readiness-checker.md` — the `readiness-checker` agent you start, its inputs
   and its report.
 
-The spec is what development reads; the card stays the request. Grilling earns Ready, which
+This skill is **specification grilling**. The spec is what development reads; the card
+stays the request, and this skill never changes it. Grilling earns Ready, which
 means a fresh agent could build the card to Done without asking anything. It does not earn
 approval: the requester approves the Ready spec once, at the Approval stage, and judges
 intent once at acceptance.
@@ -67,6 +73,33 @@ The dispatcher, or the state of the card, says which mode runs:
 
 **The scope rule.** The spec asks for nothing beyond the card, as condition 3.4 of the
 Definition of Ready says, in every mode. Grilling never changes the profile.
+
+**The card rule.** Specification grilling never changes the card: no fold, no comment, no
+field. Its one write to the card is the spec line, which is not part of the request. A
+question whose answer would change the card (its outcome, a criterion, its scope or the
+work order) is a **request question**: the request was not complete, so it is not yours to
+ask. Hand it back to request grilling, as "Handing back a request question" says.
+
+**The request gate.** Before you draft, revise or amend anything for a card, check that it
+meets the Definition of Request. Start the `card-reviewer` agent by name with the Agent
+tool, kind fresh, with every input its definition lists, as "Measure" in
+`working-a-card.md` describes; it runs on its own model, so pass none. Go on only when its
+verdict is that the card meets the Definition of Request. Otherwise do nothing for that
+card: report each breach, question and open question the reviewer found, say the card goes
+back to request grilling through `re-evaluate-card`, and stop work on it. Where the card
+sits on the board never matters. For a parent issue, check the parent and every sub-issue
+this run grills.
+
+**Handing back a request question.** Collect every request question you meet; ask none and
+fold none. Instead of stamping, leave the spec `drafting` and uncommitted, report each
+request question with the options you know and your recommendation, and say that request
+grilling settles them: the user answers them through `re-evaluate-card`, or through
+`add-to-card` when they already have the answer, and then runs `grill` again on the changed
+card.
+
+**Firing an event.** Fire each event `events.md` gives this skill with
+`devfactory event <name> --card <id>`, for each card it applies to, at the moment it says.
+A hook that fails is reported to the requester with its output, and the work carries on.
 
 **The review rule.** The readiness checker measures a spec once fresh, then at most once in
 a follow-up. Whatever the follow-up still finds goes to the requester; there is no third
@@ -109,13 +142,10 @@ one-line reason. When several cards share a gap, ask for the rule once, not the 
 Never invent an answer. A question the requester cannot answer yet becomes an open question
 on the card, which keeps the spec short of Ready (condition 2.3).
 
-**Folding an answer.** Every answer goes into the spec section it settles. It goes into the
-card as well only when it changes observable behaviour or scope, as `decision-line.md`
-draws them, or the work order. Every card write you make goes through the `add-to-card`
-skill in **settled** mode with **no-rederive**: the requester's answer is the acceptance, so
-it records the answer as the comment, folds, writes, verifies and reports the folded text,
-and the requester may object afterwards; no-rederive, because you carry the spec forward
-yourself. Say which answers were folded into the card and which only into the spec.
+**Folding an answer.** Every answer you take goes into the spec section it settles, and
+only there. You ask only questions whose answers leave the card as it is: edge behaviour the
+card leaves to the tests, an owner step's moment, a choice between ways of delivering the
+same outcome. Any other is a request question, handed back as the card rule says.
 
 **The stamp.** Its three header rows are defined in `../../references/spec-template.md`
 under "The stamp". The Card revision is the output of `devfactory stamp`, run after the last
@@ -138,10 +168,11 @@ that, every time you commit the spec folder, write the line again with that comm
 1. **Load the profile** as "Load the project profile" in `working-a-card.md` says, with its
    specs path, recorded decisions path, environments, data access, concern extensions,
    owner-step types, wireframe fidelity, branches and merging, sessions and standing
-   answers. Move the card to the Grilling stage's column, unless it is already there.
+   answers. Leave the card wherever it is on the board.
 2. **Read the card** in full, every comment with its date and author included, as "Read a
    card" in `working-a-card.md` says. For a sub-issue, read its parent too; for a parent,
-   read every sub-issue.
+   read every sub-issue. Then apply the request gate, and go on only when the card meets
+   the Definition of Request.
 3. **Read where the card's subject lives**: the code, configuration and data the change
    touches in the repository, and the recorded decisions the profile points to that bear on
    it. This is grounding for how to deliver the card, not material for the card or a
@@ -167,7 +198,8 @@ that, every time you commit the spec folder, write the line again with that comm
      through the access the profile's "Data access" section states for it, and record the
      population, the point in time, the count per rule, and each row or class of rows no
      rule covers. What an uncovered row ends up as is the requester's decision unless
-     something already answers it, so note it as a question. When the profile states no
+     something already answers it, so note it as a question; it is a request question
+     unless the card already says what such rows end up as. When the profile states no
      access for the population, or the only access would write, run nothing; note it as a
      question for the requester, since the profile lacks the entry `configure-project` adds.
    - Derive the interface determination from the card as it now stands: non-trivial,
@@ -180,14 +212,13 @@ that, every time you commit the spec folder, write the line again with that comm
    fresh, at creation. At creation the spec has no stamp, so the checker marks 9.2 not
    applicable and reports the card revision and branch head it checked.
 7. **Ask.** Put to the requester every question the checker reported and every question you
-   noted in step 5, merged where they are the same question, as "Asking the requester" says.
-   For each owner step the checker reports without a moment, agree its moment with the
-   requester the same way. Fold each answer as "Folding an answer" says. Fix every finding
-   that needs no one's answer, cutting or narrowing text before adding any. Put each
-   work-order fault to the requester with the fix you propose, as a question; their
-   agreement is the answer, and the fix goes through `add-to-card`, settled with
-   no-rederive, recording the fault and the agreed fix. None of these answers is a gap: the spec has not
-   yet earned Ready.
+   noted in step 5, merged where they are the same question, as "Asking the requester" says,
+   except each request question, which you collect as the card rule says. For each owner
+   step the checker reports without a moment, agree its moment with the requester the same
+   way. Fold each answer as "Folding an answer" says. Fix every finding that needs no one's
+   answer in the spec, cutting or narrowing text before adding any. A work-order fault, and
+   any finding only a change to the card would fix, is a request question. None of these
+   answers is a gap: the spec has not yet earned Ready.
 8. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up. Ask the
    requester about whatever it still finds, and fold the answers, without another check.
 9. **Lint and stamp.** Steps 9 to 11 run in one stretch under the `grill` marker you
@@ -196,26 +227,30 @@ that, every time you commit the spec folder, write the line again with that comm
    the spec as "The stamp" says: the Card revision from `devfactory stamp`, the Repo commit
    the follow-up reported, today's date. Set its status to `Ready` when the follow-up found
    nothing open, or when the requester settled everything it found; otherwise it stays
-   `drafting`.
+   `drafting`. When you collected any request question, stamp and commit nothing: hand
+   them back as "Handing back a request question" says, and go to step 12.
 10. **Commit** the spec folder, and nothing else, as its own commit, once the lint "The
     stamp" requires is clean. The commit lands directly on the integration branch when the
     profile's branches and merging allows a direct commit there; otherwise it is made on a
     branch that is then fast-forwarded onto the integration branch, which the git guard
     allows under `grill`'s marker.
 11. **Point the card at the spec.** When the spec is Ready, write the spec line with that
-    commit, as "The spec line" says. Only now may you run `devfactory end grill` to report
-    or ask.
-12. **Report** that the spec is Ready, with its path and commit and the answers folded into
-    the card, or name each thing still open: the question, the owner step without a moment,
-    or the failing condition.
-13. **Approval.** Once Ready, move the card to the Approval stage's column and ask the
-    requester to approve the Ready spec, once, as one question: approve it, or say what to
-    change. On approval, set the status to `approved`, commit that change on its own,
-    landing as step 10 says, and write the spec line with the new commit, under the
-    marker. A change asked for at approval is a gap, at stage Approval, handled through
-    Amend: the requester's words are the answer, the amendment and gap entry are written, the card is folded through `add-to-card` where the
-    change alters observable behaviour or scope, the affected conditions are re-checked as
-    Amend says, and approval is asked again.
+    commit, as "The spec line" says, then fire `ready`. Only now may you run
+    `devfactory end grill` to report or ask.
+12. **Report** that the spec is Ready, with its path and commit, or name each thing still
+    open: a request question handed back, a question, an owner step without a moment, or
+    a failing condition.
+13. **Approval.** Once Ready, ask the requester to approve the Ready spec, once, as one
+    question: approve it, or say what to change. On approval, set the status to `approved`,
+    commit that change on its own, landing as step 10 says, write the spec line with the
+    new commit, under the marker, and fire `approved`. A change asked for at approval is a
+    gap, at stage Approval. When it changes only the spec, handle it through Amend: the
+    requester's words are the answer, the amendment and gap entry are written, the affected
+    conditions are re-checked as Amend says, and approval is asked again. When it would
+    change the card, it is a request question: end your marker, put the requester's words
+    on the card through `add-to-card` in settled mode with no-rederive, as request
+    grilling's fold, then run Amend for it, which applies the request gate to the changed
+    card, and ask for approval again.
 
 ## A parent issue
 
@@ -229,15 +264,15 @@ that, every time you commit the spec folder, write the line again with that comm
    carries: its dispositions, an evidence row for each parent criterion, the owner steps of
    the run, and the project bindings it relies on. The checker measures the parent and every
    sub-issue together, which is what tests the work order (condition 8.2).
-3. **Approval covers the set.** The parent and its sub-issues move to the Approval stage's
-   column only when every sub-issue is Ready and the parent is Ready, and one approval
-   question covers them all. On approval, set every spec in the set to `approved`, commit,
-   and write each card's spec line, as New step 13 says.
+3. **Approval covers the set.** Approval is asked only when every sub-issue is Ready and the
+   parent is Ready, and one approval question covers them all. On approval, set every spec
+   in the set to `approved`, commit, write each card's spec line and fire `approved` for
+   each card, as New step 13 says. `ready` fires for each card as its spec is made Ready.
 
 ## Re-derive
 
-1. **Load the profile and read the card** as New steps 1 and 2 say, without moving the card,
-   and read the spec folder in full.
+1. **Load the profile and read the card** as New steps 1 and 2 say, the request gate
+   included, and read the spec folder in full.
 2. **Find what changed.** Take the changed parts from the dispatcher. When only
    `devfactory stamp-check --card <n> --spec <spec dir>` says the card changed, compare the card's current text with the revision the stamp
    records, from the tracker's revision history where it keeps one, and otherwise treat
@@ -262,7 +297,8 @@ that, every time you commit the spec folder, write the line again with that comm
 4. **Revise** the spec sections those conditions read, as New step 5 says.
 5. **Check.** Dispatch the readiness checker as "Dispatching the checker" says, kind
    re-derive, naming the conditions this re-derivation re-runs; ask, fold and run the one
-   follow-up as New steps 7 and 8 say. When the caller runs the readiness check itself, as
+   follow-up as New steps 7 and 8 say, handing back any request question as the card rule
+   says. When the caller runs the readiness check itself, as
    `check-ready` does, skip this step and leave the check to it; the caller passes the
    branch head its check reported, and the re-stamp records that head.
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
@@ -278,10 +314,11 @@ Amend runs only after the spec has earned Ready. A question answered before then
 by New or Re-derive and is not a gap.
 
 1. **Load the profile** and read the card and the spec folder in full, on the branch the
-   spec lives on now.
-2. **Write the amendment**: the answer goes into the spec section it settles, and into the
-   card as "Folding an answer" says, when it changes observable behaviour, scope or the work
-   order.
+   spec lives on now. When the answer changes the card, its dispatcher has already put it
+   there through `add-to-card`, as request grilling's fold: apply the request gate to the
+   changed card, and when the card does not carry the answer, stop and report it.
+2. **Write the amendment**: the answer goes into the spec section it settles. Never write
+   the card.
 3. **Add the gap entry** with `devfactory gaps add <spec dir> --stage <stage> --question
    <question> --condition <condition> --resolved <version>`, each value quoted as one
    argument: the card's current stage (Approval, Development, Done or Acceptance), the
@@ -292,5 +329,5 @@ by New or Re-derive and is not a gap.
 5. **Re-stamp** the Card revision, from `devfactory stamp`, and the date, as "The stamp"
    says, commit the spec folder on its own on the current branch, and write the spec line
    with that commit.
-6. **Report** the amendment, its version, whether the card changed, and whether the answer
+6. **Report** the amendment, its version, whether the card had changed, and whether the answer
    changes what another card depends on, so the work order is re-checked.

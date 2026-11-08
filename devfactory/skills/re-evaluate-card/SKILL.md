@@ -40,6 +40,9 @@ Read these first, in full:
 - `../../references/card-template.md`
 - `../../agents/card-reviewer.md` — the `card-reviewer` agent you start, its inputs
   and its report.
+- `../../references/definition-of-request.md` — what the card must meet before a
+  spec is written from it.
+- `../../references/events.md` — the `request-met` event you fire.
 
 Re-evaluation runs only because someone asked for it, and it checks the card as
 it stands, whatever has changed on it and however. It does not try to work out
@@ -61,16 +64,17 @@ details: the edit is itself the change.
    of them: start the `card-reviewer` agent by name with the Agent tool, as
    "Measure" describes. This first review is fresh, and the follow-up in step 6
    is a second `card-reviewer`; each runs on its own model, so pass none. If it
-   finds no breach, no question and no decision for the user, tell the user the
-   card meets the standard, with any suggestions it made, change nothing on the
-   card, and go to step 9. Otherwise carry on with the steps below.
+   finds no breach, no question and no open question, tell the user the card
+   meets the standard and the Definition of Request, with any suggestions it
+   made, change nothing on the card, and go to step 9. Otherwise carry on with
+   the steps below.
 4. **Fold in** any comment whose outcome-changing content is missing. The
-   comment is already the record, so add no comment of your own for it. If the
-   card is outside the profile's fold columns, each such comment is instead the
-   user's decision, as "Fold" describes. Keep every criterion's ID as "Fold"
-   describes.
-5. **Grill** the user about each remaining gap. Their answers are new additions:
-   record each question and answer as a comment, then fold the answer in.
+   comment is already the record, so add no comment of your own for it. Keep
+   every criterion's ID as "Fold" describes.
+5. **Request grilling.** Ask the user about each remaining gap and each open
+   question on the card, as "Request grilling" describes. Their answers are new
+   additions: record each question and answer as a comment, then fold the
+   answer in.
 6. **Measure again** as "Measure" describes — one follow-up review by a second
    `card-reviewer`, with whatever it still finds going to the user at
    acceptance.
@@ -84,7 +88,10 @@ details: the edit is itself the change.
 8. **Write and verify.** Once accepted, write the sections and read the card back
    to confirm every write landed, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs when the criteria changed.
-9. **Re-derive the spec.** If the card has a spec line and any part changed —
+9. **Fire `request-met`** when the card meets the Definition of Request, as
+   "Request grilling" in `working-a-card.md` says; otherwise tell the user what
+   keeps it short.
+   **Re-derive the spec.** If the card has a spec line and any part changed —
    in this re-evaluation, or since the stamp when step 2 found the card ahead
    of it — hand off to `grill` in re-derive mode as "Re-derive the spec"
    describes, naming each part that changed, and say when the interface

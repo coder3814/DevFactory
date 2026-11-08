@@ -104,10 +104,7 @@ and the evidence behind them. Nothing given when the card is created is recorded
 here: it is curated into the description and acceptance criteria, and any files
 are attached. The description and acceptance criteria carry whatever in the comments
 changes the outcome, and never contradict them; nothing else in a comment is
-restated on the card. The one exception is an addition made while the card
-was in a board column where folding does not happen: it stays off the card
-while the user has not decided to fold it, or once they have chosen not to, as
-the comments record.
+restated on the card.
 
 ## The spec line
 

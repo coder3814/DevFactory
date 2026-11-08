@@ -21,9 +21,11 @@ time. The two are deliberately separate.
 4. A reviewer measures the draft once, fresh, including, when an existing card
    is restructured, any comments to be posted with it. Only a breach of the standard, or a question for the user,
    fails a card; anything that is a matter of judgement is a suggestion, which
-   the agent may take or leave. The agent asks the user every question the
-   review raises, folds the answers in — what the user does not know becomes an
-   open question on the card — and fixes each breach, by removing or narrowing
+   the agent may take or leave. This is request grilling: the agent asks the
+   user every question the review raises and every open question on the card,
+   folds the answers in — what the user does not know yet stays an open question
+   on the card, which keeps it short of the
+   [Definition of Request](definition-of-request.md) — and fixes each breach, by removing or narrowing
    text wherever that closes it and adding text only when nothing else does. If
    the review passes the card, it is done. Otherwise one follow-up review checks
    the earlier findings and the changed text only. Whatever it still finds goes
@@ -32,7 +34,9 @@ time. The two are deliberately separate.
    review still found, and the suggestions the agent left, and accepts it or
    asks for changes. Changes the user asks for are folded in and shown to them again; they do not reopen the review.
 6. The card is created exactly as accepted, with any files provided attached.
-   Anything that must change on the way goes back to the user to accept.
+   Anything that must change on the way goes back to the user to accept. When it
+   meets the Definition of Request, the `request-met` event fires
+   ([`events.md`](events.md)); the card is never moved by the agent.
 
 Nothing gathered during creation is recorded as a comment; it goes straight into
 the description and acceptance criteria, and any files are attached.
@@ -48,7 +52,7 @@ afresh from the outcome rather than edited from the old ones. A card whose
 criteria have no IDs yet is numbered from `C1`. Where they already carry IDs, a
 rewritten criterion that carries an old one's outcome keeps that ID, the IDs no
 longer carried are retired, and each new criterion takes the next number above
-the highest the card has ever carried. Any question asked while grilling,
+the highest the card has ever carried. Any question asked in request grilling,
 and the user's answer, is a new addition, so it is recorded as a comment and then
 folded in, as with any update.
 
@@ -63,8 +67,9 @@ names:
 - **Interactive**, the default: the addition is recorded and folded, the user
   sees the rewritten sections, and nothing is written to the card's parts until
   they accept them or ask for changes.
-- **Settled**: the requester has already answered — a question asked while the
-  card is grilled, a question the coordinator relays during a development run,
+- **Settled**: the requester has already answered — a question the coordinator
+  relays during a development run, a request question or a change the requester
+  gives while a spec is approved,
   the requester's words on an acceptance not given, or a change the requester
   asks for during a run. The answer is recorded as
   the comment, folded and written without a further round on its wording, the
@@ -73,7 +78,7 @@ names:
   and folded like any other.
 
 So acceptance of the rewritten wording stays for interactive additions made
-outside grilling and outside a development run; the requester's answer is the
+outside a development run and outside approval; the requester's answer is the
 acceptance everywhere else.
 
 ### Additions through an agent
@@ -95,11 +100,10 @@ changed on it and however.
    standard, including whether they carry what in the comments changes the
    outcome and contradict none of them.
 2. **Fold in** any comment whose outcome-changing content is missing. A comment a user added directly is
-   already the record, so folding it adds nothing further. While the card is in
-   a column where folding does not happen, each such comment goes to the user to
-   decide instead, as "Where folding happens" describes.
-3. **Grill** the user about any gap. Their answers are new additions, so they are
-   recorded as comments and then folded in.
+   already the record, so folding it adds nothing further.
+3. **Request grilling.** Ask the user about any gap and any open question on the
+   card. Their answers are new additions, so they are recorded as comments and
+   then folded in.
 4. **Measure again** with one follow-up review of the changed text; whatever it
    still finds goes to the user.
 5. **Accept.** The user sees the rewritten sections, the verdict, anything the
@@ -130,18 +134,11 @@ asks for now — never appending the change or its date.
 
 ### Where folding happens
 
-The profile's board section lists the board columns in which additions are folded,
-which may be all of them or none. While a card is in any other
-column, an addition is still recorded as a comment, but it is not folded on its
-own: the agent tells the user the card is in a column where folding does not
-happen, and the user decides whether to fold it anyway or to raise a new card
-for it. A decision not to fold is itself recorded as a comment, naming any new
-card.
-
-Restructuring an existing card folds whatever column it is in: it is a rewrite
-the user asked for. So does a settled addition: the requester's answer to a
-readiness question, a relayed question or a refusal is folded whatever the
-column, because the answer was given to change the card.
+Everywhere. An addition is folded wherever the card sits on the board; no card
+skill reads the card's column. A card that already has a spec is protected by
+its stamp instead: the fold changes the card's revision, the spec is re-derived
+for what the change feeds, and a build never starts on a spec whose stamp no
+longer matches the card.
 
 ## The spec
 
@@ -153,8 +150,10 @@ its spec change together.
 - Every write to the card through a card skill is followed by re-deriving the
   spec for the conditions the changed part feeds, re-stamping it with the card's
   new revision, and reporting what changed in it. The `grill` skill does the
-  re-derivation. When `grill` itself has the card written, it asks for no
-  re-derivation, because it is already deriving the spec.
+  re-derivation, which first checks the changed card against the Definition of
+  Request. A dispatcher that folds a requester's answer and then has `grill`
+  amend the spec for it asks for no re-derivation, because the amendment
+  carries the spec forward.
 - The spec line is not an addition: `grill` writes it directly, as
   [`card-standard.md`](card-standard.md) says, and records no comment for it.
 - A change to the interface determination or to a scope boundary re-grounds the
@@ -186,7 +185,8 @@ The owner made each of these choices when the process was settled.
   into the description and acceptance criteria, with files attached; none of it
   is recorded as a comment.
 - **Restructuring an existing card splits old from new:** what the card already
-  held is treated as creation; grilling questions and answers are recorded.
+  held is treated as creation; request grilling's questions and answers are
+  recorded.
 - **A user's own comment is not re-recorded** when it is folded in; recording it
   again would duplicate the record.
 - **Re-evaluation runs on request,** not automatically before work starts or on a
@@ -207,20 +207,19 @@ The owner made each of these choices when the process was settled.
   left untaken.
 - **The user is asked before the next review.** A gap only the user can fill is
   never closed by another review.
-- **Each team chooses the columns in which folding happens.** Some teams fold
-  at every stage; others freeze a card once development starts. Outside those
-  columns nothing is lost: the addition is recorded, and the user decides
-  whether it changes the card or becomes a new one.
+- **Folding never depends on the board.** The plugin works a card wherever it
+  sits, and a project moves cards by its own rules, through the events. A card
+  being built is protected by its spec's stamp, not by a frozen column.
 - **Team modules recommend; the user accepts.** A team module's value is a
   judgement on the card, so it goes to the user like any other rewrite.
 - **The set of cards is settled before drafting,** so a split is the user's
   decision before any card exists, not a cleanup after large cards are written.
 - **A settled answer is its own acceptance.** The requester has just said what
-  they want, in their own words — to a grilling question, to a question relayed
+  they want, in their own words — to a question relayed
   during a run, or in refusing an acceptance; a second round on the wording of
   the fold would stall the work for no new decision. The fold is reported as
   done, so drift is still caught, and an objection is folded like any other
-  addition. Interactive additions made outside grilling and outside a run keep
+  addition. Interactive additions made outside a run keep
   the acceptance, because nothing there replaces it.
 - **Criteria keep their IDs through every fold.** What cites a criterion — a
   work order, a comment, a spec, a gap, evidence — must still point at the same

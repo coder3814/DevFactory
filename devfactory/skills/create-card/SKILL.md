@@ -43,6 +43,9 @@ Read these first, in full:
 - `../../references/card-template.md` — the skeleton to fill.
 - `../../agents/card-reviewer.md` — the `card-reviewer` agent you start, its inputs
   and its report.
+- `../../references/definition-of-request.md` — what the finished card must meet
+  before a spec is written from it.
+- `../../references/events.md` — the `request-met` event you fire.
 
 After `begin`, load the profile as "Load the project profile" describes; if there is
 none, run `devfactory end create-card` before you offer `configure-project` and stop.
@@ -65,8 +68,9 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    and the description below it, and run `devfactory criteria-ids --text <file>`;
    fix any duplicate ID it reports before measuring.
 4. Measure the draft as "Measure" describes: start the `card-reviewer` agent by
-   name with the Agent tool for one fresh review, grilling the user for each
-   question it raises, then at most one follow-up by a second `card-reviewer`.
+   name with the Agent tool for one fresh review, then request grilling, asking
+   the user each question it raises and each open question on the draft, then at
+   most one follow-up by a second `card-reviewer`.
    The agent runs on its own model; pass none. During creation nothing is recorded
    as comments; answers go straight into the draft.
 5. Show the user the whole card, with each team field's value and reason, the
@@ -74,7 +78,7 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    and get their acceptance or changes. Changes the user asks for are folded in
    and shown to them again; they do not reopen the review.
 6. Once accepted, create the card on the profile's board exactly as accepted,
-   in the column the profile's stages map Request to, each part in the field
+   wherever the board puts a new card, each part in the field
    the profile maps it to, marked as a parent issue or a sub-issue as the
    binding says, with a parent's sub-issue order set to match its work order.
    Attach any files the user provided, and verify it by reading it back, with
@@ -82,8 +86,9 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    tracker `gh` does not reach, `--text` with the card as read back). A new
    sub-issue of an existing parent changes that parent's work order: make that
    change through `add-to-card` on the parent.
-7. If the card's column is the one the profile's stages map Grilling to, tell
-   the user the next step is `grill`. Do not run it.
+7. If the card meets the Definition of Request, fire `request-met` as "Request
+   grilling" in `working-a-card.md` says, and tell the user the next step is
+   `grill`; do not run it. Otherwise tell the user what keeps it short.
 8. Run `devfactory end create-card`.
 
 ## From an existing card
@@ -95,11 +100,11 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    from the outcome; do not edit the old ones into shape, and give them IDs as
    "From an existing card" in `card-process.md` says, then check them as step 3
    of "From scratch" does, with `criteria-ids --text`. Read each part from
-   wherever the card holds it now, and fold everything in whatever column the
-   card is in. Apply the profile's team modules to the reshaped card.
+   wherever the card holds it now, and fold everything in. Apply the profile's team modules to the reshaped card.
 3. Measure the reshaped card as "Measure" describes: start the `card-reviewer`
-   agent by name with the Agent tool for one fresh review, grilling the user for
-   each question it raises, then at most one follow-up by a second
+   agent by name with the Agent tool for one fresh review, then request
+   grilling, asking the user each question it raises and each open question on
+   the card, then at most one follow-up by a second
    `card-reviewer`. The agent runs on its own model; pass none. Each question
    you ask and the user's answer are new additions to an existing card: record
    the question and the answer, in the user's own words, as a comment on the
@@ -115,8 +120,10 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    any field a part has moved out of; attach any files the user provided, and
    verify it by reading it back, with `devfactory criteria-ids --card <id>`
    confirming its criterion IDs.
-6. If the card has a spec line, re-derive the spec as "Re-derive the spec"
-   describes, naming each part that changed.
-7. Otherwise, if the card's column is the one the profile's stages map Grilling
-   to, tell the user the next step is `grill`. Do not run it.
+6. If the card meets the Definition of Request, fire `request-met` as "Request
+   grilling" in `working-a-card.md` says; otherwise tell the user what keeps it
+   short.
+7. If the card has a spec line, re-derive the spec as "Re-derive the spec"
+   describes, naming each part that changed. Otherwise, when it meets the
+   Definition of Request, tell the user the next step is `grill`; do not run it.
 8. Run `devfactory end create-card`.

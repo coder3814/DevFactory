@@ -45,16 +45,17 @@ The skill runs in one of two modes, and its caller names which:
   directly: you record and fold, show the user the result, and write only once
   they accept it.
 - **Settled**, named by a skill that hands you an answer the requester has
-  already given: a readiness question answered during grilling, a question
-  relayed during a development run, the requester's words on an acceptance
-  not given, or a change the requester asks for during a run. The requester's
+  already given: a request question `grill` handed back, or a change asked for
+  at approval, a question relayed during a development run, the requester's
+  words on an acceptance not given, or a change the requester asks for during a
+  run. The requester's
   answer is the acceptance: you write the fold
   without a further round on its wording, and the requester may object
   afterwards.
 
-A caller may also pass **no-rederive**, which skips step 6. `grill` always calls
-this skill settled with no-rederive, because it carries the spec forward
-itself. Every other caller leaves step 6 to run.
+A caller may also pass **no-rederive**, which skips step 6, when it has `grill`
+amend the spec for the same answer next, because the amendment carries the spec
+forward. Every other caller leaves step 6 to run.
 
 1. **Begin.** Run `devfactory begin add-to-card`.
 2. **Read the card** in full, as "Read a card" describes, after loading the
@@ -65,10 +66,8 @@ itself. Every other caller leaves step 6 to run.
    the question it answers where the caller gives one. Attach any file provided,
    and say in the comment what it shows. Recording happens before anything is
    folded in.
-4. **Fold** the addition into the card's parts, if the card is in one of the
-   profile's fold columns; otherwise the user decides, as "Fold" describes. In
-   settled mode fold whatever the column, as "Where folding happens" says. If it
-   answers an open question, the question
+4. **Fold** the addition into the card's parts, wherever the card sits on the
+   board. If it answers an open question, the question
    leaves open questions and its answer lands where it changes the card. Keep
    every criterion's ID as "Fold" describes. Revise the work order and the
    suggested model and effort where the change calls for it, and apply again
