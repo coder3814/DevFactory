@@ -190,6 +190,39 @@ by `gaps ledger <dir> --card <n> --types <types> --ledger .devfactory/gaps.md`, 
 can still group by request type after the spec is gone. The readiness checker reads the
 ledger and every live spec's `gaps.md` before grilling, and `curate` reads the same set.
 
+### `receipts.md`
+
+The receipts. A check judges once, in the stage that produces what it judges; a later stage
+compares a fingerprint instead of judging again. When a check passes, its skill writes a
+receipt here: the fingerprint of everything the check read, field by field. A later stage
+runs `receipt check` and goes on without the check when it prints `match`; any `differs`
+line, or `no-receipt`, means the check runs as before, and a pass writes a new receipt.
+Only `devfactory receipt write` writes this file and only `devfactory receipt check` reads
+it; nobody edits it by hand.
+
+- **Request**, written by whichever card skill or `grill` gate finds that the card meets the
+  Definition of Request: `receipt write <dir> --check request --card <n>` (or `--text
+  <file>`) `--facts <file>`. Its fields are the Card revision, as "The stamp" defines it;
+  the Card facts, a hash of the facts file; the Standard, the plugin's version; and the
+  Profile, a hash of the profile and its team modules. The facts file holds, one per line,
+  everything else the card reviewer read about the card, as raw values from the tracker:
+  `field <name>: <value>` for each team field, `comment <date> <author>` for each comment,
+  `attachment <name>` for each attachment, `parent <id>` or `sub-issue <id>` for its
+  standing, and `related <what>: <value>` for each piece of related data a team module
+  names. Order and spacing do not matter. A card's first passing review creates this folder
+  to hold the receipt, so the folder exists before `spec.md` does; a folder without
+  `spec.md` is not a spec.
+- **Ready**, written by `grill` when its last check finds the spec Ready, and by
+  `check-ready` when its check finds nothing open: `receipt write <dir> --check ready --specs
+  <file>`, the file naming, one per line, every spec folder the check measured together,
+  written in the folder of the card the check was run for (the parent, for a parent issue).
+  Its fields are the Specs measured; the Specs content, a hash of every file in them except
+  `receipts.md`, with the Status row's value left out, so approval keeps it matching; the Gap
+  sources, a hash of the ledger and every live `gaps.md`; the Standard; the Profile; and the
+  Repo commit, the head the check read. The Repo commit matches while that commit is an
+  ancestor of HEAD and nothing outside the specs path and `.devfactory/` differs between
+  them, since everything under those is fingerprinted on its own.
+
 ### `evidence/`
 
 What the Done judge consumes, added during development. One subfolder per criterion ID
