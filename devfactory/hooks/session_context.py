@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """SessionStart: in a project with a DevFactory profile (at the repository root of cwd), prints
-the profile path, the lifecycle stages and their columns, the skills to use, the decision
+the profile path, the event hooks in .devfactory/hooks/, the skills to use, the decision
 line, the active markers and any stale ones, in under 25 lines. Silent on a missing profile,
 on "Session context: off", and on any error.
 """
@@ -34,14 +34,10 @@ def main():
 
     out = ['DevFactory profile: %s' % os.path.join(root, '.devfactory', 'profile.md')]
 
-    stages = lib.profile_section(root, 'Stages')
-    if stages is not None:
-        column_field = lib.profile_field(root, 'Stages', 'Column field')
-        out.append('Stages (column field: %s):' % column_field if column_field else 'Stages:')
-        for line in [l for l in stages if re.search(r'^\s*\|', l)][:9]:
-            out.append(line.strip())
-    else:
-        out.append('Stages: the profile has no Stages section.')
+    hooks_dir = os.path.join(root, '.devfactory', 'hooks')
+    found = sorted(os.listdir(hooks_dir)) if os.path.isdir(hooks_dir) else []
+    out.append('Event hooks in .devfactory/hooks/: %s.' % ', '.join(found) if found
+               else 'Event hooks: none in .devfactory/hooks/; the plugin moves no card on the board.')
 
     out.append('Skills: use create-card / add-to-card / re-evaluate-card for cards, grill for '
                'specs, coordinate for a parent issue, build for one card, accept, release.')

@@ -25,10 +25,13 @@ never reviews or accepts its own work: a separate reviewer passes it, and the re
 accepts it.
 
 In a parent issue run the session reports to the coordinator, which its brief names; every
-question and report goes there, and the coordinator owns merging and every column move but
-the move to Development. A standalone card reports to the requester directly and moves
-its own card; after its review passes it hands to `accept`, and `release` merges it once.
-"Report" below means to whichever applies.
+question and report goes there, and the coordinator owns merging and every event but
+`development-started`. A standalone card reports to the requester directly and fires its
+own events; after its review passes it hands to `accept`, and `release` merges it once.
+"Report" below means to whichever applies. This skill never moves a card on the board: it
+fires the events in `../../references/events.md` with `devfactory event <name> --card
+<n>`, and the project's hooks move cards as the project wants. A hook that fails is
+reported with its output, and the work carries on.
 
 `devfactory` below means running the plugin's script with `python`: the script is
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
@@ -72,14 +75,13 @@ directory is.
    they are.
 
 3. **Check the status and the stamp.** A build starts only on a spec whose status is
-   `approved`, whatever column the card is in. Run
+   `approved`, wherever the card sits on the board. Run
    `devfactory stamp-check --card <n> --spec <spec dir>` in this worktree (Ready condition
    9.2). When the status is not `approved` or the check fails, start nothing: report the
    status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. A stale
    spec is re-derived through `grill`, never worked around.
 
-4. **Move the card to Development**, the column the profile's Stages map that stage to,
-   through the binding, before the first change.
+4. **Fire `development-started`** for the card, before the first change.
 
 5. **Make the delegated calls up front.** For each decision the spec delegates, make the
    call now, grounded in a recorded decision, the profile, a design system or an existing
@@ -112,11 +114,12 @@ directory is.
       Ready condition failed: <the condition that should have caught it, such as Ready 3.2>
       ```
 
-   3. When the answer arrives, run `grill` in amend mode with the question, the answer word
-      for word and the Ready condition that failed. It writes the spec amendment and the
-      gap entry on this card's branch, and, when the answer changes observable behaviour
-      or scope, the card through `add-to-card` in settled mode, the answer being the
-      requester's acceptance. Report
+   3. When the answer arrives and it changes the card (its outcome, a criterion, its scope
+      or the work order), first put it on the card through `add-to-card` in settled mode
+      with no-rederive, the answer being the requester's acceptance: that is request
+      grilling's fold, never `grill`'s. Then, for every answer, run `grill` in amend mode
+      with the question, the answer word for word and the Ready condition that failed. It
+      writes the spec amendment and the gap entry on this card's branch. Report
       whether the amendment changes what another card depends on, then continue from the
       amended spec.
 
@@ -143,13 +146,13 @@ directory is.
 
 10. **Finish.**
     - **In a parent issue run**, wait. Merge only when the coordinator says it is this
-      card's turn, exactly as the brief says. Move the card to no other column, never merge
+      card's turn, exactly as the brief says. Fire no other event, never merge
       into the integration branch, and never push. After the merge, report and wait again:
       this session, its worktree and its branch stay until `release` reaps them after
       acceptance.
     - **A standalone card**: the review's PASS is its Done verdict, since the change
       reviewer applies every Definition of Done condition but 6, which only a parent issue
-      has. Move the card to Done and stop building without merging: follow `accept`, which
+      has. Fire `done` and stop building without merging: follow `accept`, which
       hands to `release`, and `release` merges the work once.
 
 Stop every agent you started before you finish, and tell each to stop its own.

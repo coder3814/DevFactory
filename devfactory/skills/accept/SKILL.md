@@ -17,7 +17,7 @@ allowed-tools:
 
 The requester judges intent here, once, against the evidence. Nothing is checked by taste:
 each criterion is shown with the artifact its evidence row promised, so a refusal arrives
-already naming what it refuses. Under a coordinator, every read, write and board move below
+already naming what it refuses. Under a coordinator, every read, write and event below
 is done by a session or a subagent it starts, as `coordinate` says.
 
 `devfactory` below means running the plugin's script with `python`: the script is
@@ -50,8 +50,7 @@ one-line reason.
 1. **Load and read.** Load the profile as `working-a-card.md` says. Read the card, or for a
    parent run the parent and every sub-issue the run built, and each spec with its evidence.
    Start only once the result is Done: the Done judge's DONE for a parent run, the change
-   review's PASS for a standalone card. As acceptance begins, move the card, or the parent
-   and every sub-issue the run built, to Acceptance.
+   review's PASS for a standalone card. Leave every card where it sits on the board.
 
 2. **Walk the criteria.** Take the parent's criteria first, then each sub-issue's in the
    work order. For each criterion show its ID and text, the evidence row's artifact (the
@@ -93,7 +92,10 @@ one-line reason.
 
 5. **Record the acceptance.** When every criterion and the whole are accepted, record the
    requester's words verbatim on the card, and in a parent run on the parent and each
-   sub-issue it covers, through `add-to-card` in settled mode. Acceptance ends here; a
+   sub-issue it covers, through `add-to-card` in settled mode. Then fire `accepted` for
+   each card accepted, with `devfactory event accepted --card <n>`, as
+   `../../references/events.md` says; a hook that fails is reported with its output.
+   Acceptance ends here; a
    parent run's sessions, worktrees and branches stay until `release` reaps them.
 
 6. **Hand to release.** `release` runs only when the requester starts it, never on an

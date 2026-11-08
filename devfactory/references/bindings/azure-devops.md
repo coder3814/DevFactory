@@ -18,7 +18,7 @@ file's. The profile's board section records it, and the agent follows it.
 | Project | The project the cards are in |
 | Team | The team whose board the profile is for |
 | Board | That team's board, for example Stories |
-| Board column field | The board's column field, `WEF_<id>_Kanban.Column` |
+
 | Work item type | The type cards are created as, for example User Story |
 | Area path | The area path new cards are created under |
 | Access | How the agent reaches Azure DevOps, in the team's words |
@@ -60,8 +60,10 @@ with no default is one the team must fill.
 
 ## A card's column is per team board
 
-A work item sits in a column of each team board that shows it, and those
-columns can differ. Read a card's column from the profile's board column field,
+The plugin reads and moves no column; this is for a project's event hooks
+([`../events.md`](../events.md)). A work item sits in a column of each team board
+that shows it, and those columns can differ. Read or set a card's column through
+that board's column field, `WEF_<id>_Kanban.Column`,
 never from `System.State` (several columns can share a state) or from
 `System.BoardColumn` (which does not say whose board it describes).
 

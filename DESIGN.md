@@ -80,7 +80,7 @@ of the description body, where the commit is the spec folder's own commit. `gril
 that line after every commit of the spec folder, and the card revision the stamp hashes
 excludes any line of that form, so writing it never makes the spec stale.
 
-The spec is written while the card is in a pre-development column and lands on the
+The spec is written before development starts, wherever the card sits on the board, and lands on the
 integration branch through a commit of its own. During development it is amended on the
 sub-issue's branch and merges with the work. At release its gap entries are appended to the
 project's gap ledger and the folder is deleted, not archived; history keeps it, and the
@@ -120,14 +120,14 @@ One folder per project, `.devfactory/` at the repository root:
 - `modules/`: the team modules the profile names.
 - `gaps.md`: the gap ledger, the gap records of released cards (section 2.7).
 - `.active/`: the marker folder the hooks read (section 8), ignored by git.
+- `hooks/`: the project's event hooks, one script per event it wants acted on (section 3).
 
 `profile.md` holds, each as its own section:
 
 - **The board**: the tracker binding and the entries it asks for; the field each part of a
   card is written to; any additional fields with the team module that works each one (a
-  module may have no field and hold rules for the card as a whole); the columns in which
-  additions are folded; and under Stages, the column field and the column each lifecycle
-  stage maps to.
+  module may have no field and hold rules for the card as a whole). It names no board
+  column: no skill reads a card's column or moves a card.
 - **The work**: where specs live; where recorded decisions live, so the checker can read
   them (they are never kept in the profile); the test gate, the command or procedure that
   proves existing behaviour; the environments available for checkpoints and what each can
@@ -190,18 +190,28 @@ recurring class is asked up front next time, and `curate` reads the same records
 
 | Stage | What happens | Who acts | Exit |
 |---|---|---|---|
-| Request | The card is created or restructured under the card standard. | `create-card`, the owner | Card accepted |
-| Grilling | The spec is drafted from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question once. | `grill`, the readiness checker agent, the owner | Ready earned and stamped |
-| Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved`; the card waits in the Approval column until work starts |
+| Request | The card is created or restructured under the card standard, and request grilling asks the owner every question the card reviewer raises and every open question, until none is left. | `create-card`, `re-evaluate-card`, the card reviewer agent, the owner | The card meets the Definition of Request |
+| Grilling | Specification grilling first checks the card against the Definition of Request, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back to request grilling. | `grill`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
+| Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved` |
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
-| Done | Merged work sits in the Done column. The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
-| Acceptance | The card moves to the Acceptance column. The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
-| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated; the card moves to the Release column. | `release` | Cards closed |
+| Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
+| Acceptance | The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
+| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated. | `release` | Cards closed |
 
-The profile maps each stage to a board column. A project whose board has fewer columns maps
-several stages to one.
+Three definitions gate the work, one per hand-off: the Definition of Request
+(`references/definition-of-request.md`) before a spec is written, the Definition of Ready
+before a build, the Definition of Done before acceptance. Each is checked by an agent where
+the work changes hands, never by where the card sits.
 
-`build` and `coordinate` check the spec's status, not the card's column, before any work
+**The board is the project's.** Every skill works a card wherever it sits, and no skill
+moves one. At each hand-off the skill fires an event — `request-met`, `ready`, `approved`,
+`development-started`, `done`, `accepted`, `released` — with `devfactory event`, which runs
+the project's hook for it in `.devfactory/hooks/` if there is one and does nothing
+otherwise (`references/events.md`). A project that wants its cards moved, to whatever
+columns its board has, writes those hooks; a failed hook is reported and never holds back
+the work.
+
+`build` and `coordinate` check the spec's status before any work
 starts. Results merge into the parent branch in the order they finish, except that a card
 that waits on another merges after the card it waits on. A standalone card is not merged
 when its review passes; `release` merges it once, after acceptance.
@@ -346,16 +356,17 @@ A card changes only through the plugin's card skills, which the tracker guard en
 (section 8). Each skill, after writing the card, re-derives the spec for the conditions the
 changed part feeds, re-stamps, and reports what changed. A change to the interface
 determination or to a scope boundary re-grounds the whole spec. A comment that changes no
-part of the card changes nothing. A direct edit on the tracker is caught by the stamp at the
+part of the card changes nothing. An addition is folded wherever the card sits; a card with
+a spec is protected by its stamp, not by a frozen column. A direct edit on the tracker is caught by the stamp at the
 next check and handled the same way.
 
 `add-to-card` runs in one of two modes, named by its caller:
 
 - **Interactive**, the default: the addition is recorded and folded, and the requester
   accepts the rewritten wording or asks for changes. This holds for additions made outside
-  grilling and outside a run.
-- **Settled**: the requester has already answered (a grilling question, a relayed question,
-  a refusal). The answer is the acceptance; the fold is written without a further round on
+  a run and outside approval.
+- **Settled**: the requester has already answered (a request question handed back from
+  specification grilling, a change asked for at approval, a relayed question, a refusal). The answer is the acceptance; the fold is written without a further round on
   its wording, and the requester may still object.
 
 ### 6.2 During development
@@ -367,8 +378,9 @@ Only two things change a spec in development.
 delegations; a question they answer is decided and logged, not asked. A surviving question
 goes to the coordinator in a fixed shape: the question, the options, a recommendation, and
 the Ready condition that failed. The owner's answer becomes a spec amendment on the
-sub-issue's branch and a gap entry. The card changes only when the answer alters observable
-behaviour or scope, through `add-to-card` in settled mode. A changed dependency re-checks
+sub-issue's branch and a gap entry. When the answer changes the card, it goes onto the card
+first, through `add-to-card` in settled mode, and the amendment then checks the changed card
+against the Definition of Request; `grill` itself never writes the card. A changed dependency re-checks
 the work order. The session rebases on the amended spec and continues.
 
 **An acceptance not given.** The refusal names the criterion the result fails or states the

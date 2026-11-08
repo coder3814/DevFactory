@@ -3,7 +3,8 @@
 **A Claude Code plugin that takes a request from a card on your board to an accepted,
 unattended build, and stops asking you questions along the way.**
 
-You write the request. DevFactory grills it into a specification complete enough that an
+You write the request, and DevFactory grills you until it meets a Definition of Request, with
+every answer in it. It then grills the request into a specification complete enough that an
 agent can build from it without a single further question, proves that claim with a numbered
 Definition of Ready, runs the build as one Claude session per piece of work, judges the
 result against a Definition of Done, and records every miss so the next grilling asks it up
@@ -30,7 +31,9 @@ run.
 title, summary, the issue, scope, supporting information, open questions, acceptance criteria
 with stable IDs, a suggested model and effort, and for a parent issue a work order that says
 which sub-issues run in parallel and which wait on what. Skills create cards, add to them and
-re-evaluate them, always recording what changed and folding it into the card.
+re-evaluate them, always recording what changed and folding it into the card. Every card is
+worked wherever it sits on your board; the plugin moves no card, but fires an event at each
+hand-off that your own `.devfactory/hooks/` scripts can use to move it.
 
 **Grills the card into a spec.** A spec folder sits beside your code, one per card. It holds
 what the card does not: which decisions are delegated to the developer and which are the
@@ -108,8 +111,9 @@ scripts, so two checkers agree by construction.
 ## Reading further
 
 - [DESIGN.md](DESIGN.md): what the plugin is and how each part works, the design of record.
-- `devfactory/references/definition-of-ready.md` and `definition-of-done.md`: the two
-  definitions, condition by condition.
+- `devfactory/references/definition-of-request.md`, `definition-of-ready.md` and
+  `definition-of-done.md`: the three definitions, condition by condition.
+- `devfactory/references/events.md`: the events and how a project hooks them.
 - `devfactory/references/decision-line.md`: what the requester decides and what the developer
   decides.
 - `devfactory/references/profile-template.md`: everything a project configures.

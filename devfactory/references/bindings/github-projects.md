@@ -26,8 +26,9 @@ records it, and the agent follows it.
 | Epics | How an epic is marked, for example issue type Epic or label `epic` |
 | Access | How the agent reaches GitHub, in the team's words |
 
-The single-select field the view is grouped by, usually Status, is the profile's **Column
-field**, written under its Stages section rather than here.
+The single-select field the view is grouped by, usually Status, holds the card's column.
+The plugin reads and moves no column; a project's event hooks
+([`../events.md`](../events.md)) set that field when they move a card.
 
 ## Naming a card
 
@@ -81,7 +82,7 @@ field is one the team must fill unless the team says so.
 
 ## A card's column is per project
 
-A card's column is the value of the profile's column field on the card's item
+A card's column is the value of the view's grouping field on the card's item
 in this project. An issue can sit in several projects, each with its own value,
 and the issue's own open or closed state says nothing about its column. Read the
 value from the item in the profile's project, never from another project's

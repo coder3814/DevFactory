@@ -6,18 +6,6 @@ from .helpers import project, run_hook
 PROFILE = '\n'.join([
     '# Project profile: Example',
     '',
-    '## Stages',
-    '- Column field: Status',
-    '| Stage | Column |',
-    '|---|---|',
-    '| Request | Backlog |',
-    '| Grilling | Specification |',
-    '| Approval | Specification |',
-    '| Development | In progress |',
-    '| Done | In progress |',
-    '| Acceptance | Review |',
-    '| Release | Done |',
-    '',
     '## Hooks',
     '- Session context: on',
     '',
@@ -29,18 +17,24 @@ class SessionContextTest(unittest.TestCase):
         return run_hook(self, 'session_context.py', {'session_id': 'test', 'cwd': cwd,
                                                      'hook_event_name': 'SessionStart', 'source': 'startup'})
 
-    def test_prints_the_profile_stages_skills_decision_line_and_markers_in_under_25_lines(self):
+    def test_prints_the_profile_hooks_skills_decision_line_and_markers_in_under_25_lines(self):
         cwd = project(self, profile=PROFILE)
         lines = self.run_context(cwd).rstrip().split('\n')
         self.assertLess(len(lines), 25, '%d lines' % len(lines))
         self.assertEqual(lines[0], 'DevFactory profile: %s' % os.path.join(cwd, '.devfactory', 'profile.md'))
-        self.assertEqual(lines[1], 'Stages (column field: Status):')
-        self.assertIn('| Stage | Column |', lines)
-        for stage in ['Request', 'Grilling', 'Approval', 'Development', 'Done', 'Acceptance', 'Release']:
-            self.assertTrue(any(l.startswith('| %s |' % stage) for l in lines), stage)
+        self.assertEqual(lines[1], 'Event hooks: none in .devfactory/hooks/; the plugin moves no card on the board.')
         self.assertTrue(any('create-card / add-to-card / re-evaluate-card' in l for l in lines))
         self.assertTrue(any(l.startswith('Decision line: the requester decides') for l in lines))
         self.assertRegex(lines[-1], r'No card skill is running')
+
+    def test_names_the_event_hooks_the_project_has(self):
+        cwd = project(self, profile=PROFILE)
+        hooks = os.path.join(cwd, '.devfactory', 'hooks')
+        os.makedirs(hooks)
+        for name in ['ready.ps1', 'done.py']:
+            open(os.path.join(hooks, name), 'w').close()
+        lines = self.run_context(cwd).rstrip().split('\n')
+        self.assertEqual(lines[1], 'Event hooks in .devfactory/hooks/: done.py, ready.ps1.')
 
     def test_names_an_active_marker_and_reports_a_stale_one(self):
         out = self.run_context(project(self, profile=PROFILE, markers=['grill', ('build', 30)]))

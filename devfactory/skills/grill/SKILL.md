@@ -321,7 +321,7 @@ by New or Re-derive and is not a gap.
    the card.
 3. **Add the gap entry** with `devfactory gaps add <spec dir> --stage <stage> --question
    <question> --condition <condition> --resolved <version>`, each value quoted as one
-   argument: the card's current stage (Approval, Development, Done or Acceptance), the
+   argument: the stage the work is at (Approval, Development, Done or Acceptance), the
    question as asked, the condition the dispatcher named as having let it through, and the
    new version as what resolved it. The script writes the date and the form
    `spec-template.md` lays out; never write the entry by hand.

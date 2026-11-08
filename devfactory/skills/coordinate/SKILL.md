@@ -16,10 +16,10 @@ and archive the sessions a run is made of.
 "Start work on" a parent issue makes the session that receives it the coordinator. It is a
 fresh session, never the one that specified the parent or its sub-issues. It decides what
 runs when, relays between the sessions and the requester, and is answerable for every
-card's column in the run. It builds nothing and reviews nothing, and it runs nothing
-itself, no git or tracker command included: every read, command, board move and change is
+event the run fires. It builds nothing and reviews nothing, and it runs nothing
+itself, no git or tracker command included: every read, command, event and change is
 done by a session or a subagent it starts. The marker calls below are the one exception.
-Subagents suit reads, board moves and worktree clean-up; sessions suit the work the
+Subagents suit reads, events and worktree clean-up; sessions suit the work the
 requester may want to open, steer or stop. Every session it starts runs on the model and
 effort the Suggested model and effort of the card it works on names (the parent's, for work
 across the run), or the profile's default under Sessions when that card names none. Named
@@ -72,7 +72,7 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
 1. Reply "waiting" and end your turn. When messaged to begin, load the `build` skill for this
    card and follow it from its first step, which marks the session as building before
    anything else; its second step is the rebase onto the parent branch named here.
-2. Move the card to the development column as work starts; leave every other column move
+2. The `build` skill fires `development-started` as work starts; leave every other event
    to the coordinator.
 3. A question the spec and the decision line do not answer: stop and report it to the
    coordinator in the shape the `build` skill gives, and wait.
@@ -108,10 +108,11 @@ one-line reason.
 ## Steps
 
 1. **Read the parent.** Have an agent read the parent issue, its work order, and every
-   sub-issue in full with its comments, and report each one's column, spec line, spec
+   sub-issue in full with its comments, and report each one's spec line, spec
    status and what it waits on. A sub-issue that is itself a parent issue is coordinated in
    place: its sub-issues join this run in its own work order. A sub-issue whose spec status
-   is not `approved` is not built in this run, whatever its column: tell the requester which
+   is not `approved` is not built in this run, wherever it sits on the board: tell the
+   requester which
    ones wait and why. The parent stays open until they are done.
 
 2. **Settle readiness.** Follow `check-ready` over the parent, at development start. It ran
@@ -141,8 +142,8 @@ one-line reason.
 
    Run as many at once as the waits allow. If the machine cannot sustain that many at
    once, hold the extra ones back and tell the requester which and why. When the first
-   sub-issue begins, have the parent, and any nested parent whose sub-issue it is, moved to
-   Development.
+   sub-issue begins, have an agent fire `development-started` for the parent, and for any
+   nested parent whose sub-issue it is.
 
 6. **Relay questions.** A question pauses only the sub-issue that raised it. Read it in the
    shape `build` gives it.
@@ -152,13 +153,15 @@ one-line reason.
    - Otherwise put it to the requester as the session gave it: the question, the options
      with the recommendation first, and the Ready condition that failed. When several
      sessions raise the same gap, ask for the rule once.
-   - Send the answer to the session word for word, telling it to apply it through `grill`
-     in amend mode and continue. The amendment writes the spec change and the gap entry on
-     the session's branch, and, when the answer changes observable behaviour or scope, the
-     card through `add-to-card` in settled mode, the answer being the acceptance.
+   - Send the answer to the session word for word, telling it to apply it as step 7.3 of
+     `build` says and continue: when the answer changes the card, through `add-to-card` in
+     settled mode with no-rederive first, the answer being the acceptance; then, for every
+     answer, through `grill` in amend mode, which writes the spec change and the gap entry
+     on the session's branch and never changes the card.
    - When the session reports that the answer changes what another sub-issue waits on, have
-     the work order revised on the parent through `add-to-card` in settled mode, citing the
-     answer that drove it, and re-check what may run.
+     the work order revised on the parent through `add-to-card` in settled mode with
+     no-rederive, citing the answer that drove it, then the parent's spec amended through
+     `grill` in amend mode, and re-check what may run.
 
 7. **Handle a request change.** When the requester changes what a card asks for during the
    run, outside an answer to a question, have the card changed through `add-to-card` in
@@ -184,8 +187,8 @@ one-line reason.
      fast-forward refuses, the session stops and reports it, and nothing is forced.
    - Keep the session, its worktree and its branch: they stay until `accept` ends in
      acceptance, and `release` reaps them.
-   - Then have the sub-issue moved to Done, and a nested parent moved to Done once all its
-     sub-issues are there.
+   - Then have an agent fire `done` for the sub-issue, and for a nested parent once every
+     one of its sub-issues is merged.
 
 9. **Judge the combined result.** When every sub-issue this run builds is merged, start the
    `done-judge` agent by name with the Agent tool; it carries its own definition
@@ -204,7 +207,7 @@ one-line reason.
    is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once the
    findings are merged. After a NOT DONE there are at most two further rounds: when the
    third judgment is still NOT DONE, stop and report it to the requester with its findings,
-   and wait. On DONE, have the parent moved to Done.
+   and wait. On DONE, have an agent fire `done` for the parent.
 
 10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester to start
     `release`, which only the requester can start; it runs in this session, under this
@@ -221,12 +224,12 @@ one-line reason.
 
 ## Throughout
 
-- **Columns.** A move to a stage is a move to the column the profile's Stages map it to.
-  The coordinator is answerable for every card's column in the run, whoever makes the
-  move. After each move that should have happened, the session's own move to
-  Development included, have an agent check the board and make any move that is missing.
-  The parent moves to Release and closes only when every one of its sub-issues is released;
-  until then it stays in Development for those still waiting.
+- **Events.** The run moves no card on the board; it fires the events in
+  [`../../references/events.md`](../../references/events.md), and the project's hooks move
+  cards as the project wants. The coordinator is answerable for every event in the run,
+  whoever fires it: a hook failure a session or agent reports is reported to the
+  requester with its output, and the work carries on. The parent closes only when every
+  one of its sub-issues is released.
 - **Progress.** Report to the requester at each phase: what is running, what is done, what
   is waiting and on what.
 - **Work no card asks for.** Work found along the way that no card asks for becomes a

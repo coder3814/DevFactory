@@ -50,20 +50,6 @@ where, so the readiness checker can read them.
 | <field>, … | `modules/<module>.md` |
 | none | `modules/<rules module>.md` |
 
-## Folding
-Fold additions while the card is in: <column>, <column>, … (or: none)
-
-## Stages
-- Column field: <the tracker field that holds the column>
-| Stage | Column |
-|---|---|
-| Request | <column> |
-| Grilling | <column> |
-| Approval | <column> |
-| Development | <column> |
-| Done | <column> |
-| Acceptance | <column> |
-| Release | <column> |
 
 ## Specs
 - Path: <specs/, or another path>
@@ -133,13 +119,10 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   fields. A module whose field is `none` holds rules the team adds for the card as a whole,
   such as what a kind of card may and may not cover; the card reviewer applies it to the
   card's parts the way it applies a core module, and it recommends no field value.
-- **Folding** lists the board columns in which an addition is folded into the card: any
-  number of them, all or none. Every profile has this section. A project that develops
-  cards through `coordinate` and `build` includes its Development column, because an
-  answer relayed during a run is folded into the card as it arrives.
-- **Stages** maps each of the seven lifecycle stages to the column a card sits in during it.
-  A board with fewer columns maps several stages to one; every stage has a column. A skill
-  moves a card by its stage and reads the column from here.
+- **No board columns.** The profile names no column, and no skill reads one or moves a
+  card between them: every skill works a card wherever it sits. A project that wants cards
+  moved gives the events in [`events.md`](events.md) hooks in `.devfactory/hooks/`, beside
+  the profile.
 
 ### The work
 
@@ -190,8 +173,8 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   integration branch or a parent branch, while neither `release` nor `coordinate` is
   running. The **stamp notice** says, when a prompt names a card that has a spec, whether
   the spec is still current or the card has changed since it earned Ready; it never blocks.
-  The **session context** prints, when a session starts, where the profile is, the stages
-  and their columns, which skill does what, and whether a card skill is running. The guards
+  The **session context** prints, when a session starts, where the profile is, the event
+  hooks the project has, which skill does what, and whether a card skill is running. The guards
   read the markers in `.devfactory/.active/`.
 - **Permissions** lists the allowlist entries `configure-project` writes to the project's
   `.claude/settings.json`, so the skills' reads run without a prompt each time, such as

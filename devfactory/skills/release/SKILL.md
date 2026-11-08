@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, move the cards to Release and close them, curate the gap records, and reap every session, worktree and branch. Use after the requester accepts a card or a parent issue run.
+description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session, worktree and branch. Use after the requester accepts a card or a parent issue run.
 disable-model-invocation: true
 allowed-tools:
   - Read
@@ -26,7 +26,7 @@ live is the profile's Branches and merging, with its Release entry (the release 
 the project's steps, or the skill that holds them), and its standing answers; this skill
 follows them and adds only what every release does. This is the one merge onto the integration branch: a parent run's
 parent branch, or a standalone card's own branch, which `build` left unmerged. Under a
-coordinator, every command, write and board move below is done by a session or a subagent
+coordinator, every command, write and event below is done by a session or a subagent
 it starts, as `coordinate` says. Only the requester starts this skill.
 
 `devfactory` below means running the plugin's script with `python`: the script is
@@ -81,9 +81,11 @@ one-line reason.
    answers it where the profile says so; otherwise ask. Work held rather than released
    keeps its cards in Acceptance until the held release goes out.
 
-5. **Move and close.** Once the release is live, move each released card to Release and
-   close it. A parent issue, nested ones included, moves and closes only when every one of
-   its sub-issues is released.
+5. **Close and fire.** Once the release is live, close each released card and fire
+   `released` for it with `devfactory event released --card <n>`, as
+   `../../references/events.md` says; a hook that fails is reported with its output. A
+   parent issue, nested ones included, closes and fires only when every one of its
+   sub-issues is released.
 
 6. **Curate.** Run `curate`.
 

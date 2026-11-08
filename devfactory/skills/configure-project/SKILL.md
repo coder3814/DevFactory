@@ -1,6 +1,6 @@
 ---
 name: configure-project
-description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one, the columns in which additions are folded, and the column each lifecycle stage maps to), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the default model and effort, which of the plugin's hooks are on, the read commands pre-approved in the project's Claude Code settings, and the standing answers. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
+description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the default model and effort, which of the plugin's hooks are on, the read commands pre-approved in the project's Claude Code settings, and the standing answers. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
 allowed-tools:
   - Read
   - Glob
@@ -52,17 +52,20 @@ AskUserQuestion tool, and wherever the board or the repository suggests an
 answer, propose it as the first option rather than asking from blank.
 
 1. **Begin.** Run `devfactory begin configure-project`. When whoever started you handed
-   over answers the owner has already given (a brief that names the stages, the test gate,
+   over answers the owner has already given (a brief that names the board, the test gate,
    the environments and so on), take each as that step's answer, show it in the summary at
-   step 20, and ask only the questions no answer covers.
+   step 19, and ask only the questions no answer covers.
 2. **Start from what exists.** If the project already has `.devfactory/profile.md`,
    read it and its team modules; change only what the owner asks for, and go
    straight to the steps that cover it. Where it lacks a section the template
    has, offer to fill that section through its step; a profile with no Hooks
-   section runs every hook, as the template's default says. If the project has
+   section runs every hook, as the template's default says. A Folding or Stages
+   section the template no longer has is read by nothing: offer to remove it,
+   and, where the owner wants their old stage moves kept, to write them as event
+   hooks in step 6. If the project has
    instead an old `.card-standard/<board>.md`, read it and its
    `.card-standard/modules/` as the starting point for the board part (tracker,
-   where each part is written, additional fields, folding), and offer to
+   where each part is written, additional fields), and offer to
    migrate it: its entries and modules carried into `.devfactory/`, and
    `.card-standard/` removed once the new profile is written, if the owner
    agrees. Otherwise, take any of the binding's tracker entries, such as
@@ -96,52 +99,50 @@ answer, propose it as the first option rather than asking from blank.
    `../../references/examples/work-type-module.md`, offer it as the draft
    instead, without its opening note. Check its values against the field's
    allowed values, and change it as the team asks.
-6. **Choose the fold columns.** Show the board's columns and ask in which ones
-   additions should be folded into the card, letting the owner choose any
-   number of them, all or none. If the project will develop cards through
-   `coordinate` and `build`, point out what the template's Folding entry says
-   about its Development column.
-7. **Map the stages.** Show the seven lifecycle stages beside the board's
-   columns, propose the column each stage maps to, and ask the owner to confirm
-   or change the mapping. Every stage gets a column; several may share one
-   where the board has fewer columns.
-8. **Place specs and recorded decisions.** Propose `specs/` as the specs path,
+6. **Explain the events.** Say that the plugin moves no card on the board: it
+   fires the events in `../../references/events.md` at each point where the work
+   changes hands, and a project that wants cards moved, or anything else done,
+   adds a hook for that event in `.devfactory/hooks/`. Ask whether the owner
+   wants any hook now; write each one they ask for, as `events.md` says, with
+   the tracker's own CLI and the column names they give, and show it before
+   writing it in step 19.
+7. **Place specs and recorded decisions.** Propose `specs/` as the specs path,
    or another path outside any documentation system the project runs where
    `specs/` would sit inside one, and ask. Look for where the project already
    keeps its decisions, such as a decisions or architecture-decision folder,
    propose that path, and ask; if it keeps none, ask where they are.
-9. **Find the test gate.** Read the project's build files, such as a package
+8. **Find the test gate.** Read the project's build files, such as a package
    manifest's test script, a make target, a solution or project file, or the
    test step of a continuous-integration workflow, and propose the command that
    runs the whole existing test suite. Ask the owner to confirm or correct it.
-10. **List the environments.** Propose environments from what the repository
+9. **List the environments.** Propose environments from what the repository
     reveals, such as a local run configuration, a container compose file or a
     deploy workflow and the targets it deploys to. Ask which environments exist,
     and for each, what a checkpoint there can show, what it cannot, and how it
     is reached, in the project's words, one environment at a time.
-11. **Name the data access.** Propose the populations of existing data a card's
+10. **Name the data access.** Propose the populations of existing data a card's
     rules might act on from what the repository reveals, such as a database
     schema, migrations, data files or seed data, and ask which exist. For each,
     one population at a time, ask how it is read without writing and who may
     read it, in the project's words. Say that a population with no entry leaves
     Ready condition 5 unchecked for any card whose rules act on it. None is a
     valid answer for a project whose cards never act on existing data.
-12. **Extend the concerns.** Show the core fixed concerns and ask whether the
+11. **Extend the concerns.** Show the core fixed concerns and ask whether the
     project adds any, proposing any that its recorded decisions or contributor
     rules make recurring. For each, record what its disposition must answer.
     None is a valid answer.
-13. **Name the owner-step types.** Ask what kinds of step only the requester
+12. **Name the owner-step types.** Ask what kinds of step only the requester
     can take in this project, proposing any the contributor rules or recorded
     decisions name, such as approving a mock-up or running something in a
     protected environment. For each, record what it is and who takes it.
-14. **Set the wireframe fidelity and design review.** Say that the default is a
+13. **Set the wireframe fidelity and design review.** Say that the default is a
     wireframe, which fixes structure, fields, states and interaction but not
     aesthetics, and ask whether the project's design review works at another
     fidelity: a finished mock-up, or a design card of its own whose approved
     mock-up a development card's spec references. Then ask how a wireframe is shown to the requester and approved,
     proposing any procedure or skill the contributor rules name, and record it
     as the Design review line.
-15. **Set branches and merging.** Read the project's contributor rules, if any,
+14. **Set branches and merging.** Read the project's contributor rules, if any,
     such as a contributing guide or agent instructions, and propose the
     integration branch, the worktree layout, how a parent issue's branch is
     named, how a sub-issue's branch is named, who merges what into which branch
@@ -149,13 +150,13 @@ answer, propose it as the first option rather than asking from blank.
     or document it names, for pushing, releasing and closing finished work.
     Where the rules are silent, read the repository's branches and its deploy
     workflows and ask.
-16. **Set the sessions default.** Ask for the default model and effort level
+15. **Set the sessions default.** Ask for the default model and effort level
     (Low, Medium or High) a build session uses when a card suggests none. Say
     that `coordinate` runs a parent issue as one session per sub-issue through
     the Claude desktop app's session tools, so a project that runs parent
     issues needs the Claude desktop app; a standalone card built with `build`
     does not.
-17. **Choose the hooks.** Show the four hooks as the template's "Hooks and
+16. **Choose the hooks.** Show the four hooks as the template's "Hooks and
     permissions" describes them — the tracker guard, the git guard, the stamp
     notice and the session context — say that all four are on by default, and
     ask whether the owner wants any off. Say that the tracker guard covers
@@ -171,7 +172,7 @@ answer, propose it as the first option rather than asking from blank.
     `devfactory markers --clear-stale` removes once past its lifetime; a guard
     that refuses a running skill's write points to an expired marker, which
     that skill's `begin` refreshes.
-18. **Choose the permissions.** Propose the allowlist entries for the
+17. **Choose the permissions.** Propose the allowlist entries for the
     Permissions section, read commands only, in the `Bash(<command> *)`
     spelling: the plugin's script, `Bash(python *devfactory.py*)`; the binding's
     reads, `Bash(gh issue view *)`, `Bash(gh project item-list *)` and
@@ -183,15 +184,16 @@ answer, propose it as the first option rather than asking from blank.
     there is one, and say which entries it already allows. Ask the owner to
     accept, drop or add entries. Refuse any entry that writes, such as a
     tracker edit, a push or a merge: writes are never pre-approved.
-19. **Record standing answers.** Explain what a standing answer is and the rule
+18. **Record standing answers.** Explain what a standing answer is and the rule
     that a question answered twice in gap records becomes one, as the template
     says. Start the section empty unless the owner has answers to record now;
     record each as the question, its answer and where the answer came from.
-20. **Accept and write.** Show the profile and every team module in full, the
+19. **Accept and write.** Show the profile and every team module in full, the
     allow entries to be added to `.claude/settings.json` and the `.gitignore`
     line, and get the owner's acceptance or changes. Once accepted:
     - write the profile and modules to `.devfactory/profile.md` and
-      `.devfactory/modules/` with the Write tool;
+      `.devfactory/modules/`, and each event hook the owner asked for to
+      `.devfactory/hooks/`, with the Write tool;
     - merge the Permissions entries into the project's `.claude/settings.json`
       under `permissions.allow`: read the file with the Read tool, add each
       entry it does not already hold with the Edit tool, and keep every other
@@ -201,8 +203,8 @@ answer, propose it as the first option rather than asking from blank.
       the file if there is none, unless a line already ignores that folder;
     - carry out any migration the owner agreed to in step 2;
     - run `devfactory profile` and confirm it prints the profile you wrote.
-    Commit the profile, the modules, `.claude/settings.json` and `.gitignore` as the
+    Commit the profile, the modules, any hooks, `.claude/settings.json` and `.gitignore` as the
     project's conventions say, or tell the owner to, so the whole team shares one profile.
     Say that hooks and the session context load when a session starts, so this session
     runs without them: the next session in the project is the first with the guards on.
-21. **End.** Run `devfactory end configure-project`.
+20. **End.** Run `devfactory end configure-project`.

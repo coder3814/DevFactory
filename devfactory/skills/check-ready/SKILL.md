@@ -50,7 +50,7 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
 
 1. **Load the profile** as "Load the project profile" in `working-a-card.md` says.
 2. **Gather the cards.** Take the card named, and for a parent issue the parent itself and
-   every sub-issue not in the Release stage's column or closed; a sub-issue that is itself a
+   every sub-issue not yet closed; a sub-issue that is itself a
    parent brings its own sub-issues in the same pass. Read each in full with its comments, as
    "Read a card" in `working-a-card.md` says, and each card's spec folder under the profile's
    specs path, the parent's own spec included.
@@ -73,13 +73,16 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
    your recommendation first, as "Asking the requester" in `grill` says; a gap several cards
    share is asked once, as the rule. Every answer for a stamped spec takes one route: `grill`
    amend, given the question, the answer and the condition the checker named. Amend writes the
-   spec, records the gap at the card's current stage, and writes the card through
-   `add-to-card` when the answer changes it. Re-derive is for card changes, never for answers.
+   spec and records the gap at the stage the work is at; it never changes the card. When the
+   answer changes the card (its outcome, a criterion, its scope or the work order), put it
+   on the card first through `add-to-card` in settled mode with no-rederive, as request
+   grilling's fold, and then run Amend. Re-derive is for card changes, never for answers.
    - For each owner step without a moment, the agreed moment goes under the spec's "Owner
      steps" through `grill` amend, against condition 8.1.
-   - For each work-order fault, the agreed fix goes onto the parent card through `grill`
-     amend on the parent's spec, against condition 8.2; so does a change to what one
-     sub-issue waits on or which may run alongside it, whenever an answer brings one.
+   - For each work-order fault, the agreed fix goes onto the parent card through
+     `add-to-card` in settled mode with no-rederive, then into the parent's spec through
+     `grill` amend, against condition 8.2; so does a change to what one sub-issue waits on
+     or which may run alongside it, whenever an answer brings one.
 6. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up, with the
    fresh check's report and the spec versions it measured, over the cards that changed.
    Settle whatever it still finds with the requester as step 5 says, without another check.
