@@ -1,8 +1,10 @@
 # Definition of Ready
 
 **The purpose of a spec is to carry development to Done without a single additional
-question.** Ready is the claim that this purpose is met: the card, the spec, the profile and
-the repository already hold everything the work will consume. Every condition below is a
+question, and to ask for nothing beyond the card.** The card is the request; the spec says
+how that request will be delivered, and never widens it. Ready is the claim that this
+purpose is met: the card, the spec, the profile and the repository already hold everything
+the work will consume, and the spec holds nothing the card does not ask for. Every condition below is a
 cheaply checkable way a spec commonly falls short of that purpose, and condition 9.3 tests
 the purpose itself, end to end. A spec that meets every condition and still forces a question
 mid-build has failed Ready by definition: the question is a readiness miss, recorded as a gap
@@ -91,6 +93,13 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
 3.3 Scope moves since the last Ready are reflected in both the card and the spec.
     `[machine: the checker reads]`
 
+3.4 The spec asks for nothing beyond the card. `[judgment]`
+    It fails this when it asks for work, behaviour, states, data, tooling or evidence the
+    card's request does not need, changes existing behaviour the card does not ask to
+    change, reopens parts of a surface the card does not change, or takes on work another
+    card holds. Whatever goes beyond the card is cut from the spec, never put to the
+    requester as a question.
+
 ### 4. The fixed concerns are disposed
 
 4.1 Every concern on the list has a disposition; "not applicable, because X" is one.
@@ -101,10 +110,11 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
 
 4.2 Each disposition is true of the request as specified. `[judgment]`
 
-4.3 A non-trivial disposition's demands appear as criteria or evidence rows.
-    `[machine: the checker reads]`
+4.3 A non-trivial disposition's demands appear in the spec's requirements or evidence rows
+    under the criteria they bear on. `[machine: the checker reads]`
     A disposition is non-trivial when it requires something to be done or shown, such as a
-    permission check, a measured limit, or a step before the deploy.
+    permission check, a measured limit, or a step before the deploy. A disposition covers
+    only the change the card asks for; it adds no criterion.
 
 ### 5. The data population is checked
 
@@ -126,7 +136,8 @@ These conditions apply when the request's rules act on existing data.
 
 6.2 When non-trivial, the wireframe is present and approved, and grounds structure, fields,
     states and interaction. `[machine: presence, the checker reads; judgment: grounding]`
-    States include empty, loading, error and populated where the surface has them. The
+    States are those the card's change reaches, such as empty, loading, error or populated;
+    parts of the surface the card does not change are not reopened. The
     wireframe fixes structure, not aesthetics, unless the profile chooses another fidelity.
 
 ### 7. The evidence plan is complete
@@ -141,6 +152,12 @@ These conditions apply when the request's rules act on existing data.
 7.3 Every checkpoint named is one the profile's environments can provide.
     `[machine: the checker reads]`
     A checkpoint names a profile environment whose "can show" covers what the row promises.
+
+7.4 Every row uses the lightest artifact that could fail it, from what the project already
+    has. `[judgment]`
+    A row fails this when it asks for seed data, scripts, review pages or environment
+    capability that a lighter existing check, such as a test or a reading of the change,
+    would prove as well. The spec never asks for a change to the profile.
 
 ### 8. The owner's part is scheduled
 

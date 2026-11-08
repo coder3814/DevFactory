@@ -101,7 +101,9 @@ The prompt that started you gives you all of these. If any is missing, say which
      decisions;
    - on the requester's side: a question for the requester.
    When several cards share a gap, write one question asking for the rule, naming every card
-   it settles. Never ask the requester something the line gives the developer.
+   it settles. Never ask the requester something the line gives the developer. A 3.4
+   finding, something beyond the card, needs no decision: report what to cut, never a
+   question or a delegation.
 10. **Collect** every owner step with no moment in the run (8.1), and, for a parent issue,
    every work-order fault (8.2): a wait citing no allowed reason, a pair marked parallel
    that would collide, a wait holding back work that could run.

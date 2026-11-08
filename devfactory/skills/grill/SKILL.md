@@ -65,6 +65,9 @@ The dispatcher, or the state of the card, says which mode runs:
 
 ## Rules that hold in every mode
 
+**The scope rule.** The spec asks for nothing beyond the card, as condition 3.4 of the
+Definition of Ready says, in every mode. Grilling never changes the profile.
+
 **The review rule.** The readiness checker measures a spec once fresh, then at most once in
 a follow-up. Whatever the follow-up still finds goes to the requester; there is no third
 check, because a fresh checker finds something different every time and repeated rounds
@@ -141,7 +144,8 @@ that, every time you commit the spec folder, write the line again with that comm
    read every sub-issue.
 3. **Read where the card's subject lives**: the code, configuration and data the change
    touches in the repository, and the recorded decisions the profile points to that bear on
-   it. This is grounding for the spec, not material for the card.
+   it. This is grounding for how to deliver the card, not material for the card or a
+   source of further work for the spec.
 4. **Read the gap sources**: the project ledger `.devfactory/gaps.md`, whose entries carry
    the released card's ID, and every live `gaps.md` under the profile's specs path. Note
    each class of question that recurs, and settle that class for this card up front rather
@@ -150,6 +154,9 @@ that, every time you commit the spec folder, write the line again with that comm
    section; a section the template allows to drop goes only when it has nothing to say.
    Cite criteria by their IDs on the card. Version 1 covers everything up to the spec's
    first commit, and the status is `drafting`. While drafting:
+   - Stay inside the card. Before adding anything, ask whether it goes beyond what the card
+     asks for; if it does, leave it out. The spec never expands scope, and never asks the
+     requester whether to.
    - Sort every decision the work needs by `decision-line.md`. One a recorded decision, the
      profile, a design system or an existing pattern already answers is followed, and the
      source named. One on the developer's side goes under "Decisions delegated to the

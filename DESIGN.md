@@ -240,6 +240,8 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
 3.2 Each requirement's edge behaviour is specified, excluded with a reason, or delegated to
     the developer. `[judgment]`
 3.3 Scope moves since the last Ready are reflected in both the card and the spec. `[machine]`
+3.4 The spec asks for nothing beyond the card; whatever does is cut, never asked about.
+    `[judgment]`
 
 **4. The fixed concerns are disposed**
 4.1 Every concern on the list has a disposition; "not applicable, because X" is one.
@@ -247,7 +249,8 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
     release sequencing (does the change need anything before or after the deploy); owner
     steps. The profile may extend it.
 4.2 Each disposition is true of the request as specified. `[judgment]`
-4.3 A non-trivial disposition's demands appear as criteria or evidence rows. `[machine]`
+4.3 A non-trivial disposition's demands appear in the spec's requirements or evidence rows
+    under the criteria they bear on; a disposition adds no criterion. `[machine]`
 
 **5. The data population is checked** (when the request's rules act on existing data)
 5.1 The rules were run read-only, through the profile's Data access entry, against the
@@ -267,6 +270,8 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
     generated and the checkpoint. `[machine]`
 7.2 Every row could be failed by a delivered artifact. `[judgment]`
 7.3 Every checkpoint named is one the profile's environments can provide. `[machine]`
+7.4 Every row uses the lightest artifact that could fail it, from what the project already
+    has; the spec never asks for a profile change. `[judgment]`
 
 **8. The owner's part is scheduled**
 8.1 Every owner step has a moment in the run. `[machine: presence]`
