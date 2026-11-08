@@ -860,6 +860,54 @@ def cmd_profile(opts):
         raise UsageError('profile has no "%s" field%s' % (opts['field'], ' under "%s"' % section if section else ''))
     return [value], 0
 
+# ---------- events ----------
+
+EVENTS = ['request-met', 'ready', 'approved', 'development-started', 'done', 'accepted', 'released']
+EVENT_TIMEOUT_SECONDS = 300
+
+
+def event_runner(file):
+    ext = os.path.splitext(file)[1].lower()
+    if ext == '.py':
+        return [sys.executable, file]
+    if ext == '.ps1':
+        return ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', file]
+    if ext in ('.cmd', '.bat'):
+        return ['cmd', '/c', file]
+    if ext in ('', '.sh'):
+        return ['bash', file]
+    raise UsageError('hook %s: no runner for "%s" files (use .py, .ps1, .cmd, .bat, .sh or none)' % (file, ext))
+
+
+def cmd_event(opts):
+    name = opts['_'][0] if opts['_'] else None
+    if name not in EVENTS:
+        raise UsageError('give an event: %s' % ', '.join(EVENTS))
+    card = opts.get('card')
+    if not card:
+        raise UsageError('give --card <id>')
+    root = project_root()
+    d = os.path.join(root, '.devfactory', 'hooks')
+    found = sorted(f for f in (os.listdir(d) if os.path.isdir(d) else [])
+                   if os.path.splitext(f)[0] == name and os.path.isfile(os.path.join(d, f)))
+    if not found:
+        return ['no-hook %s' % name], 0
+    if len(found) > 1:
+        raise UsageError('more than one hook for %s: %s' % (name, ', '.join(found)))
+    file = os.path.join(d, found[0])
+    env = dict(os.environ, DEVFACTORY_EVENT=name, DEVFACTORY_CARD=card)
+    try:
+        r = subprocess.run(event_runner(file) + [card], cwd=root, env=env, stdin=subprocess.DEVNULL,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=EVENT_TIMEOUT_SECONDS,
+                           creationflags=NO_WINDOW)
+    except subprocess.TimeoutExpired:
+        return ['hook-failed %s timed out after %ds' % (found[0], EVENT_TIMEOUT_SECONDS)], 1
+    except OSError as e:
+        return ['hook-failed %s could not start: %s' % (found[0], e)], 1
+    out = [l for l in (decode(r.stdout) + decode(r.stderr)).replace('\r\n', '\n').split('\n') if l]
+    out.append(('ran %s' if r.returncode == 0 else 'hook-failed %s exit ' + str(r.returncode)) % found[0])
+    return out, 0 if r.returncode == 0 else 1
+
 # ---------- entry point ----------
 
 
@@ -899,6 +947,7 @@ COMMANDS = {
     'end': cmd_end,
     'markers': cmd_markers,
     'profile': cmd_profile,
+    'event': cmd_event,
 }
 
 
