@@ -335,49 +335,62 @@ DevFactory/
   devfactory/
     plugin.json
     skills/
-      configure-project/      the profile: board, specs path, test gate, environments, concerns, conventions
+      configure-project/      the profile: board, specs path, test gate, environments, concerns, conventions, hooks, permissions
       create-card/            from card-standard, plus stable criterion IDs and the two core sections
       add-to-card/            from card-standard, plus the spec re-derivation trigger
       re-evaluate-card/       from card-standard, plus the trigger
       grill/                  draft the spec from the card, code, decisions and data; run the checker; ask; stamp
       check-ready/            the readiness check alone, for a card or every sub-issue of a parent; reports, asks, folds
-      coordinate/             a parent issue: settle, start one session per sub-issue, relay, merge, judge, release
+      coordinate/             a parent issue on the Claude desktop app: settle, start one session per sub-issue, relay, merge, judge, release
       build/                  one card in one session: read spec, decide delegated calls, build, review, report
       accept/                 walk the owner through acceptance against the evidence plan; classify a refusal
       release/                merge, push, release and close as the profile says; delete specs; curate gaps
       curate/                 read gap records across specs; propose checker tuning and profile entries
     agents/
-      README.md               why the card reviewer stays a reference, and that no agent names a model
+      card-reviewer.md        measures a card against the card standard, read-only
       readiness-checker.md    applies the Definition of Ready, fixed inputs, fixed report
       change-reviewer.md      a sub-issue's result against its spec, given what not how
       done-judge.md           applies the Definition of Done to a parent branch
     references/
-      card-standard.md, card-template.md, card-process.md, working-a-card.md, card-reviewer.md, modules/
+      card-standard.md, card-template.md, card-process.md, working-a-card.md, modules/
       definition-of-ready.md, definition-of-done.md, decision-line.md
       spec-template.md, profile-template.md
       bindings/github-projects.md, bindings/azure-devops.md
-      runtime/claude-desktop.md     the session mechanics the coordinator uses; the only runtime-bound file
+    scripts/
+      devfactory.js           the machine checks and helpers: stamp, stamp-check, spec-lint, criteria-ids,
+                              gaps add, gaps check, gaps ledger, evidence-check, begin, end, profile
     hooks/
-      (optional) a PreToolUse hook that refuses raw tracker writes outside the card skills
-  README.md
+      hooks.json              the four hooks, each switched by its line in the profile's Hooks section
+      guard-tracker.js        PreToolUse: refuses a tracker write while no card skill is running
+      guard-git.js            PreToolUse: refuses a push, or a merge or rebase into the integration or a parent
+                              branch, while neither release nor coordinate is running
+      stamp-notice.js         UserPromptSubmit: says whether the spec of a card the prompt names is current
+      session-context.js      SessionStart: the profile, the stages, the skills to use and any active marker
   DESIGN.md
 ```
 
-**Hooks.** Agent hooks cannot judge readiness. Two are worth having, both optional and
-profile-enabled: one that refuses a raw tracker write (`gh issue edit`, `gh issue comment`,
-their Azure DevOps equivalents) from a session not running a card skill, enforcing principle
-"every change goes through the skills"; and one that, at session start in a project with a
-profile, checks the stamp of any spec the prompt names and says if it is stale. Everything
-else is a skill step.
+**Hooks.** Four ship in `hooks/hooks.json`, each switched on or off in the profile's Hooks
+section, all on by default. Two guards block: a tracker write (`gh issue edit`, `gh issue
+comment`, `gh project item-edit`, the Azure DevOps equivalents) outside a running card skill,
+and a `git push` or a merge or rebase onto the integration or a parent branch outside
+`coordinate` or `release` (a `build` marker allows the rebase and fast-forward the coordinator
+asks for). Two inform: a prompt that names a card with a spec gets the result of
+`stamp-check`, and a session in a project with a profile gets the lifecycle, the skills and
+the decision line at start. A skill marks itself running with `begin <skill>` and `end
+<skill>`, which write and remove `.devfactory/.active/<skill>`; the guards read that folder.
 
-**Agents** carry their whole definition inline, name no model, and are started by the skills
-with the model the card suggests or the profile defaults.
+**Scripts.** `scripts/devfactory.js` decides every `[machine]` condition that has a command
+(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`) and holds
+the markers and the profile reader. Node, standard library only. The definitions name the
+command beside each condition.
 
-**The runtime seam.** `coordinate` says "start a session for each sub-issue, briefed to wait;
-message it to begin; read its report; stop it". `references/runtime/claude-desktop.md` says
-how, including the desktop app's constraints (sessions start only on the owner's turn; a
-waiting session replies and ends its turn; messaging works from any turn). A Codex adapter is
-a second file in that folder and a profile entry choosing it.
+**Agents** carry their whole definition inline with `tools` and `model` in their
+frontmatter; the four judging agents run read-only on the most capable model, and skills
+start them by name with the Agent tool. Build sessions run on the card's suggested model and
+effort.
+
+**The coordinator** names the Claude desktop session tools directly and needs the desktop
+app; the card and spec skills run in any Claude Code client.
 
 ## 10. What is carried over, changed and dropped
 
@@ -483,10 +496,46 @@ text above and an entry here disagree, the entry holds.
 - **9 Plugin layout.** The agents folder holds `README.md`, `readiness-checker.md`,
   `change-reviewer.md` and `done-judge.md`. The card reviewer is not an agent definition:
   it stays a brief at `references/card-reviewer.md` that the card skills hand to a
-  read-only agent, and the README says why.
+  read-only agent, and the README says why. (Superseded by the Claude Code-first entries.)
 - **12.1 Fold acceptance.** Restated: acceptance of the rewritten wording stays for
   interactive additions made outside grilling and outside a run; the requester's answer is
   the acceptance everywhere else. `add-to-card` has two modes, named by its caller:
   interactive (the default) and settled (the requester has already answered).
 - **12.5 Hooks.** Deferred: the first version ships no hooks and no hooks folder. The owner
-  has not yet decided; this remains open.
+  has not yet decided; this remains open. (Superseded by the Claude Code-first entries.)
+
+### Claude Code-first (2026-11-07)
+
+The owner decided that DevFactory is designed for Claude Code. Portability to another agent
+system is not a goal, so the plugin uses Claude Code's own mechanisms wherever they do the
+job instead of describing the job in neutral words. These entries supersede any earlier
+entry they contradict.
+
+- **2 Principles, 9.** Replaced by: **Claude Code's mechanisms are used fully: scripts for
+  machine checks, hooks for enforcement, agents with models and tools, skill frontmatter for
+  permissions and context.**
+- **3.5 The definitions.** Every `[machine]` condition is decided by a command of the
+  plugin's script, `scripts/devfactory.js`, which each condition names, never by an agent
+  reading. A machine condition no command covers yet says so, and the definition lists it.
+- **9 Plugin layout.** The plugin gains `scripts/devfactory.js` (the commands `stamp`,
+  `stamp-check`, `spec-lint`, `criteria-ids`, `gaps add`, `gaps check`, `gaps ledger`,
+  `evidence-check`, `begin`, `end` and `profile`) and `hooks/` (`hooks.json` and the four
+  hooks `guard-tracker.js`, `guard-git.js`, `stamp-notice.js` and `session-context.js`). It
+  loses `references/runtime/`, whose session mechanics are folded into `coordinate`. The
+  card reviewer becomes the agent `agents/card-reviewer.md`, carrying its whole brief inline,
+  and `references/card-reviewer.md` is removed; this supersedes the earlier 9 Plugin layout
+  entry. Agents carry a `model` and their `tools` in their frontmatter, and skills start them
+  by name. The tree in section 9 shows the result.
+- **12.5 Hooks.** Resolved, superseding the earlier 12.5 entry: four hooks ship, each
+  enabled by its own line in the profile. The tracker guard and the git guard block; the
+  stamp notice and the session context only inform.
+- **4 The lifecycle and 9 The runtime seam.** The coordinator requires the Claude desktop
+  app and names its session tools directly. There is no runtime seam and no second runtime
+  file.
+- **3.4 The project profile.** The profile gains a Hooks section (one on or off line per
+  hook, all on by default) and a Permissions section (the read-only allowlist entries
+  `configure-project` writes to the project's `.claude/settings.json`), and its Sessions
+  section loses the Runtime line.
+- **11 What BottleNote keeps.** The BottleNote adoption must also rewrite the "Agents and
+  pipelines" section of its `AGENTS.md`, whose neutral-wording, no-model and Codex rules
+  contradict this decision for DevFactory's own skills and agents.

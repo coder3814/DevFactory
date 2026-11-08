@@ -1,6 +1,16 @@
 ---
 name: accept
 description: Walk the requester through accepting a card or a parent issue run, criterion by criterion against the evidence plan, and sort any refusal into a defect, a request change or a new request. Use when a parent run has the Done judge's DONE verdict, or a standalone card has passed its change review.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
+  - Bash(gh issue view *)
+  - Bash(gh project item-list *)
+  - Bash(az boards work-item show *)
+  - Bash(git log *)
+  - Bash(git show *)
 ---
 
 # Accept a card or a parent run
@@ -8,9 +18,14 @@ description: Walk the requester through accepting a card or a parent issue run, 
 The requester judges intent here, once, against the evidence. Nothing is checked by taste:
 each criterion is shown with the artifact its evidence row promised, so a refusal arrives
 already naming what it refuses. Under a coordinator, every read, write and board move below
-is done by a session or an agent it starts, as the runtime file says. Every agent this skill
-starts runs on the model and effort the card's Suggested model and effort names (the
-parent's, in a parent run), or the profile's default under Sessions when it names none.
+is done by a session or a subagent it starts, as `coordinate` says.
+
+`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
+in the plugin's `scripts/` folder.
+
+**Markers.** Run `devfactory begin accept` as your first action and `devfactory end accept`
+as your last. Whenever you end your turn to wait for the requester's answer, or to report,
+run `devfactory end accept` first, and `devfactory begin accept` again when you resume.
 
 The requester is asked one question at a time, the recommended option first with a
 one-line reason.
@@ -53,8 +68,9 @@ one-line reason.
      cut from the parent branch when no sub-issue owns it. Add a gap entry to that
      criterion's spec at stage Acceptance, let through by the Done condition that should
      have caught it, resolved by an amendment that records the fix and its commit and
-     changes nothing else. The fix is reviewed and
-     judged again, and the refused criterion, with any other the fix touched, is asked
+     changes nothing else; write it with `devfactory gaps add <spec dir> --stage
+     Acceptance --question <the refusal> --condition <Done condition> --resolved
+     <version>`, each value quoted as one argument. The fix is reviewed and judged again, and the refused criterion, with any other the fix touched, is asked
      again.
    - **Meets every criterion but is not what was wanted.** A request change. Record the
      requester's words on the card through `add-to-card` in settled mode, the words being
@@ -64,7 +80,8 @@ one-line reason.
      the sub-issue it belongs to, or by a new session cut from the parent branch when no
      sub-issue owns it, as a Done finding is built. The gap entry, at stage Acceptance, notes that
      Ready was earned on a spec that did not ground the outcome, names the Ready condition
-     that let it through, and is resolved by the re-derivation's amendment.
+     that let it through, and is resolved by the re-derivation's amendment; it is written
+     with `devfactory gaps add` the same way, at stage Acceptance.
    - **Wants something the request never asked for.** A new card through `create-card` by
      default, and this card is accepted as specified: carry on with the walk. Amend it into
      this card, as a request change, only when the addition is inseparable from the outcome
@@ -73,6 +90,9 @@ one-line reason.
 5. **Record the acceptance.** When every criterion and the whole are accepted, record the
    requester's words verbatim on the card, and in a parent run on the parent and each
    sub-issue it covers, through `add-to-card` in settled mode. Acceptance ends here; a
-   parent run's sessions, worktrees and branches stay until `release` reaps them. Hand to
-   `release`, quoting the requester's words; whether they also answer a release question is
-   the profile's to say.
+   parent run's sessions, worktrees and branches stay until `release` reaps them.
+
+6. **Hand to release.** `release` runs only when the requester starts it, never on an
+   agent's own invocation. Tell the requester the work is accepted and ready to release,
+   quoting their words, and ask them to start `release` in this session; whether their
+   acceptance also answers a release question is the profile's to say.

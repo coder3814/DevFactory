@@ -1,6 +1,20 @@
 ---
 name: build
 description: Build one card in one session from its approved spec — check the stamp, make the delegated calls up front, build to the criteria with the tests and evidence the spec requires, stop on a question the spec does not answer, and have a separate reviewer pass the result before reporting. Use when a session is briefed to build a card, as a sub-issue in a parent issue run or as a standalone card.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
+  - Bash(gh issue view *)
+  - Bash(gh project item-list *)
+  - Bash(az boards work-item show *)
+  - Bash(git log *)
+  - Bash(git show *)
+  - Bash(git diff *)
+  - Bash(git status *)
+  - Bash(git rev-parse *)
+  - Bash(git merge-base *)
 ---
 
 # Build a card
@@ -15,6 +29,16 @@ question and report goes there, and the coordinator owns merging and every colum
 the move to Development. A standalone card reports to the requester directly and moves
 its own card; after its review passes it hands to `accept`, and `release` merges it once.
 "Report" below means to whichever applies.
+
+`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
+in the plugin's `scripts/` folder.
+
+**Markers.** Run `devfactory begin build` as your first action, and keep the marker for the
+whole build: through every question, wait, review round and the merge, since the git guard
+allows the parent branch's fast-forward only under it. Run `devfactory end build` as your
+last action: in a parent issue run after the merge is reported, and for a standalone card
+once you hand to `accept`, or when you stop with nothing left to do. When you are messaged
+again to fix a finding or a refusal, run `devfactory begin build` before the first change.
 
 ## Read these first, in full
 
@@ -41,10 +65,10 @@ its own card; after its review passes it hands to `accept`, and `release` merges
    they are.
 
 3. **Check the status and the stamp.** A build starts only on a spec whose status is
-   `approved`, whatever column the card is in. Recompute the card's revision as "The stamp"
-   in `spec-template.md` says and compare it with the spec's stamp (Ready condition 9.2).
-   When the status is not `approved` or the stamp does not match, start nothing: report the
-   status, the card's current revision, the stamp's, and what differs, and wait. A stale
+   `approved`, whatever column the card is in. Run
+   `devfactory stamp-check --card <n> --spec <spec dir>` in this worktree (Ready condition
+   9.2). When the status is not `approved` or the check fails, start nothing: report the
+   status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. A stale
    spec is re-derived through `grill`, never worked around.
 
 4. **Move the card to Development**, the column the profile's Stages map that stage to,
@@ -89,17 +113,21 @@ its own card; after its review passes it hands to `accept`, and `release` merges
       whether the amendment changes what another card depends on, then continue from the
       amended spec.
 
-8. **Review.** When the card is built, start a separate reviewer agent following
-   [`../../agents/change-reviewer.md`](../../agents/change-reviewer.md), on read-only tools
-   where you can limit them, with the model and effort the card's Suggested model and
-   effort names, or the profile's default under Sessions when it names none. Give it the
-   path to the plugin's `references/` folder, the card with its criteria, the spec path, the
-   profile path, the base revision (the merge-base of this branch with the parent branch,
-   or with the integration branch for a standalone card, computed at review time), the
-   revision under review, and a clean checkout at that revision; never how the work was
-   built or what you think of it. Fix each finding, commit, and start a fresh review of the
-   new revision. After a FAIL there are at most two further rounds: when the third review
-   still fails, stop and report it with its findings, and wait. A finding that needs a
+8. **Review.** When the card is built, write the criteria file with
+   `devfactory criteria-ids --card <n>` into a file outside the repository, then run
+   `devfactory evidence-check <spec dir> --criteria <file>` and `devfactory gaps check <spec
+   dir>`. Fix every finding they report, or, for an open gap, settle it as step 7 says,
+   before any review starts. Then start the `change-reviewer` agent by name with the Agent
+   tool; it carries its own definition
+   ([`../../agents/change-reviewer.md`](../../agents/change-reviewer.md)), tools and model.
+   Give it the path to the plugin's `references/` folder, the card with its criteria, the
+   spec path, the profile path, the base revision (the merge-base of this branch with the
+   parent branch, or with the integration branch for a standalone card, computed at review
+   time), the revision under review, and a clean checkout at that revision; never how the
+   work was built or what you think of it. Fix each finding, commit, rerun both checks, and
+   start a fresh review of the new revision. After a FAIL there are at most two further
+   rounds: when the third review still fails, stop and report it with its findings, and
+   wait. A finding that needs a
    decision the spec does not record is a question, handled as step 7 says.
 
 9. **Report**: what was built, by criterion ID; the review verdict and how many rounds it

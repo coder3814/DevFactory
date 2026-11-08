@@ -8,11 +8,13 @@ record; where your task and it disagree, follow it and report the disagreement.
 - Match the existing card-standard references in `devfactory/references/`: plain prose,
   wrapped at about 90 columns, present tense, rules stated as what is true or must hold.
 - Rule text names roles ("the requester", "the owner", "the developer", "the coordinator"),
-  never people, products or models. Name no model anywhere; models come from the card's
-  suggested model or the profile.
-- Write for any agent system in neutral wording ("start a session", "start a separate
-  reviewer agent"), never a tool name, except inside `references/runtime/claude-desktop.md`,
-  which is the only runtime-bound file.
+  never people.
+- Write for Claude Code. DevFactory is designed for it alone; portability to another agent
+  system is not a goal. Name Claude Code's tools, hooks and frontmatter wherever they do the
+  job: "start the `card-reviewer` agent with the Agent tool", a script command for a machine
+  check, a hook for enforcement, `allowed-tools` or `context: fork` in a skill's frontmatter.
+  Name no model, except in an agent's frontmatter; a build session's model comes from the
+  card's suggested model or the profile.
 - Project-agnostic. Nothing about BottleNote, wine, admin pages, production databases or
   Azure. When you need an example, invent a neutral one or use a generic shape.
 - Every skill's `SKILL.md` has YAML frontmatter with `name` and a `description` that says
@@ -20,7 +22,7 @@ record; where your task and it disagree, follow it and report the disagreement.
   relative to the skill's directory (`../../references/...`).
 - Every agent definition in `devfactory/agents/` is self-contained (character, inputs, rules,
   report format, checklist), with frontmatter `name`, `description`, `tools` (read-only
-  tools for reviewers and judges) and no `model`.
+  tools for reviewers and judges) and `model`.
 - Concise: say each thing once, in the place a reader needs it, and cross-reference by
   path rather than restating.
 

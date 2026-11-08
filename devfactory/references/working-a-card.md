@@ -10,7 +10,9 @@ Read the project profile, `.devfactory/profile.md` at the project's root, as
 `profile-template.md` beside this file describes, with every team module its
 board section names, from `.devfactory/modules/`. Read the binding the profile's
 board section names, such as `bindings/azure-devops.md` beside this file, and
-reach the tracker exactly as that section's access entry says.
+reach the tracker exactly as that section's access entry says. The plugin's script reads
+the profile the same way the hooks do: `profile` prints it, and `profile --field <name>`
+prints one entry, run as `node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`.
 
 If the project has no profile, touch no tracker: tell the user, and offer to run
 `configure-project` first.
@@ -23,7 +25,8 @@ names of its attachments, the column it is in on the profile's board, whether
 it is a parent issue or a sub-issue and of which parent, as the binding says to
 read it, the spec line if it has one, and the related data any team module
 names. Note the highest criterion ID the card has ever carried, from its
-criteria, its comments and, where the tracker keeps one, its revision history. A card
+criteria, its comments and, where the tracker keeps one, its revision history;
+`criteria-ids --card <n>` lists the IDs the criteria carry now. A card
 written before the profile, or under an earlier one, may hold a part in another
 rich-text field, such as an acceptance criteria field: read every rich-text
 field that holds content, and take each part from wherever it is. Note each
@@ -45,7 +48,8 @@ are fresh when you write rather than remembered from before the research, and
 shape the card from the template. Check each section against its module's rules,
 and hand the card to the reviewer only once you believe it meets the standard.
 Give every criterion its stable ID as the acceptance criteria module says,
-keeping each existing ID with its criterion. Write the suggested model and
+keeping each existing ID with its criterion, and run `criteria-ids --text <file>`
+on the draft, which fails on a duplicate ID. Write the suggested model and
 effort for the card as it now stands, and on a parent issue the work order, with
 the tracker's sub-issue order set to match it when the card is written. On a
 sub-issue, open the description with the line naming its parent.
@@ -58,10 +62,10 @@ field with set values recommend one, with a one-line reason, from its module's
 
 ## Measure
 
-Dispatch a separate agent as the reviewer and tell it to follow
-`card-reviewer.md`, beside this file, exactly. Give it the full paths to
-`card-reviewer.md`, `card-standard.md` and the project profile and its team
-modules, and the card's full content — each part with the field it is in or
+Start the `card-reviewer` agent by name with the Agent tool. It carries its
+whole brief, its read-only tools and its own model, so pass no model and no
+brief. Give it the full paths to `card-standard.md` and the project profile and
+its team modules, and the card's full content — each part with the field it is in or
 will be written to, each team field's value, the related data any team module
 names, whether the card is a parent issue or a sub-issue and of which parent,
 for a parent issue its sub-issues in the tracker's order, and for a draft, the
@@ -70,9 +74,8 @@ whether folding applies to it — always yes for a restructure, which folds
 whatever the column — and for a rewrite, also any comments you will post with
 it, the criteria with their IDs as they stand on the card now, and the highest
 criterion ID the card has ever carried. The reviewer only
-reads and changes nothing; where you can limit its tools, give it read access
-only. Start it on the default model and effort under Sessions in the profile. Never
-measure a card you drafted yourself; the reviewer is always a separate agent.
+reads and changes nothing. Never measure a card you drafted yourself; the
+reviewer is always a separate agent.
 
 A review is one of two kinds, and you tell the reviewer which:
 

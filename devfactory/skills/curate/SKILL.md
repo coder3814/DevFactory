@@ -1,6 +1,14 @@
 ---
 name: curate
 description: Read the project's gap records, the ledger of released specs' gaps and every live spec's record, group the misses by the Ready or Done condition that let them through, and propose checker emphasis, standing answers, missing profile entries and decision-line misses, writing to the profile only what the requester accepts. Use after a release, or when the requester asks what the gap records show.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
+  - Bash(git log *)
+  - Bash(git show *)
+  - Bash(git ls-tree *)
 ---
 
 # Curate the gap records
@@ -9,6 +17,12 @@ Every question asked after Ready, every refused acceptance and every Done-check 
 gap entry naming the condition that let it through. Curating turns those entries into
 proposals, so the next grilling asks up front what this run had to ask mid-build. It writes
 nothing the requester has not accepted.
+
+`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
+in the plugin's `scripts/` folder.
+
+**Markers.** Run `devfactory begin curate` as your first action and `devfactory end curate`
+as your last, including when you stop to ask the requester or to report.
 
 The requester is asked one question at a time, the recommended option first with a
 one-line reason.
@@ -26,11 +40,11 @@ one-line reason.
 
 ## Steps
 
-1. **Load the profile** and the project's Standing answers.
+1. **Load the profile** with `devfactory profile`, and the project's Standing answers.
 
-2. **Collect every gap entry**: the project ledger `.devfactory/gaps.md`, which holds every
-   released spec's entries prefixed with its card's id, and each live `gaps.md` under the
-   profile's specs path on the integration branch. Keep each entry's card, its stage and
+2. **Collect every gap entry** by reading the files themselves: the project ledger
+   `.devfactory/gaps.md`, which holds every released spec's entries prefixed with its card's
+   id, and each live `gaps.md` under the profile's specs path on the integration branch. Keep each entry's card, its stage and
    its date, and its request types: from the ledger heading for a released entry, from
    the spec header for a live one.
 

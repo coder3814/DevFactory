@@ -13,9 +13,11 @@ Every condition is evaluated over three objects:
   after compares exactly these two.
 
 Every check carries a mode, as in [`definition-of-ready.md`](definition-of-ready.md):
-`[machine]` a script or a mechanical reading decides it; `[rubric]` an agent applies a named
-rubric; `[judgment]` an agent exercises adversarial judgment, looking for the way the result
-fails.
+`[machine]` the command its tag names decides it, a command of
+`${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js` or, for 1.1, the profile's own
+test gate, and `[machine: the judge reads]` marks a condition no command covers yet, which
+the Done judge decides by a mechanical reading; `[rubric]` an agent applies a named rubric;
+`[judgment]` an agent exercises adversarial judgment, looking for the way the result fails.
 
 **Intent is not gated.** Whether the result is what the requester wanted is judged by the
 requester at acceptance, criterion by criterion against the evidence, never here.
@@ -24,18 +26,20 @@ requester at acceptance, criterion by criterion against the evidence, never here
 
 ### 1. The tests exist and pass
 
-1.1 The profile's test gate passes at the revision under evaluation. `[machine]`
+1.1 The profile's test gate passes at the revision under evaluation.
+    `[machine: the profile's test gate]`
 
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the
     declared surface unchanged; a data correction has the dry run's counts matching the
-    apply's. `[machine]`
+    apply's. `[machine: the judge reads]`
     A mixed request takes the union of its types' requirements. For "other", the spec states
     the test types.
 
 ### 2. The tests test the spec
 
-2.1 Every criterion is exercised by at least one test or evidence artifact. `[machine]`
+2.1 Every criterion is exercised by at least one test or evidence artifact.
+    `[machine: evidence-check]`
     The link is the criterion ID, cited by the test or by the artifact's folder under
     `evidence/`.
 
@@ -52,7 +56,7 @@ requester at acceptance, criterion by criterion against the evidence, never here
     an interface artifact is compared with.
 
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
-    produced it. `[machine]`
+    produced it. `[machine: evidence-check]`
 
 ### 4. The work is grounded
 
@@ -61,7 +65,7 @@ requester at acceptance, criterion by criterion against the evidence, never here
     A decision the requester owns under [`decision-line.md`](decision-line.md) cannot be
     grounded by the log.
 
-4.2 The gap record is closed: every gap has a resolving amendment. `[machine]`
+4.2 The gap record is closed: every gap has a resolving amendment. `[machine: gaps check]`
 
 4.3 Every disposition is still true of the delivered result. `[judgment]`
     The approach can falsify a disposition that was true of the request, such as a change
@@ -84,3 +88,12 @@ requester at acceptance, criterion by criterion against the evidence, never here
 - **Nothing is checked by taste.** Every check above carries a mode.
 - **Readiness is not re-checked.** That every concern has a disposition and every criterion
   an evidence row is a Ready guarantee; Done checks what the delivered result did to them.
+
+## Machine conditions without a script yet
+
+- **1.2** The test types the request type requires: the Done judge runs and reads them
+  until a command of `scripts/devfactory.js` covers them.
+
+Condition 1.1 needs no script: the profile's test gate command decides it. Condition 2.1 is
+decided by `evidence-check`, given the criterion IDs `criteria-ids` prints, because every
+criterion has an evidence row (Ready 7.1) and so an evidence folder of its own.

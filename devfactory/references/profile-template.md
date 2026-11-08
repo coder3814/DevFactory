@@ -13,6 +13,10 @@ One folder per project, `.devfactory/` at the repository root:
 - `profile.md`: the profile, laid out below.
 - `modules/`: the team modules the profile names.
 - `gaps.md`: the gap ledger, the gap records of released cards, which `release` appends to.
+- `.active/`: the marker folder. A card or spec skill writes a marker here when it begins
+  and removes it when it ends, and the hooks read it to tell whether one is running.
+  `configure-project` adds `.devfactory/.active/` to `.gitignore`, so markers are never
+  committed.
 
 Recorded decisions are not here. They stay where the project keeps them, and the profile says
 where, so the readiness checker can read them.
@@ -97,8 +101,16 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
 - Release: <the project's release steps, or the skill that holds them>
 
 ## Sessions
-- Runtime: `runtime/<file>.md`
 - Default model and effort: <used when a card suggests none>
+
+## Hooks
+- Tracker guard: <on / off>
+- Git guard: <on / off>
+- Stamp notice: <on / off>
+- Session context: <on / off>
+
+## Permissions
+- <an allowlist entry, for example `Bash(gh issue view *)`>
 
 ## Standing answers
 - **<the question, as it was asked>** <the answer, and where it came from>
@@ -153,8 +165,28 @@ Fold additions while the card is in: <column>, <column>, … (or: none)
   holds them. `coordinate`, `build` and `release` follow it. The change reviewer's base
   revision is the merge-base of the card's branch with the parent branch, or with the
   integration branch for a standalone card, at the time of the review.
-- **Sessions** names the file in [`runtime/`](runtime/) the coordinator follows to start,
-  message and stop sessions, and the model and effort used when a card suggests none.
+- **Sessions** is the model and effort used when a card suggests none. The coordinator
+  runs a parent issue as one session per sub-issue through the Claude desktop app's session
+  tools, so a project that runs parent issues needs the Claude desktop app, and
+  `coordinate` says so.
+
+### Hooks and permissions
+
+- **Hooks** switches each of the plugin's four hooks on or off for this project; all four
+  are on by default, and a hook whose line says off does nothing. The **tracker guard**
+  refuses a write to the tracker while no card skill is running, so every card change goes
+  through the card skills. The **git guard** refuses a push, or a merge or rebase into the
+  integration branch or a parent branch, while neither `release` nor `coordinate` is
+  running. The **stamp notice** says, when a prompt names a card that has a spec, whether
+  the spec is still current or the card has changed since it earned Ready; it never blocks.
+  The **session context** prints, when a session starts, where the profile is, the stages
+  and their columns, which skill does what, and whether a card skill is running. The guards
+  read the markers in `.devfactory/.active/`.
+- **Permissions** lists the allowlist entries `configure-project` writes to the project's
+  `.claude/settings.json`, so the skills' reads run without a prompt each time, such as
+  reading a card, listing the board, reading the git log and running the plugin's script.
+  Only read commands belong here; a write to the tracker or to a branch is never
+  pre-approved.
 
 ### Standing answers
 

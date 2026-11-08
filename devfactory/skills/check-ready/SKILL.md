@@ -1,11 +1,29 @@
 ---
 name: check-ready
 description: Check that a card, or a parent issue and every sub-issue not yet released, is still Ready to build without a single further question — catch any card that changed since its spec was stamped, have the readiness checker measure the specs together, settle every question and owner step with the requester one at a time, and fix the work order. Use when a parent issue is created, when a card is added to one, and at development start, when the coordinator runs it before starting any session.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
+  - Bash(gh issue view *)
+  - Bash(gh project item-list *)
+  - Bash(az boards work-item show *)
+  - Bash(git log *)
+  - Bash(git show *)
+  - Bash(git rev-parse *)
+  - Bash(git merge-base *)
 ---
 
 # Check readiness
 
-Paths below are relative to this skill's directory.
+Paths below are relative to this skill's directory. `devfactory` below means
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
+folder.
+
+**Markers.** Run `devfactory begin check-ready` as your first action and
+`devfactory end check-ready` as your last, including when you stop to ask the requester or
+to report.
 
 Read these first, in full:
 
@@ -16,7 +34,8 @@ Read these first, in full:
 - `../../references/working-a-card.md` — loading the profile and reading a card.
 - `../grill/SKILL.md` — the review rule, dispatching the checker, asking the requester and
   folding an answer are defined there and used here as written.
-- `../../agents/readiness-checker.md` — the agent you dispatch, its inputs and its report.
+- `../../agents/readiness-checker.md` — the `readiness-checker` agent you start, its inputs
+  and its report.
 
 This is the readiness check on its own, over specs that `grill` has already written. It runs
 at three moments: when a parent issue is created; when a card is added to a parent issue,
@@ -31,15 +50,16 @@ anything it does find against a Ready spec is a readiness miss, recorded as a ga
    parent brings its own sub-issues in the same pass. Read each in full with its comments, as
    "Read a card" in `working-a-card.md` says, and each card's spec folder under the profile's
    specs path, the parent's own spec included.
-3. **Check each stamp first.** Compute each card's revision as "The stamp" in
-   `spec-template.md` says and compare it with the spec's stamp. A mismatch is reported as
-   "the card changed since Ready" and sends that card to `grill` re-derive, telling it this
-   check runs the readiness check itself. A card with no spec yet is reported as such and
+3. **Check each stamp first.** For each card with a spec, run
+   `devfactory stamp-check --card <n> --spec <spec dir>` from a checkout of the branch the
+   spec lives on. `changed` is reported as "the card changed since Ready", and
+   `not-ancestor` as "the stamped commit is not in this branch's history"; either sends that
+   card to `grill` re-derive, telling it this check runs the readiness check itself. A card with no spec yet is reported as such and
    goes to `grill` new, which earns its Ready before this check continues; for a parent, that
    grills every sub-issue not yet Ready and then the parent, as "A parent issue" in `grill`
    says.
 4. **Check, fresh.** Dispatch the readiness checker as "Dispatching the checker" in `grill`
-   says, on the model it names and with every input it lists, kind fresh, over every card
+   says, linting each spec first and passing every input it lists, kind fresh, over every card
    gathered, at the moment this run is: at creation for a
    parent's creation or an added card, at development start when `coordinate` runs it. Its
    gap sources are the project ledger `.devfactory/gaps.md` and every live `gaps.md` under

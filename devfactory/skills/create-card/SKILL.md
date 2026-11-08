@@ -1,11 +1,31 @@
 ---
 name: create-card
 description: Create a work-tracking card that meets the card standard, either from scratch from the user's idea or by restructuring an existing card in place, with stable criterion IDs, the parent line on a sub-issue, the work order on a parent issue and the suggested model and effort on every card. Use when the user wants to raise, write, draft or create a card, story, ticket, work item, parent issue or sub-issue, or to bring an existing card up to the card standard ("restructure", "rewrite to standard", "convert this card").
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js*)
+  - Bash(gh issue view *)
+  - Bash(gh project item-list *)
+  - Bash(gh api -X GET *)
+  - Bash(az boards work-item show *)
+  - Bash(git log *)
 ---
 
 # Create a card
 
-Paths below are relative to this skill's directory.
+Paths below are relative to this skill's directory. `devfactory` below means
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
+folder. Read the tracker with `gh issue view`, `gh project item-list`, `gh api -X GET` or
+`az boards work-item show`, as the profile's binding says; those reads and the script run
+without a permission prompt.
+
+**Markers.** Run `devfactory begin create-card` as your first action and
+`devfactory end create-card` as your last. Whenever you end your turn to wait for the
+user's answer or acceptance, or stop for any reason, run `devfactory end create-card`
+first, and `devfactory begin create-card` again when you resume. The tracker guard allows
+your card writes only while the marker is there.
 
 Read these first, in full:
 
@@ -18,10 +38,13 @@ Read these first, in full:
   draft, measure, grill, fold, get acceptance, write and verify, and re-derive
   the spec.
 - `../../references/card-template.md` — the skeleton to fill.
+- `../../agents/card-reviewer.md` — the `card-reviewer` agent you start, its inputs
+  and its report.
 
-Load the profile as "Load the project profile" describes. Then decide which way
-in applies. If the user names an existing card (an id, a link, or "this card"),
-restructure it. Otherwise create one from scratch.
+After `begin`, load the profile as "Load the project profile" describes; if there is
+none, run `devfactory end create-card` before you offer `configure-project` and stop.
+Then decide which way in applies. If the user names an existing card (an id, a link, or
+"this card"), restructure it. Otherwise create one from scratch.
 
 ## From scratch
 
@@ -35,12 +58,14 @@ restructure it. Otherwise create one from scratch.
    criteria numbered from `C1`, the parent line on a sub-issue, the work order
    on a parent issue, the suggested model and effort, and the values the
    profile's team modules recommend. Leave out what you do not know rather than
-   inventing it.
-4. Measure the draft as "Measure" describes: one fresh review, grilling the
-   user for each question it raises, then at most one follow-up. Start each
-   reviewer on the profile's default model and effort. During
-   creation nothing is recorded as comments; answers go straight into the
-   draft.
+   inventing it. Write the draft to a scratch file, the title on the first line
+   and the description below it, and run `devfactory criteria-ids --text <file>`;
+   fix any duplicate ID it reports before measuring.
+4. Measure the draft as "Measure" describes: start the `card-reviewer` agent by
+   name with the Agent tool for one fresh review, grilling the user for each
+   question it raises, then at most one follow-up by a second `card-reviewer`.
+   The agent runs on its own model; pass none. During creation nothing is recorded
+   as comments; answers go straight into the draft.
 5. Show the user the whole card, with each team field's value and reason, the
    verdict, anything the follow-up still found and the suggestions you left,
    and get their acceptance or changes. Changes the user asks for are folded in
@@ -49,11 +74,14 @@ restructure it. Otherwise create one from scratch.
    in the column the profile's stages map Request to, each part in the field
    the profile maps it to, marked as a parent issue or a sub-issue as the
    binding says, with a parent's sub-issue order set to match its work order.
-   Attach any files the user provided, and verify it by reading it back. A new
+   Attach any files the user provided, and verify it by reading it back, with
+   `devfactory criteria-ids --card <id>` confirming its criterion IDs (on a
+   tracker `gh` does not reach, `--text` with the card as read back). A new
    sub-issue of an existing parent changes that parent's work order: make that
    change through `add-to-card` on the parent.
 7. If the card's column is the one the profile's stages map Grilling to, tell
    the user the next step is `grill`. Do not run it.
+8. Run `devfactory end create-card`.
 
 ## From an existing card
 
@@ -62,14 +90,17 @@ restructure it. Otherwise create one from scratch.
    the template, as "Shape a draft" describes. That existing content is treated
    as creation: it is not recorded as new comments. Write the criteria afresh
    from the outcome; do not edit the old ones into shape, and give them IDs as
-   "From an existing card" in `card-process.md` says. Read each part from
+   "From an existing card" in `card-process.md` says, then check them as step 3
+   of "From scratch" does, with `criteria-ids --text`. Read each part from
    wherever the card holds it now, and fold everything in whatever column the
    card is in. Apply the profile's team modules to the reshaped card.
-3. Measure the reshaped card as "Measure" describes: one fresh review,
-   grilling the user for each question it raises, then at most one follow-up.
-   Start each reviewer on the profile's default model and effort. Each question you ask and the user's answer are new additions to an
-   existing card: record the question and the answer, in the user's own words,
-   as a comment on the card, then fold the answer in.
+3. Measure the reshaped card as "Measure" describes: start the `card-reviewer`
+   agent by name with the Agent tool for one fresh review, grilling the user for
+   each question it raises, then at most one follow-up by a second
+   `card-reviewer`. The agent runs on its own model; pass none. Each question
+   you ask and the user's answer are new additions to an existing card: record
+   the question and the answer, in the user's own words, as a comment on the
+   card, then fold the answer in.
 4. Show the user the rewritten card, with each team field's value and reason,
    the verdict, anything the follow-up still found and the suggestions you
    left, and get their acceptance or changes. A change they ask for that
@@ -79,8 +110,10 @@ restructure it. Otherwise create one from scratch.
 5. Once accepted, write it to the same card exactly as accepted — never create
    a replacement — with each part in the field the profile maps it to, clearing
    any field a part has moved out of; attach any files the user provided, and
-   verify it by reading it back.
+   verify it by reading it back, with `devfactory criteria-ids --card <id>`
+   confirming its criterion IDs.
 6. If the card has a spec line, re-derive the spec as "Re-derive the spec"
    describes, naming each part that changed.
 7. Otherwise, if the card's column is the one the profile's stages map Grilling
    to, tell the user the next step is `grill`. Do not run it.
+8. Run `devfactory end create-card`.

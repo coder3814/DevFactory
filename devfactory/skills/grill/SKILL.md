@@ -1,11 +1,32 @@
 ---
 name: grill
 description: Turn a card into a Ready spec — draft the specification folder from the card, the code, the recorded decisions and the data population, have the readiness checker measure it, ask the requester each open question once, stamp and commit it and point the card at it; for a parent issue, every sub-issue not yet Ready and then the parent itself — or bring an existing spec back in line after the card changed, or amend it for a question answered after Ready. Use when a card needs its spec, when a card with a spec has changed or its stamp no longer matches, and when a dispatcher hands over an answered question for a Ready spec.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
+  - Bash(gh issue view *)
+  - Bash(gh project item-list *)
+  - Bash(az boards work-item show *)
+  - Bash(git log *)
+  - Bash(git show *)
+  - Bash(git diff *)
+  - Bash(git status *)
+  - Bash(git rev-parse *)
+  - Bash(git merge-base *)
 ---
 
 # Grill a card into a Ready spec
 
-Paths below are relative to this skill's directory.
+Paths below are relative to this skill's directory. `devfactory` below means
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script in the plugin's `scripts/`
+folder.
+
+**Markers.** Run `devfactory begin grill` as your first action and `devfactory end grill` as
+your last. Whenever you end your turn to wait for the requester's answer, or to report, run
+`devfactory end grill` first, and `devfactory begin grill` again when you resume. The card
+guard allows your card writes only while the marker is there.
 
 Read these first, in full:
 
@@ -17,7 +38,8 @@ Read these first, in full:
   "The spec line" there is the line you write.
 - `../../references/card-process.md` — "The spec" and "Updating a card".
 - `../../references/working-a-card.md` — loading the profile and reading a card.
-- `../../agents/readiness-checker.md` — the agent you dispatch, its inputs and its report.
+- `../../agents/readiness-checker.md` — the `readiness-checker` agent you start, its inputs
+  and its report.
 
 The spec is what development reads; the card stays the request. Grilling earns Ready, which
 means a fresh agent could build the card to Done without asking anything. It does not earn
@@ -42,18 +64,28 @@ a follow-up. Whatever the follow-up still finds goes to the requester; there is 
 check, because a fresh checker finds something different every time and repeated rounds
 never converge. Never measure a spec yourself.
 
-**Dispatching the checker.** Start it as a separate agent, with read-only tools where you can
-limit them, on the model the card's Suggested model and effort names (for a parent issue, the
-parent's), or the profile's default model and effort when the card names none. Tell it to
-follow `../../agents/readiness-checker.md` exactly, and pass every input that definition
-requires:
+**The criteria file.** The scripts that check criteria take them as a file of IDs, one per
+line. Write it with `devfactory criteria-ids --card <n>` into a file outside the
+repository; a non-zero exit means a duplicate criterion ID, which you fix on the card before
+going on.
+
+**The card revision.** A card's revision is what `devfactory stamp --card <n>` prints,
+never a hash you compute or a reading of the card. For a card the script cannot read with
+`gh`, write its text to a file as "The stamp" in `spec-template.md` lays it out (the title on
+the first line, then the body, then each other field the profile writes a part to) and pass
+`--text <file>` in place of `--card <n>`.
+
+**Dispatching the checker.** First run `devfactory spec-lint <spec dir> --criteria <file>`
+on every spec the check covers, and fix every finding it reports before going on. Then start
+the `readiness-checker` agent by name with the Agent tool; it carries its own definition,
+tools and model. Pass every input that definition requires:
 
 - the path to the plugin's references folder (`../../references/`);
 - the repository path, the branch to read and its head commit: the integration branch
   before development, the card's own branch during it;
 - for each card checked, its ID, its current text as the tracker holds it, its revision
-  computed as "The stamp" in `spec-template.md` says, and its stage; for a parent issue, the
-  parent and every sub-issue, saying which are released;
+  from `devfactory stamp`, and its stage; for a parent issue, the parent and every
+  sub-issue, saying which are released;
 - each card's spec folder path, and the profile path;
 - the gap sources to read first: the project ledger `.devfactory/gaps.md` and every live
   `gaps.md` under the profile's specs path;
@@ -76,11 +108,12 @@ it records the answer as the comment, folds, writes, verifies and reports the fo
 and the requester may object afterwards; no-rederive, because you carry the spec forward
 yourself. Say which answers were folded into the card and which only into the spec.
 
-**The stamp.** Its three header rows, and how the card revision is computed, are defined in
-`../../references/spec-template.md` under "The stamp"; every skill and agent that compares a
-card with a stamp uses that definition. The Card revision is the card's revision after the
-last write to the card, since every fold changes the text. The Repo commit is the branch head
-the last check reported reading; Amend, which runs no check, keeps the Repo commit it found.
+**The stamp.** Its three header rows are defined in `../../references/spec-template.md`
+under "The stamp". The Card revision is the output of `devfactory stamp`, run after the last
+write to the card, since every fold changes the text. The Repo commit is the branch head the
+last check reported reading; Amend, which runs no check, keeps the Repo commit it found. Run
+`devfactory spec-lint <spec dir> --criteria <file>` after stamping and before every commit of
+the spec folder, and fix every finding first.
 
 **The spec line.** The card carries exactly one spec line, the last line of its description
 body, in the form `Spec: <path> @ <commit>`, where the commit is the spec folder's own
@@ -144,7 +177,8 @@ that, every time you commit the spec folder, write the line again with that comm
    yet earned Ready.
 8. **Check, follow-up.** Dispatch the readiness checker once more, kind follow-up. Ask the
    requester about whatever it still finds, and fold the answers, without another check.
-9. **Stamp** the spec as "The stamp" says, with the branch head the follow-up reported. Set
+9. **Stamp** the spec as "The stamp" says: the Card revision from `devfactory stamp`, the
+   Repo commit the follow-up reported, today's date. Set
    its status to `Ready` when the follow-up found nothing open, or when the requester settled
    everything it found; otherwise it stays `drafting`.
 10. **Commit** the spec folder, and nothing else, as its own commit, landing on the
@@ -185,8 +219,8 @@ that, every time you commit the spec folder, write the line again with that comm
 
 1. **Load the profile and read the card** as New steps 1 and 2 say, without moving the card,
    and read the spec folder in full.
-2. **Find what changed.** Take the changed parts from the dispatcher. When only the stamp
-   says the card changed, compare the card's current text with the revision the stamp
+2. **Find what changed.** Take the changed parts from the dispatcher. When only
+   `devfactory stamp-check --card <n> --spec <spec dir>` says the card changed, compare the card's current text with the revision the stamp
    records, from the tracker's revision history where it keeps one, and otherwise treat
    every part as changed.
 3. **Choose the conditions to re-run.** A change to a scope boundary, or one that changes the
@@ -214,7 +248,7 @@ that, every time you commit the spec folder, write the line again with that comm
    branch head its check reported, and the re-stamp records that head.
 6. **Re-stamp, record and commit.** Bump the version and add a row to "Amendments" naming the
    changed card parts, or the change asked for at approval, that drove it. Re-stamp as "The
-   stamp" says, and commit the spec folder on its own on the branch it lives on: the
+   stamp" says, the Card revision from `devfactory stamp`, and commit the spec folder on its own on the branch it lives on: the
    integration branch before development, the card's own branch during it. Write the spec
    line with that commit.
 7. **Report** what changed in the spec and whether it is still Ready.
@@ -229,12 +263,15 @@ by New or Re-derive and is not a gap.
 2. **Write the amendment**: the answer goes into the spec section it settles, and into the
    card as "Folding an answer" says, when it changes observable behaviour, scope or the work
    order.
-3. **Add the gap entry** to the spec's `gaps.md` as `spec-template.md` lays it out: the date,
-   the card's current stage (Approval, Development, Done or Acceptance), the question as
-   asked, the condition the dispatcher named as having let it through, and the new version
-   as what resolved it.
+3. **Add the gap entry** with `devfactory gaps add <spec dir> --stage <stage> --question
+   <question> --condition <condition> --resolved <version>`, each value quoted as one
+   argument: the card's current stage (Approval, Development, Done or Acceptance), the
+   question as asked, the condition the dispatcher named as having let it through, and the
+   new version as what resolved it. The script writes the date and the form
+   `spec-template.md` lays out; never write the entry by hand.
 4. **Bump the version** and add the "Amendments" row, driven by the gap.
-5. **Re-stamp** the Card revision and date as "The stamp" says, commit the spec folder on
-   its own on the current branch, and write the spec line with that commit.
+5. **Re-stamp** the Card revision, from `devfactory stamp`, and the date, as "The stamp"
+   says, commit the spec folder on its own on the current branch, and write the spec line
+   with that commit.
 6. **Report** the amendment, its version, whether the card changed, and whether the answer
    changes what another card depends on, so the work order is re-checked.

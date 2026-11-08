@@ -1,24 +1,82 @@
 ---
 name: coordinate
-description: Coordinate a parent issue run — settle readiness before anything starts, start one session per sub-issue briefed to wait, set each going as its waits clear, relay its questions, merge results into the parent branch one at a time, have the Done judge check the combined result, then hand it to acceptance, which hands it to release. Use when the requester says to start work on a card that is a parent issue.
+description: Coordinate a parent issue run — settle readiness before anything starts, start one session per sub-issue briefed to wait, set each going as its waits clear, relay its questions, merge results into the parent branch one at a time, have the Done judge check the combined result, then hand it to acceptance, which hands it to release. Use when the requester says to start work on a card that is a parent issue; needs the Claude desktop app.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash(node *devfactory.js *)
 ---
 
 # Coordinate a parent issue
+
+Coordinating needs the Claude desktop app: its session tools are what start, message, stop
+and archive the sessions a run is made of.
 
 "Start work on" a parent issue makes the session that receives it the coordinator. It is a
 fresh session, never the one that specified the parent or its sub-issues. It decides what
 runs when, relays between the sessions and the requester, and is answerable for every
 card's column in the run. It builds nothing and reviews nothing, and it runs nothing
 itself, no git or tracker command included: every read, command, board move and change is
-done by a session or an agent it starts. Every session and agent it starts runs on the
-model and effort the Suggested model and effort of the card it works on names (the
-parent's, for work across the run), or the profile's default under Sessions when that card
-names none.
+done by a session or a subagent it starts. The marker calls below are the one exception.
+Subagents suit reads, board moves and worktree clean-up; sessions suit the work the
+requester may want to open, steer or stop. Every session it starts runs on the model and
+effort the Suggested model and effort of the card it works on names (the parent's, for work
+across the run), or the profile's default under Sessions when that card names none. Named
+agents (`readiness-checker`, `change-reviewer`, `done-judge`, `card-reviewer`) are started
+by name with the Agent tool and carry their own model; any other subagent is started with
+the Agent tool too.
 
-Its session actions are four: start a session for a sub-issue, briefed to wait; message it
-to begin, with an answer, or with its turn to merge; read its report; stop it. The runtime
-file the profile's Sessions section names says how to take each one on the project's
-runtime, what the brief holds, and the constraints the runtime puts on the run.
+`devfactory` below means `node "${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js"`, the script
+in the plugin's `scripts/` folder.
+
+**Markers.** Run `devfactory begin coordinate` as your first action and keep the marker for
+the whole run, through every turn and wait: the git guard allows a push, or a merge into the
+integration or the parent branch, only under it or under `release`. Run
+`devfactory end coordinate` as your last action, at step 11, or when you stop and report the
+run abandoned.
+
+## Sessions
+
+| Action | Tool |
+|---|---|
+| Start a session for a card, briefed to wait | `start_session` with `initiation: "user_asked"`, `context: "fresh"`, its own worktree (`use_worktree: true`) cut from the parent branch (`source_branch`), the `model` and `effort` the card's Suggested model and effort names, the brief below as `prompt`, and the run's goal and constraints as `background`. Record the session id and name the result returns. |
+| Tell a waiting session to begin, send it an answer, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
+| Read a session's report | Its final message arrives as a `<side-sessions-event>` note quoting the report's first 400 characters; read the rest from the card and the spec it updated, or ask the session to restate a part. |
+| Stop a session | `stop_session`, then `archive_session` once its worktree and branch are gone. |
+
+The desktop app shapes the run:
+
+- **Sessions start only on a turn the requester's own message began.** On a turn a
+  notification began, a start is offered as a card that waits for a click, so a run left
+  unattended stalls. Start every sub-issue's session up front, in the requester's turn.
+- **Messaging works from any turn**, so set each session going when its waits are met, and
+  relay answers, from a notification turn.
+- **A session cannot remove the worktree it works in.** Have a separate subagent remove it.
+- **A report is a claim, not proof.** Check the branch, the spec and the card before acting
+  on it or telling the requester it is done.
+- **Link every session you name** as `[title](#local_<id>)` so the requester can open it.
+- Run commands likely to exceed about two minutes in the background. When the requester's
+  message arrives mid-run about something else, answer it; the run continues on its own
+  notifications.
+
+## The build session's brief
+
+The brief names the card, the parent, the spec path, the parent branch and the sub-issue's
+own branch, named by the profile's Sub-issue branch entry, and says, in this order:
+
+1. Reply "waiting" and end your turn. When messaged to begin, rebase onto the parent branch
+   named here, then follow the `build` skill for this card.
+2. Move the card to the development column as work starts; leave every other column move
+   to the coordinator.
+3. A question the spec and the decision line do not answer: stop and report it to the
+   coordinator in the shape the `build` skill gives, and wait.
+4. Do not merge until the coordinator says it is this card's turn; never merge into the
+   integration branch; never push.
+5. When told it is your turn: rebase onto the parent branch, rerun the tests, fast-forward
+   the parent branch from the parent worktree, report, and end your turn. Stay available:
+   you, your worktree and your branch are kept until the run is accepted and released, and
+   the coordinator may message you with a Done-judge finding or an acceptance refusal.
 
 There is one coordinator per run. It never starts a session that acts as a coordinator; a
 parent issue outside this run, such as one created along the way, is a new run the
@@ -30,9 +88,7 @@ one-line reason.
 ## Read these first, in full
 
 - The project profile and the binding it names, as
-  [`../../references/working-a-card.md`](../../references/working-a-card.md) says, and the
-  runtime file its Sessions section names, in
-  [`../../references/runtime/`](../../references/runtime/).
+  [`../../references/working-a-card.md`](../../references/working-a-card.md) says.
 - [`../../references/modules/work-order.md`](../../references/modules/work-order.md): the
   waits and what may run alongside what.
 - [`../../references/decision-line.md`](../../references/decision-line.md): the test every
@@ -62,10 +118,10 @@ one-line reason.
    never into the integration branch.
 
 4. **Start every session up front.** Start one session for each sub-issue this run builds,
-   all of them before the first begins, each briefed to wait with the brief the runtime file
-   gives: the card, the parent, the spec path, the parent branch, and the sub-issue's own
-   branch, named by the profile's Sub-issue branch entry. Each runs on the model and
-   effort its card's Suggested model and effort names, or the profile's default.
+   all of them in the requester's turn and before the first begins, each with
+   `start_session` as "Sessions" says and briefed to wait with the brief above. Each runs on
+   the model and effort its card's Suggested model and effort names, or the profile's
+   default. Link each one for the requester.
 
 5. **Set each going.** Message a session to begin when both hold:
    - every wait the work order gives it is met: a sub-issue that waits on another begins
@@ -124,32 +180,36 @@ one-line reason.
    - Then have the sub-issue moved to Done, and a nested parent moved to Done once all its
      sub-issues are there.
 
-9. **Judge the combined result.** When every sub-issue this run builds is merged, start a
-   separate agent following [`../../agents/done-judge.md`](../../agents/done-judge.md), on
-   read-only tools where you can limit them, with the model the parent's Suggested model
-   and effort names, or the profile's default. Give it the path to the plugin's
+9. **Judge the combined result.** When every sub-issue this run builds is merged, start the
+   `done-judge` agent by name with the Agent tool; it carries its own definition
+   ([`../../agents/done-judge.md`](../../agents/done-judge.md)), tools and model. Give it the
+   path to the plugin's
    `references/` folder, the parent card and spec path, each sub-issue's card and spec path,
    the profile path, the base revision (the integration branch commit the parent branch was
    cut from or last rebased onto), the parent branch's head, and a clean checkout at that
    head, never how the work was built. A finding that belongs to one sub-issue goes to
    that sub-issue's kept session, which fixes it on its branch, rebased onto the parent
    branch; a finding no single sub-issue owns is fixed by a new session started and
-   briefed as a sub-issue's is, in a worktree cut from the parent branch. Either is
+   briefed as a sub-issue's is, in a worktree cut from the parent branch. A session can
+   start only in the requester's turn, so on a notification turn tell the requester the
+   start waits for their click, with the reason. Either is
    reviewed by its change reviewer and merged as step 8 says; a finding that
    is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once the
    findings are merged. After a NOT DONE there are at most two further rounds: when the
    third judgment is still NOT DONE, stop and report it to the requester with its findings,
    and wait. On DONE, have the parent moved to Done.
 
-10. **Accept.** Follow `accept` for the parent run; it hands to `release`, and the
-    coordinator does not follow `release` itself. A refusal `accept` sorts as a defect or a
+10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester to start
+    `release`, which only the requester can start; it runs in this session, under this
+    coordinator's marker and its own, and does every command through a session or a
+    subagent. A refusal `accept` sorts as a defect or a
     request change is built as step 9's findings are: by the kept session of the sub-issue
     it belongs to, or by a new session cut from the parent branch when no sub-issue owns
     it, reviewed and merged the same way, and then goes back to `accept`.
 
 11. **Stop.** Once `release` has reaped, confirm that every session and agent you started
     has stopped, and that each agent stopped its own. Report anything you cannot confirm has
-    stopped.
+    stopped, then run `devfactory end coordinate`.
 
 ## Throughout
 

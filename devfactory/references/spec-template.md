@@ -142,8 +142,16 @@ The stamp is three header rows of `spec.md`:
 Stamp only after the last write to the card, since every fold changes the text. The spec
 line is the exception: `grill` writes it after stamping and committing the spec, and the
 card revision leaves it out.
-Every skill and agent that compares a card with its stamp computes the card revision this
-way, so a mismatch means the card's text changed, never that two readers hashed differently.
+
+The plugin's script is the one implementation, run as
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js`: `stamp --card <n>` prints
+the card revision, and `stamp-check --card <n> --spec <dir>` compares it with the stamp's
+and checks that the stamped Repo commit is an ancestor of the current head (Ready
+condition 9.2). For a tracker the script cannot read, or a part the profile writes to
+another field, the caller writes the card's text in the form above to a file and passes it
+to either command as `--text <file>` in place of `--card`. Every skill, agent and hook that
+compares a card with its stamp runs these commands and computes nothing itself, so a
+mismatch means the card's text changed, never that two readers hashed differently.
 
 ## Sibling files
 
@@ -159,7 +167,9 @@ screens may share one file or take one each, named under Interface surface.
 The gap record. Gaps start at Ready: a question answered before the spec first earns Ready
 is folded into the card or the spec, not recorded as a gap. From Ready onward, every
 question asked, every refused acceptance and every Done-check miss is an entry. Entries are
-appended, newest last:
+appended, newest last, by `gaps add <dir> --stage <stage> --question <text> --condition
+<condition>`, adding `--resolved <version>` when the resolving amendment already exists;
+the command writes this form with the date:
 
 ```markdown
 ## <date> — <stage>
@@ -170,13 +180,15 @@ appended, newest last:
 ```
 
 The stage is the card's lifecycle stage when the entry is made: Approval, Development, Done
-or Acceptance. Done condition 4.2 requires every entry to name its resolving amendment.
+or Acceptance. Done condition 4.2 requires every entry to name its resolving amendment, and
+`gaps check <dir>` fails while any entry is still `open`.
 
 Gap records survive release. At release, before the spec folder is deleted, its `gaps.md`
 entries are appended to the project's ledger, `.devfactory/gaps.md`, each heading prefixed
 with the card ID and the spec's request types (`## <card> (<types>) — <date> — <stage>`),
-so `curate` can still group by request type after the spec is gone. The readiness checker reads the ledger and
-every live spec's `gaps.md` before grilling, and `curate` reads the same set.
+by `gaps ledger <dir> --card <n> --types <types> --ledger .devfactory/gaps.md`, so `curate`
+can still group by request type after the spec is gone. The readiness checker reads the
+ledger and every live spec's `gaps.md` before grilling, and `curate` reads the same set.
 
 ### `evidence/`
 
@@ -188,3 +200,7 @@ holding one line:
 ```text
 revision: <commit> | checkpoint: <environment> | produced by: <command or procedure>
 ```
+
+`evidence-check <dir> --criteria <file>` checks the folder: a non-empty subfolder for every
+criterion ID in the file, one per line as `criteria-ids` prints them, and a sidecar in this
+form beside every artifact (Done conditions 2.1 and 3.2).

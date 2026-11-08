@@ -21,14 +21,18 @@ A spec is **Ready** when every condition holds, evaluated over four objects:
 
 Every check carries a mode:
 
-- `[machine]` a script or a mechanical reading decides it: present or absent, matching or
-  not.
+- `[machine]` a command of the plugin's script decides it: present or absent, matching or
+  not. The tag names the command, as in `[machine: spec-lint]`, run as
+  `node ${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.js <command> ...`; a failed
+  command fails the condition. A condition no command covers yet is tagged
+  `[machine: the checker reads]`: the readiness checker decides it by a mechanical reading,
+  and "Machine conditions without a script yet" at the end lists each one.
 - `[rubric]` an agent applies a named rubric, such as the row of an evidence plan.
 - `[judgment]` an agent exercises adversarial judgment, looking for the way the spec fails.
 
-A mode written `[machine: presence; judgment: adequacy]` splits one condition: the presence
-part is mechanical, the adequacy part is judged. Cheap presence checks come first; the
-end-to-end test, 9.3, is last.
+A mode written `[machine: presence, the checker reads; judgment: adequacy]` splits one
+condition: the presence part is mechanical, the adequacy part is judged. Cheap presence
+checks come first; the end-to-end test, 9.3, is last.
 
 **Ready is not approved.** Ready says the spec is complete enough to build from unattended,
 not that it is what the requester wants. The requester approves the Ready spec once, and
@@ -40,7 +44,7 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
 ### 1. The request is classified
 
 1.1 The spec declares the request type(s): feature, bug fix, refactor, data correction,
-    other. `[machine]`
+    other. `[machine: spec-lint]`
     A mixed request declares every type it has; the Definition of Done takes the union of
     their test requirements.
 
@@ -49,17 +53,17 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     behaviour nobody had, does not fit.
 
 1.3 For a bug fix, the failing scenario at the base revision is stated.
-    `[machine: presence]`
+    `[machine: presence, the checker reads]`
     The scenario names the input or state that triggers the defect and the observed and
     expected behaviour, so the regression test's fails-at-base half can be derived from it.
 
 1.4 For a refactor, the observable surface that must not change is named.
-    `[machine: presence]`
+    `[machine: presence, the checker reads]`
     Any requested change to that surface is listed and excluded from it.
 
 ### 2. The criteria are addressable and testable
 
-2.1 Every criterion carries a stable ID. `[machine]`
+2.1 Every criterion carries a stable ID. `[machine: criteria-ids]`
     IDs are `C1`, `C2`, and so on, survive amendment, and are never reused once removed.
 
 2.2 Every criterion names observable behaviour a test could exercise and a result could
@@ -67,12 +71,13 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     A criterion fails this when it describes internal structure, when no delivered result
     could contradict it, or when it holds only for one implementation.
 
-2.3 No criterion is marked provisional, and the card has no open question. `[machine]`
+2.3 No criterion is marked provisional, and the card has no open question.
+    `[machine: the checker reads]`
 
 ### 3. The boundaries are defined
 
 3.1 Exclusions and deferrals are listed, each with a reason.
-    `[machine: presence; judgment: adequacy]`
+    `[machine: presence, the checker reads; judgment: adequacy]`
     An exclusion is out of scope for good; a deferral is kept alive elsewhere and says where.
     A reason is adequate when it is true of the request and explains the choice, so a
     considered exclusion can be told from one never considered.
@@ -84,19 +89,20 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     [`decision-line.md`](decision-line.md) covers.
 
 3.3 Scope moves since the last Ready are reflected in both the card and the spec.
-    `[machine]`
+    `[machine: the checker reads]`
 
 ### 4. The fixed concerns are disposed
 
 4.1 Every concern on the list has a disposition; "not applicable, because X" is one.
-    `[machine: presence]`
+    `[machine: presence, spec-lint]`
     The core list: existing data changed; security; performance; release sequencing (does
     the change need anything before or after the deploy); owner steps. The profile may
     extend it. Silence is not a disposition.
 
 4.2 Each disposition is true of the request as specified. `[judgment]`
 
-4.3 A non-trivial disposition's demands appear as criteria or evidence rows. `[machine]`
+4.3 A non-trivial disposition's demands appear as criteria or evidence rows.
+    `[machine: the checker reads]`
     A disposition is non-trivial when it requires something to be done or shown, such as a
     permission check, a measured limit, or a step before the deploy.
 
@@ -105,7 +111,7 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
 These conditions apply when the request's rules act on existing data.
 
 5.1 The rules were run read-only against the population the spec names, with counts per
-    rule. `[machine: presence]`
+    rule. `[machine: presence, the checker reads]`
 
 5.2 Every row no rule covers is resolved by a rule, an exclusion or a delegation.
     `[judgment]`
@@ -113,31 +119,32 @@ These conditions apply when the request's rules act on existing data.
 ### 6. The interface surface is grounded
 
 6.1 The determination is stated: non-trivial, trivial because, or not applicable because.
-    `[machine]`
+    `[machine: the checker reads]`
     Non-trivial means the work renders or serves something a person looks at with more than
     one obvious element to lay out. The determination is re-derived after any change to the
     card, not latched.
 
 6.2 When non-trivial, the wireframe is present and approved, and grounds structure, fields,
-    states and interaction. `[machine: presence; judgment: grounding]`
+    states and interaction. `[machine: presence, the checker reads; judgment: grounding]`
     States include empty, loading, error and populated where the surface has them. The
     wireframe fixes structure, not aesthetics, unless the profile chooses another fidelity.
 
 ### 7. The evidence plan is complete
 
 7.1 Every criterion has an evidence row naming artifact, what it shows, condition, how it is
-    generated and the checkpoint. `[machine]`
+    generated and the checkpoint. `[machine: spec-lint --criteria]`
 
 7.2 Every row could be failed by a delivered artifact. `[judgment]`
     A row fails this when what it promises to show would appear whether or not the criterion
     holds, such as a log line written before the behaviour runs.
 
-7.3 Every checkpoint named is one the profile's environments can provide. `[machine]`
+7.3 Every checkpoint named is one the profile's environments can provide.
+    `[machine: the checker reads]`
     A checkpoint names a profile environment whose "can show" covers what the row promises.
 
 ### 8. The owner's part is scheduled
 
-8.1 Every owner step has a moment in the run. `[machine: presence]`
+8.1 Every owner step has a moment in the run. `[machine: presence, spec-lint]`
     A moment is a point a session can recognise, such as before the build starts, after a
     named sub-issue merges, or after the deploy.
 
@@ -148,10 +155,11 @@ These conditions apply when the request's rules act on existing data.
 
 ### 9. The spec grounds the work
 
-9.1 Every project binding the spec relies on exists in the profile. `[machine]`
+9.1 Every project binding the spec relies on exists in the profile.
+    `[machine: the checker reads]`
 
 9.2 The spec is stamped with the card revision and repo commit it was checked against, and
-    the card matches the stamp. `[machine]`
+    the card matches the stamp. `[machine: stamp-check]`
     The stamp's Repo commit is the branch head the checker read. The condition holds when
     the card's revision, computed as "The stamp" in [`spec-template.md`](spec-template.md)
     says, equals the stamp's, and the stamped commit is an ancestor of the current branch
@@ -180,3 +188,19 @@ These conditions apply when the request's rules act on existing data.
 - **The per-spec rubric set and its instantiation**: the profile binds the few terms that
   vary.
 - **The existing-behaviour gate as a spec entry**: it is a profile entry, the test gate.
+
+## Machine conditions without a script yet
+
+These `[machine]` conditions are decided by the readiness checker's mechanical reading
+until a command of `scripts/devfactory.js` covers them: 1.3, 1.4, 2.3, 3.1 (presence), 3.3,
+4.3, 5.1, 6.1, 6.2 (presence), 7.3 and 9.1.
+
+Three conditions are covered by a command only in part, and the checker reads the rest:
+
+- **2.1** `criteria-ids` fails on a duplicate ID; a criterion line with no ID at all is
+  found by reading.
+- **4.1** `spec-lint` fails a blank Disposition cell; a missing row for a concern the
+  profile adds is found by reading.
+- **7.1** `spec-lint --criteria`, given the IDs `criteria-ids` prints, fails a criterion
+  with no evidence row and a row for an unknown ID; a row with an empty column is found by
+  reading.
