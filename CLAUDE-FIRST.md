@@ -68,7 +68,7 @@ effort only for build sessions; agents keep their own `model`.
 ## Skills (`skills/*/SKILL.md`)
 
 Frontmatter may use `allowed-tools` (pre-approve the reads the skill makes, such as
-`Bash(gh issue view *)`, `Bash(gh project item-list *)`, `Bash(git log *)`, `Bash(python *devfactory.py*)`), `disable-model-invocation: true` for `release`. Every card
+`Bash(gh issue view *)`, `Bash(gh project item-list *)`, `Bash(git log *)`, `Bash(python *devfactory.py*)`). Every card
 and spec skill calls `begin <skill>` as its first action and `end <skill>` as its last,
 including on the path where it stops to ask. Every `[machine]` condition is checked by the
 script named in the definitions, never by reading. The coordinator names the desktop
@@ -78,7 +78,7 @@ session tools directly (`start_session`, `SendMessage`, `stop_session`,
 ## Decisions taken during the build
 
 - `context: fork` is not used: a forked skill cannot start agents or ask the requester, which is what `check-ready` and `curate` do.
-- `release` has `disable-model-invocation: true`, so `accept` and `coordinate` end by asking the owner to run it; pushing stays the owner's word.
+- `release` is model-invocable, but runs only on the requester's explicit word in the conversation: `accept` and `coordinate` ask whether to release and start it themselves on a yes. `disable-model-invocation: true` was dropped because it refused the session's call even after the requester said to release. Pushing stays the requester's word inside `release`.
 - The agents' README moved to `references/agents.md`, because plugin validation treats every file in `agents/` as an agent.
 - Git guard semantics: the guard blocks pushes and changes to a protected branch (the integration branch or a parent branch), whether HEAD is on it or `git -C` points into its worktree; it never blocks a rebase or merge of a protected branch into an unprotected one. `release` and `coordinate` allow everything, `build` the fast-forward into a parent branch, and `grill` its spec commit and fast-forward onto the integration branch. So a build session fast-forwards with `git -C <parent worktree> merge --ff-only <branch>` from its own worktree, never by changing into the parent worktree, and `grill` holds its marker through its spec commit and spec line, ending it only after both. The spec commit lands directly on the integration branch when the profile's branching allows a direct commit, else on a branch fast-forwarded under `grill`'s marker.
 - A coordinated build session runs `begin build` first, then rebases onto the parent branch, then follows `build`.

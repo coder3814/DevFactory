@@ -1,7 +1,6 @@
 ---
 name: release
-description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session, worktree and branch. Use after the requester accepts a card or a parent issue run.
-disable-model-invocation: true
+description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session, worktree and branch. Use only when the requester says in the conversation to release a card or a parent issue run they have accepted; never on an agent's own judgment.
 allowed-tools:
   - Read
   - Glob
@@ -27,7 +26,9 @@ the project's steps, or the skill that holds them), and its standing answers; th
 follows them and adds only what every release does. This is the one merge onto the integration branch: a parent run's
 parent branch, or a standalone card's own branch, which `build` left unmerged. Under a
 coordinator, every command, write and event below is done by a session or a subagent
-it starts, as `coordinate` says. Only the requester starts this skill.
+it starts, as `coordinate` says. This skill runs only on the requester's explicit instruction
+in the conversation, never on an agent's own judgment: a session may invoke it once the
+requester has said to release, and never otherwise.
 
 `devfactory` below means running the plugin's script with `python`: the script is
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it

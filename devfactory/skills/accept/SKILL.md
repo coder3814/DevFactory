@@ -102,7 +102,8 @@ one-line reason.
    Acceptance ends here; a
    parent run's sessions, worktrees and branches stay until `release` reaps them.
 
-6. **Hand to release.** `release` runs only when the requester starts it, never on an
-   agent's own invocation. Tell the requester the work is accepted and ready to release,
-   quoting their words, and ask them to start `release` in this session; whether their
+6. **Hand to release.** `release` runs only on the requester's word, never on an agent's
+   own judgment. Tell the requester the work is accepted and ready to release, quoting
+   their words, and ask whether to release; when they say yes, start `release` in this
+   session yourself. Whether their
    acceptance also answers a release question is the profile's to say.

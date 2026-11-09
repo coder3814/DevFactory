@@ -211,8 +211,8 @@ one-line reason.
    and wait. On DONE, have an agent fire `done` for the parent and for each nested
    parent in it.
 
-10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester to start
-    `release`, which only the requester can start; it runs in this session, under this
+10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester whether to
+    release; when they say yes, start `release` yourself, never on your own judgment. It runs in this session, under this
     coordinator's marker and its own, and does every command through a session or a
     subagent. A refusal `accept` sorts as a defect or a
     request change is built as step 9's findings are: by the kept session of the sub-issue
