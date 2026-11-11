@@ -112,7 +112,11 @@ answer, propose it as the first option rather than asking from blank.
    or another path outside any documentation system the project runs where
    `specs/` would sit inside one, and ask. Look for where the project already
    keeps its decisions, such as a decisions or architecture-decision folder,
-   propose that path, and ask; if it keeps none, ask where they are.
+   propose that path, and ask; if it keeps none, ask where they are. When the
+   project's own rules have work commit notes beside the code that are not code,
+   such as change notes for a documentation system, propose their folder as the
+   Specs entry's Not code paths, so a note written after evidence was captured
+   does not make that evidence stale, and ask.
 8. **Find the test gate.** Read the project's build files, such as a package
    manifest's test script, a make target, a solution or project file, or the
    test step of a continuous-integration workflow, and propose the command that

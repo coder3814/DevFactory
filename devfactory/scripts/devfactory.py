@@ -683,6 +683,31 @@ def in_work_tree(d):
         return False
 
 
+def not_code_excludes(root, d):
+    """Exclude pathspecs for what never counts as code when judging evidence stale: the spec
+    folder, the profile's specs path, .devfactory/, and the profile's Specs "Not code" paths."""
+    spec_rel = os.path.relpath(os.path.abspath(d), root).replace(os.sep, '/')
+    paths = [spec_rel, specs_path(root), '.devfactory']
+    try:
+        extra = profile_field(read_profile(root), 'Specs', 'Not code')
+    except UsageError:
+        extra = None
+    for p in (extra or '').split(','):
+        p = p.strip().strip('`').strip().replace('\\', '/').strip('/')
+        if p and not p.startswith('<'):
+            paths.append(p)
+    return [':(exclude)%s' % p for p in paths]
+
+
+def code_changed_since(root, base, excludes):
+    """The code files the change set touches: changed from the merge-base of base and HEAD to
+    HEAD, outside the excludes."""
+    files = git_lines(['diff', '--name-only', '-z', '%s...HEAD' % base, '--', '.'] + excludes, root, '\0')
+    if files is None:
+        raise UsageError('git diff %s...HEAD failed' % base)
+    return set(files)
+
+
 def cmd_evidence_check(opts):
     d = opts['_'][0] if opts['_'] else None
     if not d:
@@ -693,6 +718,28 @@ def cmd_evidence_check(opts):
     plan = planned_checkpoints(d)
     in_git = in_work_tree(d)
     revisions = {}
+    base = opts.get('base')
+    stale = {}
+    if base and in_git:
+        if git_lines(['rev-parse', '--verify', '--quiet', base + '^{commit}'], d) is None:
+            raise UsageError('--base %s is not a commit in this repository' % base)
+        root = git_lines(['rev-parse', '--show-toplevel'], d)[0]
+        excludes = not_code_excludes(root, d)
+        change_set = code_changed_since(root, base, excludes)
+
+    def stale_finding(rev):
+        """Evidence is stale when a code file the change set touches differs between the
+        artifact's revision and HEAD; a capture at the base or before it is exempt."""
+        if rev not in stale:
+            stale[rev] = None
+            if run_process(['git', 'merge-base', '--is-ancestor', rev, base], cwd=d).returncode != 0:
+                since = git_lines(['diff', '--name-only', '-z', rev, 'HEAD', '--', '.'] + excludes, root, '\0') or []
+                hit = sorted(change_set.intersection(since))
+                if hit:
+                    shown = ', '.join(hit[:3]) + (' and %d more' % (len(hit) - 3) if len(hit) > 3 else '')
+                    stale[rev] = '%d code file%s the change set touches changed after it (%s), so capture it again at the current revision' % (
+                        len(hit), '' if len(hit) == 1 else 's', shown)
+        return stale[rev]
 
     def revision_finding(rev):
         if rev not in revisions:
@@ -742,6 +789,10 @@ def cmd_evidence_check(opts):
             problem = revision_finding(rev) if in_git else None
             if problem:
                 out.append('sidecar-revision evidence/%s/%s names %s, which %s' % (i, side, rev, problem))
+            elif base and in_git:
+                late = stale_finding(rev)
+                if late:
+                    out.append('evidence-stale evidence/%s/%s names %s, but %s' % (i, side, rev, late))
             point = norm_checkpoint(fields.get('checkpoint'))
             if i in plan and point not in plan[i]:
                 out.append('sidecar-checkpoint evidence/%s/%s names checkpoint "%s", but the evidence plan gives %s for %s'

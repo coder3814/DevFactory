@@ -53,6 +53,8 @@ where, so the readiness checker can read them.
 
 ## Specs
 - Path: <specs/, or another path>
+- Not code: <optional: paths whose changes never make evidence stale, such as where change
+  notes go, comma-separated>
 
 ## Recorded decisions
 - Path: <where the project keeps its decisions>
@@ -137,7 +139,10 @@ where, so the readiness checker can read them.
 ### The work
 
 - **Specs** is where each card's spec folder goes, as `<path><card>/`; the default is
-  `specs/`. The folder's layout is in [`spec-template.md`](spec-template.md).
+  `specs/`. The folder's layout is in [`spec-template.md`](spec-template.md). **Not code**
+  is optional: paths, on one line and separated by commas, whose changes `evidence-check`
+  never counts as a change to the code when it tests evidence for staleness, such as the
+  folder change notes go in. The specs path and `.devfactory/` never count without it.
 - **Recorded decisions** is where the readiness checker reads the decisions that already
   answer a question.
 - **Test gate** is the command, or the named procedure or script, that proves existing

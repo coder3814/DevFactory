@@ -237,10 +237,20 @@ holding one line:
 revision: <commit> | checkpoint: <environment> | produced by: <command or procedure>
 ```
 
-`evidence-check <dir> --criteria <file>` checks the folder: a non-empty subfolder for every
-criterion ID in the file, one per line as `criteria-ids` prints them, and a sidecar in this
-form beside every artifact (Done conditions 2.1 and 3.2). Inside a repository it also checks
-that every file in those subfolders is committed as it stands, so a clean checkout has it,
-that each sidecar's revision is a commit HEAD descends from, or one whose change a rebase
-carried into HEAD's history unaltered (`git cherry`), and that its checkpoint is one
-the criterion's evidence plan row names, compared without regard to case.
+The revision is the commit the artifact was captured at, and evidence is captured after the
+last commit that changes the code it shows.
+
+`evidence-check <dir> --criteria <file> --base <base revision>` checks the folder: a
+non-empty subfolder for every criterion ID in the file, one per line as `criteria-ids`
+prints them, and a sidecar in this form beside every artifact (Done conditions 2.1 and
+3.2). Inside a repository it also checks that every file in those subfolders is committed
+as it stands, so a clean checkout has it, that each sidecar's revision is a commit HEAD
+descends from, or one whose change a rebase carried into HEAD's history unaltered (`git
+cherry`), and that its checkpoint is one the criterion's evidence plan row names, compared
+without regard to case. Given the base revision, it refuses an artifact as stale when a
+code file the change set touches (changed between the base and HEAD) differs between the
+sidecar's revision and HEAD. The test compares content, so a rebase that rewrote commit ids
+or brought in other work leaves evidence current, and so do later commits that touch only
+the specs path, `.devfactory/` or a path the profile's Specs entry lists as Not code, such as
+where change notes go. An artifact whose revision is the base or an ancestor of it, such as
+a failing run recorded at the base, is a capture of the base on purpose and is not tested.

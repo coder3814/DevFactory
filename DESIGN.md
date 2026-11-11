@@ -80,7 +80,15 @@ runs. It holds:
   without `spec.md` is not a spec.
 - `evidence/`: what the Done judge consumes, added during development, one folder per
   criterion ID, each artifact with a one-line sidecar recording its revision, checkpoint and
-  what produced it.
+  what produced it. Evidence is captured after the last commit that changes the code it
+  shows. `evidence-check`, given the base revision, refuses an artifact when a code file the
+  change set touches differs between its revision and HEAD. It compares content rather than
+  commit order, so a rebase that rewrote commit ids or brought in other work leaves evidence
+  current, and so do commits that touch only the specs path, `.devfactory/` or the
+  profile's Not code paths, such as change notes; a capture at the base is exempt. A fix
+  still makes every artifact captured before it stale, because the script cannot tell which
+  files an artifact depends on, so the build captures evidence together just before each
+  review and recaptures only what the check names.
 
 The card points at its spec with exactly one line, `Spec: <path> @ <commit>`, the last line
 of the description body, where the commit is the spec folder's own commit. `grill` rewrites
@@ -398,8 +406,9 @@ the revision under evaluation.
     condition, captured at the stated checkpoint. `[rubric: the row]`
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
     produced it. `[machine]` The artifact and its record are committed, the revision is an
-    ancestor of the revision under evaluation or was rebased into it unaltered, and the
-    checkpoint is one its evidence row names.
+    ancestor of the revision under evaluation or was rebased into it unaltered, no code file
+    the change set touches has changed since that revision, and the checkpoint is one its
+    evidence row names.
 
 **4. The work is grounded**
 4.1 Every decision embodied in the work is grounded in the spec or recorded as a delegated

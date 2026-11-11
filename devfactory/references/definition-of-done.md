@@ -61,7 +61,11 @@ requester at acceptance, against every criterion's evidence, never here.
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
     produced it. `[machine: evidence-check]`
     The artifact and its record are committed, the revision is a commit the revision under
-    evaluation descends from, or one whose change a rebase carried into it unaltered, and the checkpoint is one its criterion's evidence row names.
+    evaluation descends from, or one whose change a rebase carried into it unaltered, no
+    code file the change set touches has changed since that revision, so the artifact was
+    captured after the last change to the code it shows, and the checkpoint is one its
+    criterion's evidence row names. What counts as code, and the exemption for a capture at
+    the base, are in [`spec-template.md`](spec-template.md) under `evidence/`.
 
 ### 4. The work is grounded
 

@@ -40,7 +40,10 @@ given.
 3. Run the script's checks in the checkout for the parent and for every sub-issue, and keep
    each command's output for the report: `devfactory criteria-ids --card <id>`, saving the
    IDs it prints to a temporary file outside the repository, one per card;
-   `devfactory evidence-check <spec folder> --criteria <that card's file>`; and
+   `devfactory evidence-check <spec folder> --criteria <that card's file>`, adding `--base
+   <base revision>` for the parent's own spec only, since a sub-issue's review ran the
+   stale test over that sub-issue's own change and the parent's change set holds every
+   other sub-issue's code too; and
    `devfactory gaps check <spec folder>`. Exit 0 is a pass and exit 1 a fail; exit 2, a
    usage or environment error, leaves the conditions that command decides unchecked for
    that card, with its error quoted.
@@ -67,8 +70,9 @@ given.
      merge changed what it shows.
    - **3.2** `[machine: evidence-check]` The same output: every artifact has its sidecar
      naming revision, checkpoint and what produced it, both are committed, the revision is
-     an ancestor of the revision under evaluation or was rebased into it unaltered, and the checkpoint is one the evidence
-     row names.
+     an ancestor of the revision under evaluation or was rebased into it unaltered, and the
+     checkpoint is one the evidence row names; for the parent's own evidence, no code file
+     the parent's change set touches changed after its revision.
    - **4.1** `[judgment]` Every decision in the combined work is grounded in a spec or a
      log. Look for two sub-issues that made the same delegated call differently, and for a
      requester-side decision that only a log grounds.

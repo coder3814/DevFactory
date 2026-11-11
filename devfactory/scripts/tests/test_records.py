@@ -172,6 +172,88 @@ class RecordsTest(unittest.TestCase):
         self.assertEqual(r.lines, ['sidecar-checkpoint evidence/C1/out.txt.txt names checkpoint "in-process host", '
                                    'but the evidence plan gives "local" for C1'])
 
+    def card_with_evidence(self):
+        """evidence_repo, then a card branch whose feature commit C1's evidence was captured at."""
+        d, spec, criteria = self.evidence_repo()
+        git(d, 'switch', '-q', '-c', 'card')
+        write(os.path.join(d, 'src', 'feature.txt'), 'feature\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'feature')
+        captured = git(d, 'rev-parse', 'HEAD')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm test\n' % captured[:9])
+        git(d, 'commit', '-q', '-am', 'evidence at the feature')
+        return d, spec, criteria, captured
+
+    def test_evidence_check_fails_an_artifact_captured_before_a_later_code_change(self):
+        d, spec, criteria, captured = self.card_with_evidence()
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'main'], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+        write(os.path.join(d, 'src', 'feature.txt'), 'feature, reworded\n')
+        git(d, 'commit', '-q', '-am', 'review fix')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'main'], d)
+        self.assertEqual(r.code, 1)
+        self.assertEqual(r.lines, ['evidence-stale evidence/C1/out.txt.txt names %s, but 1 code file the change set '
+                                   'touches changed after it (src/feature.txt), so capture it again at the current '
+                                   'revision' % captured[:9]])
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 0, 'without --base the stale test does not run: ' + r.stdout)
+
+    def test_evidence_check_ignores_later_commits_to_specs_evidence_devfactory_and_not_code_paths(self):
+        d, spec, criteria, _ = self.card_with_evidence()
+        write(os.path.join(spec, 'spec.md'), spec_text(amendments='| Version | Date | What changed | Driven by |\n'
+                                                       '|---|---|---|---|\n| 1 | 2026-11-07 | Initial spec | — |\n'
+                                                       '| 2 | 2026-11-08 | Log | review |'))
+        write(os.path.join(d, 'specs', '13', 'spec.md'), 'another card\n')
+        write(os.path.join(spec, 'evidence', 'C1', 'more.txt'), 'more\n')
+        write(os.path.join(spec, 'evidence', 'C1', 'more.txt.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm test\n' % git(d, 'rev-parse', 'HEAD'))
+        write(os.path.join(d, 'docs', 'notes', 'change-feature.md'), 'what changed\n')
+        write(os.path.join(d, 'CHANGELOG.md'), 'feature\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'spec amendment, another spec, more evidence, a change note')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'main'], d)
+        self.assertEqual(r.code, 1, 'a change note is code until the profile says otherwise')
+        self.assertEqual(len(r.lines), 2, r.lines)
+        for line in r.lines:
+            self.assertRegex(line, r'^evidence-stale evidence/C1/(out|more)\.txt\.txt .*\(CHANGELOG\.md, docs/notes/change-feature\.md\)')
+        write(os.path.join(d, '.devfactory', 'profile.md'),
+              '# Project profile: Test\n\n## Specs\n- Path: specs/\n- Not code: `docs/notes/`, `CHANGELOG.md`\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'profile names the change notes')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'main'], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+
+    def test_evidence_check_stale_test_holds_across_a_rebase_and_ignores_code_outside_the_change_set(self):
+        d, spec, criteria, captured = self.card_with_evidence()
+        git(d, 'switch', '-q', 'main')
+        write(os.path.join(d, 'src', 'other.txt'), 'another card\'s code\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'main moves on')
+        git(d, 'switch', '-q', 'card')
+        git(d, 'rebase', '-q', 'main')
+        self.assertNotEqual(git(d, 'rev-parse', 'HEAD~1'), captured)
+        base = git(d, 'merge-base', 'main', 'HEAD')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', base], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+        write(os.path.join(d, 'src', 'feature.txt'), 'feature, fixed after the rebase\n')
+        git(d, 'commit', '-q', '-am', 'fix')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', base], d)
+        self.assertEqual(r.code, 1)
+        self.assertEqual([l.split(' ')[0] for l in r.lines], ['evidence-stale'])
+
+    def test_evidence_check_exempts_a_capture_at_the_base_and_rejects_an_unknown_base(self):
+        d, spec, criteria = self.evidence_repo()
+        git(d, 'switch', '-q', '-c', 'card')
+        write(os.path.join(d, 'src', 'fix.txt'), 'fixed\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'the fix, after the failing run at base was captured')
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'main'], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+        r = run(['evidence-check', spec, '--criteria', criteria, '--base', 'deadbeef'], d)
+        self.assertEqual(r.code, 2)
+        self.assertIn('--base deadbeef is not a commit', r.stderr)
+
     def test_begin_writes_a_marker_and_lists_others_with_their_age_end_removes_it(self):
         d = temp_dir(self)
         active = os.path.join(d, '.devfactory', '.active')

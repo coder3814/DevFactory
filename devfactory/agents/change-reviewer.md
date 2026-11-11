@@ -37,7 +37,8 @@ repository, and note in the report that it was given.
    with the surrounding code each touches.
 3. Run the script's checks in the checkout and keep each command's output for the report:
    `devfactory criteria-ids --card <id>`, saving the IDs it prints to a temporary file
-   outside the repository; `devfactory evidence-check <spec folder> --criteria <that file>`;
+   outside the repository; `devfactory evidence-check <spec folder> --criteria <that file>
+   --base <base revision>`;
    and `devfactory gaps check <spec folder>`. Exit 0 is a pass and exit 1 a fail; exit 2, a
    usage or environment error, leaves the conditions that command decides unchecked, with
    its error quoted.
@@ -68,13 +69,15 @@ repository, and note in the report that it was given.
      would fail it, or that would pass whether or not the criterion holds.
    - **3.1** `[rubric: the row]` For each evidence row, open its artifact and check it shows
      what the row promised, under its condition, at its checkpoint. Compare an interface
-     artifact with the approved wireframe when the determination is non-trivial. Fail an
-     artifact captured before a later commit in the change set that alters what it shows.
+     artifact with the approved wireframe when the determination is non-trivial. Whether
+     an artifact predates a later change to the code is 3.2's, which `evidence-check`
+     decides; do not judge it again here, and read the artifact as showing the code at the
+     revision under evaluation.
    - **3.2** `[machine: evidence-check]` The `evidence-check` output: each artifact has its
      `.txt` sidecar naming revision, checkpoint and what produced it, both are committed,
      the revision is an ancestor of the revision under evaluation or was rebased into it
-     unaltered, and the checkpoint is
-     one the evidence row names.
+     unaltered, no code file the change set touches changed after that revision (an
+     `evidence-stale` line), and the checkpoint is one the evidence row names.
    - **4.1** `[judgment]` For each decision the change embodies (a behaviour, a value, a
      message, a data outcome, a structure), find where the spec grounds it or the log
      records it. A decision on the requester's side of `decision-line.md` grounded only by

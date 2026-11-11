@@ -53,7 +53,8 @@ of everything it read: the card's text, comments, fields and sub-issue order, th
 files, the gap records, the profile, the plugin's standard and the code commit. The next
 stage compares fingerprints instead of judging again, so moving from card to spec to
 development re-runs a check only when something it reads has changed, and then only that
-check.
+check. Before any review, the script also refuses evidence captured before a later change to
+the code it shows, so no review round is spent finding stale evidence.
 
 **Runs the build unattended.** For a parent issue, a coordinator starts one Claude desktop
 session per sub-issue, all in your opening turn, sets each going as its waits clear, hears
