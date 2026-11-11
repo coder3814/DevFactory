@@ -1,6 +1,6 @@
 ---
 name: accept
-description: Show the requester every criterion of a card or a parent issue run with its evidence, ask once whether to accept them all or which to refuse, ask whether the whole is what was wanted, sort any refusal into a defect, a request change or a new request, and hand to release, without asking again when the release is authorised ahead of time. Use when a parent run has the Done judge's DONE verdict, or a standalone card has passed its change review.
+description: Show the requester every criterion of a card or a parent issue run with its evidence, ask once whether to accept them all or which to refuse, ask whether the whole is what was wanted, sort any refusal into a defect, a request change or a new request, and hand to release, without asking again when the release is authorised ahead of time. Use when a parent run has the Done judge's DONE verdict, or a standalone card has passed its change review, or either carried on past its review limit after spec-only amendments.
 allowed-tools:
   - Read
   - Glob
@@ -54,7 +54,9 @@ together when the platform can ask both at once.
 1. **Load and read.** Load the profile as `working-a-card.md` says. Read the card, or for a
    parent run the parent and every sub-issue the run built, and each spec with its evidence.
    Start only once the result is Done: the Done judge's DONE for a parent run, the change
-   review's PASS for a standalone card. Leave every card where it sits on the board.
+   review's PASS for a standalone card, or, for either, a round past the review or
+   judgment limit whose findings were all fixed by spec-only amendments, as
+   "Findings after the review limit" in `../../references/decision-line.md` says. Leave every card where it sits on the board.
 
 2. **Show every criterion, then ask once.** In one message, take the parent's criteria
    first, then each sub-issue's in the work order. For each criterion show its ID and text,
@@ -101,7 +103,7 @@ together when the platform can ask both at once.
      that let it through, and is resolved by the re-derivation's amendment; it is written
      with `devfactory gaps add` the same way, at stage Acceptance.
    - **Wants something the request never asked for.** A new card through `create-card` by
-     default, and this card is accepted as specified: carry on with the walk. Amend it into
+     default, and this card is accepted as specified: carry on with the acceptance. Amend it into
      this card, as a request change, only when the addition is inseparable from the outcome
      under review. Ask which, recommending the new card unless it is inseparable.
 

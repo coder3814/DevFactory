@@ -107,6 +107,9 @@ where, so the readiness checker can read them.
 
 ## Declined proposals
 - **<the proposal, as curate made it>** declined <date>, after <run or card>: <the requester's words>
+
+## Proposals awaiting an answer
+- **<the proposal, as curate made it>** proposed <date>, after <run or card>
 ```
 
 ### The board
@@ -205,8 +208,15 @@ answers it, the skill acts on the entry and cites it, and nothing is asked.
 What the requester chose not to write when `curate` proposed it, one entry per proposal:
 the proposal, the date, the run or card it followed, and the requester's words. `curate`
 writes this section and reads it before proposing, so a proposal declined in one run is
-not asked again in the next unless gap entries dated after the decline support it. No
-other skill reads it.
+not asked again in another. No other skill reads it.
+
+### Proposals awaiting an answer
+
+The proposals a `curate` pass has put to the requester and not yet had answered, one entry
+each with the date and the run or card it followed. `curate` commits them before it asks
+and removes them when it writes the answer, so a run curating at the same time, in any
+worktree, drops them instead of asking them again. An entry older than the Marker lifetime
+belongs to an abandoned pass and no longer counts.
 
 ## Team modules
 

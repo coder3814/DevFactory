@@ -49,10 +49,11 @@ filter, so a proposal the profile already settles never reaches them.
 ## Steps
 
 1. **Load the profile** with `devfactory profile`, read from the integration branch's head
-   so that another run's committed curation counts, with the project's Standing answers
-   and Declined proposals. When `devfactory begin curate` lists another live `curate`
-   marker, another run is curating now: wait until that marker is gone, then load the
-   profile again, so the two passes never ask the same proposal.
+   so that another run's committed curation counts, with the project's Standing answers,
+   Declined proposals and Proposals awaiting an answer. An entry awaiting an answer is
+   another run's curation under way, whatever worktree it runs in, unless it is older than
+   the profile's Marker lifetime, when that run is taken as abandoned and the entry no
+   longer counts.
 
 2. **Collect every gap entry** by reading the files themselves: the project ledger
    `.devfactory/gaps.md`, which holds every released spec's entries prefixed with its card's
@@ -75,23 +76,27 @@ filter, so a proposal the profile already settles never reaches them.
      side of the line and what already answered it (a recorded decision, the profile, a
      pattern in the code, a delegation).
 
-   Then drop every proposal already settled: one whose substance the profile already holds
-   (a standing answer, a profile entry, or a rule in the section it would go to), and one
-   the requester has declined, which Declined proposals records. A proposal is settled in
+   Then drop every proposal already settled or under way: one whose substance the profile
+   already holds (a standing answer, a profile entry, or a rule in the section it would go
+   to), one the requester has declined, which Declined proposals records, and one another
+   run is asking now, which Proposals awaiting an answer records. A proposal is matched in
    substance, not by its wording: "write a page-cost test for each page" and "every page
-   gets a cost test" are one proposal. A declined proposal comes back only when entries
-   dated after its decline support it, and then says so.
+   gets a cost test" are one proposal.
 
 5. **Report the proposal**: the count per condition, then each remaining proposal with its
    entries, numbered, the writable ones (standing answers and missing profile entries)
    first. Checker emphasis and decision-line misses are reported, not written: the
    readiness checker reads the ledger and every live gap record itself.
 
-6. **Ask once.** When any writable proposal remains, ask one question covering them all:
+6. **Ask once.** When any writable proposal remains, first list each one under the
+   profile's Proposals awaiting an answer with the date and the run or card it follows,
+   and commit that on its own on the integration branch, so a run curating at the same
+   time drops them. Then ask one question covering them all:
    which numbers to write and which to skip, with your recommendation for each and a
    one-line reason, and an option to write every one you recommend. Ask nothing when none
    remains. On the answer, write each accepted standing answer to the profile's Standing
    answers with where it came from, and each accepted profile entry to the section it
    belongs in; record each skipped one under Declined proposals with the date, the run or
-   card it was proposed after, and the requester's words. Commit the profile change on its
-   own on the integration branch, so the next curation reads it.
+   card it was proposed after, and the requester's words. Remove this pass's entries from
+   Proposals awaiting an answer in the same change, and commit it on its own on the
+   integration branch, so the next curation reads it.

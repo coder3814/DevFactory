@@ -179,7 +179,7 @@ rules that could otherwise be misread.
   rather than a team field. It is kept current as the card changes, and it is
   judged by its own module, never cut as text a reader does not need.
 - **A parent issue carries its own work order.** The order and the waits are
-  part of what its readers must agree on before any session starts, so they live
+  part of what its readers must agree on before any session begins work, so they live
   on the card. Sub-issues run in parallel by default, and only three reasons
   hold one back, so a wait is never a habit or a hunch.
 - **A parent waits on another parent only for that parent's work.** Each

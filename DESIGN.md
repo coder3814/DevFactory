@@ -231,7 +231,7 @@ receipt says a check need not run again.
 | Grilling | Specification grilling first checks the card against the Definition of Request, which a matching request receipt has already done, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back to request grilling. | `grill`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
 | Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved` |
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
-| Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
+| Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Past the review or judgment limit, a round whose findings were all fixed by spec-only amendments goes on to acceptance as Done. | the Done judge agent | Done verdict, or a spec-only round past the limit |
 | Acceptance | The owner judges the result against the evidence: every criterion is shown with its artifact, and one question accepts them all or names the refused ones. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
 | Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated. | `release` | Cards closed |
 
@@ -505,7 +505,7 @@ DevFactory/
                             session up front, settle, relay, merge, judge, accept
       build/                one card in one session: check the stamp, make the delegated
                             calls, build, review, report
-      accept/               walk the owner through acceptance against the evidence plan;
+      accept/               show the owner every criterion's evidence, accept in one answer;
                             classify a refusal
       release/              release by the profile's procedure; ledger the gaps; delete
                             specs; close cards; remove sessions, worktrees and branches

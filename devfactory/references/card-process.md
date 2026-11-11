@@ -23,6 +23,9 @@ time. The two are deliberately separate.
    fails a card; anything that is a matter of judgement is a suggestion, which
    the agent may take or leave. This is request grilling: the agent asks the
    user every question the review raises and every open question on the card,
+   once each has passed "Before anything is asked" in
+   [`decision-line.md`](decision-line.md), so one the profile's Standing answers
+   settle is followed and cited rather than asked, and
    folds the answers in — what the user does not know yet stays an open question
    on the card, which keeps it short of the
    [Definition of Request](definition-of-request.md) — and fixes each breach, by removing or narrowing
@@ -102,7 +105,7 @@ changed on it and however.
 2. **Fold in** any comment whose outcome-changing content is missing. A comment a user added directly is
    already the record, so folding it adds nothing further.
 3. **Request grilling.** Ask the user about any gap and any open question on the
-   card. Their answers are new additions, so they are recorded as comments and
+   card that a standing answer does not settle, as "Creating a card" says. Their answers are new additions, so they are recorded as comments and
    then folded in.
 4. **Measure again** with one follow-up review of the changed text; whatever it
    still finds goes to the user.

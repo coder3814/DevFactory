@@ -77,9 +77,8 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
 1. Reply "waiting" and end your turn. You wait for the run's readiness check to settle as
    well as for what the work order makes you wait on; the coordinator messages you when
    both are done. When messaged to begin, load the `build` skill for this card and follow
-   it from its first step, which marks the session as building before anything else; its
-   second step is the rebase onto the parent branch named here, which brings in anything
-   the readiness check amended.
+   it from its first step, which marks the session as building and then rebases onto the
+   parent branch named here, which brings in anything the readiness check amended.
 2. The `build` skill fires `development-started` as work starts; leave every other event
    to the coordinator.
 3. A question the spec, the profile's Standing answers and the decision line do not
@@ -97,7 +96,8 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
 
 **The parent-fixes session's brief** is the same, with these differences: its card is the
 parent issue, and its spec is the parent's; its branch is named by the profile's Sub-issue
-branch entry with the parent's id as the card's; and it is not set going when readiness
+branch entry with the parent's id as the card's; it fires no event, `development-started`
+included, since the coordinator fires the parent's; and it is not set going when readiness
 settles. It waits until the coordinator messages it a Done-judge finding or an acceptance
 refusal that no single sub-issue owns, then follows `build` under "Fixing a finding or a
 refusal" for the parent, and after its merge waits again, kept like the others, for the
@@ -160,7 +160,8 @@ not end before step 3 has started every session.
    folds committed anything to the integration branch, have an agent rebase the parent
    branch onto it before any session begins. A sub-issue the check finds no longer Ready
    keeps its session waiting until its spec is approved again; one that leaves the run has
-   its session stopped and archived.
+   its session stopped, its worktree and branch removed by a subagent, and the session
+   archived.
 
 5. **Set each going.** Message a sub-issue's session to begin when all of these hold:
    - the readiness check of step 4 reported nothing open;
@@ -250,8 +251,9 @@ not end before step 3 has started every session.
      still NOT DONE, sort its findings by the decision line's "Findings after the review
      limit". When every finding is on the developer's side, have them fixed as above and
      carry on without asking: after a code fix, review and judge once more; when every fix
-     was a spec-only amendment, merge it as step 8 says without a further review and go
-     straight to step 10, with no further judgment. Escalate to the requester, and wait, only
+     is a spec-only amendment, say so in the message to each session, so it amends the spec
+     and reports without a review, then merge it as step 8 says and go straight to step 10,
+     with no further judgment. Escalate to the requester, and wait, only
      with findings that change what an observer sees or can do, what persisted data ends
      up as, or scope, or when the extra judgment is still NOT DONE.
    - On DONE, or when a spec-only round past the limit is merged, have an agent fire

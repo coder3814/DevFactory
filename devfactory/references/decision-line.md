@@ -52,6 +52,8 @@ not asked. The stops that remain are these:
   requester takes;
 - the acceptance itself;
 - the release, unless the requester has already authorised it (`accept`, step 6);
+- a change review or Done judgment that still fails after the one extra round that
+  "Findings after the review limit" allows;
 - the profile writes `curate` proposes, asked once per curation.
 
 ## Findings after the review limit
