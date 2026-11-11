@@ -46,7 +46,7 @@ root, wherever the shell's working directory is.
 |---|---|
 | Start a session, briefed to wait | `start_session` with `initiation: "user_asked"`, `context: "fresh"`, its own worktree (`use_worktree: true`) cut from the parent branch (`source_branch`), the `model` and `effort` the card's Suggested model and effort names, the brief below as `prompt`, and the run's goal and constraints as `background`. Record the session id and name the result returns. |
 | Tell a waiting session to begin, send it an answer or a finding, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
-| Read a session's report | Its final message arrives as a `<side-sessions-event>` note quoting the report's first 400 characters; read the rest from the card and the spec it updated, or ask the session to restate a part. |
+| Read a session's report | The session sends every report, question and stop as a message (the brief says so), which wakes this session on any turn. A `<side-sessions-event>` note quoting a session's final message is not the channel: the app holds those notes back after many in a row with no message from the requester. On a note that carries nothing the session has not already sent by message, such as a session ending a turn to wait, do nothing and end the turn. When a session's note or final message shows a report it did not send, message it to send its report. Read what a report leaves out from the card and the spec it updated, or ask the session to restate a part. |
 | Stop a session | `stop_session`, then `archive_session` once its worktree and branch are gone. |
 
 The desktop app shapes the run:
@@ -72,7 +72,13 @@ The desktop app shapes the run:
 ## The build session's brief
 
 The brief names the card, the parent, the spec path, the parent branch and the sub-issue's
-own branch, named by the profile's Sub-issue branch entry, and says, in this order:
+own branch, named by the profile's Sub-issue branch entry. It opens with this rule:
+every report, question and stop you make, the merge report included, goes to the
+coordinator as a message you send with `SendMessage` to the coordinator's `local_…` id
+(the session that started you, which your session prompt names) before you end the turn,
+as `build` says under "Reporting to the coordinator"; a final message alone does not reach
+the coordinator reliably; keep your turn open while your own commands run, and end it only
+to wait for the coordinator. Then it says, in this order:
 
 1. Reply "waiting" and end your turn. You wait for the run's readiness check to settle as
    well as for what the work order makes you wait on; the coordinator messages you when
@@ -82,15 +88,15 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
 2. The `build` skill fires `development-started` as work starts; leave every other event
    to the coordinator.
 3. A question the spec, the profile's Standing answers and the decision line do not
-   answer: stop and report it to the coordinator in the shape the `build` skill gives,
-   and wait.
+   answer: stop, message it to the coordinator in the shape the `build` skill gives, and
+   wait. So too for findings past the review limit that `build` says to stop on.
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
 5. When told it is your turn: rebase onto the parent branch, run the test gate as `build`
    says under "The test gate", fast-forward
    the parent branch with `git -C <parent worktree> merge --ff-only <branch>` run from this
-   session's own worktree, never by changing into the parent worktree, report, and end your
-   turn. Stay available: you, your worktree and your branch are kept until the run is
+   session's own worktree, never by changing into the parent worktree, message your report,
+   and end your turn. Stay available: you, your worktree and your branch are kept until the run is
    accepted and released, and the coordinator may message you with a Done-judge finding or
    an acceptance refusal, which you fix as `build` says under "Fixing a finding or a
    refusal".

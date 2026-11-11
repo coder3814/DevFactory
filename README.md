@@ -56,7 +56,8 @@ development re-runs a check only when something it reads has changed, and then o
 check.
 
 **Runs the build unattended.** For a parent issue, a coordinator starts one Claude desktop
-session per sub-issue, all in your opening turn, sets each going as its waits clear, relays the rare question that
+session per sub-issue, all in your opening turn, sets each going as its waits clear, hears
+from each session by a message it sends rather than its final message, relays the rare question that
 survives the spec and the decision line, merges results into the parent branch one at a
 time, and has a separate judge apply the Definition of Done to the combined result. For a
 single card, one session builds it and a separate reviewer passes it. No agent accepts its

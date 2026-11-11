@@ -15,6 +15,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git rev-parse *)
   - Bash(git merge-base *)
+  - SendMessage
 ---
 
 # Build a card
@@ -33,6 +34,20 @@ In a parent issue run the coordinator has already fired `work-started` for this 
 fires the events in `../../references/events.md` with `devfactory event <name> --card
 <n>`, and the project's hooks move cards as the project wants. A hook that fails is
 reported with its output, and the work carries on.
+
+**Reporting to the coordinator.** In a parent issue run, every report, question and stop
+reaches the coordinator as a message this session sends, never only as the final message
+of its turn: send it with `SendMessage` to the coordinator's `local_…` id, which the brief
+gives and the session's own prompt names as the session that started it (load the tool
+with `ToolSearch` first when it is deferred), then end the turn with the same text as the
+final message. The desktop app relays a finished turn to the coordinator only as a note it
+may hold back after many in a row, so a report left as the final message alone can sit
+unread until the requester next types. For the same reason, keep the turn open while
+waiting on your own work: run the test gate in the foreground when it fits the shell's
+limit, and otherwise in the background with a wait inside the turn (the Monitor tool where
+the session has it), rather than ending the turn to wait for its notification. Every turn
+a session ends wakes the coordinator for nothing. End a turn only to wait for the
+coordinator, once the message is sent.
 
 `devfactory` below means running the plugin's script with `python`: the script is
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
@@ -93,7 +108,8 @@ only the tests the current edit touches.
    9.2). When the status is not `approved` or the check fails, fire `readiness-lost` for
    the card when its spec status is `Ready` or `approved`, and start nothing: report the
    status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. A stale
-   spec is re-derived through `grill`, never worked around.
+   spec is re-derived through `grill`, never worked around. In a parent issue run this
+   report goes by message as "Reporting to the coordinator" says.
 
 4. **Fire `development-started`** for the card, before the first change.
 
@@ -121,7 +137,8 @@ only the tests the current edit touches.
       cited in the log. A question on the developer's side is decided and logged as step 5
       says, not asked. A question on the requester's side that a recorded decision, the
       profile or the spec already answers is followed, and the answer is cited in the log.
-   2. A question that survives stops this card's work. Report it in this shape and wait:
+   2. A question that survives stops this card's work. Report it in this shape, in a parent
+      issue run by message as "Reporting to the coordinator" says, and wait:
 
       ```text
       Question: <what must be decided, and why the work needs it now>
@@ -173,9 +190,10 @@ only the tests the current edit touches.
      without a further review.
    - **Any finding that changes what an observer sees or can do, what persisted data ends
      up as, or scope**, or the extra review still failing: stop and report the findings,
-     and wait.
+     in a parent issue run by message as "Reporting to the coordinator" says, and wait.
 
-9. **Report**: what was built, by criterion ID; the review verdict and how many rounds it
+9. **Report**, in a parent issue run by message as "Reporting to the coordinator" says:
+   what was built, by criterion ID; the review verdict and how many rounds it
    took, and, when the review limit was passed, each developer-side finding fixed without
    asking and whether a further review ran; the delegated calls made, from the log; the gaps raised, with their amendments;
    the branch and revision; the test gate's result, saying whether it was a fresh run or a
@@ -186,7 +204,8 @@ only the tests the current edit touches.
       card's turn, exactly as the brief says: rebase onto the parent branch, run the test
       gate as "The test gate" says, which prints the record when the rebase left the tree
       unchanged, and fast-forward only on a pass. Fire no other event, never merge
-      into the integration branch, and never push. After the merge, report and wait again:
+      into the integration branch, and never push. When the fast-forward refuses, report
+      it by message and wait. After the merge, report it by message and wait again:
       this session, its worktree and its branch stay until `release` reaps them after
       acceptance.
     - **A standalone card**: the review's PASS is its Done verdict, since the change
@@ -209,5 +228,7 @@ Then review the fix as step 8 says, with the base revision computed against the 
 branch, report as step 9 says, and merge only when the coordinator says it is your turn,
 as step 10 says. When the coordinator says the fix is a spec-only amendment past the Done
 judge's limit, amend the spec through `grill` in amend mode and report without a review.
+Every report here goes to the coordinator by message, as "Reporting to the coordinator"
+says.
 
 Stop every agent you started before you finish, and tell each to stop its own.

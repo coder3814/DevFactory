@@ -279,6 +279,16 @@ in the turn of the "start work" message, each briefed to wait for the readiness 
 for its work-order waits, and then sets each going by message, which works from any turn.
 A sub-issue added mid-run is the one start that can wait for a click.
 
+**Sessions report by message.** The app relays a session's finished turn to the
+coordinator as a note, and stops relaying those notes after many in a row with no message
+from the requester, holding them for the coordinator's next turn; a coordinator once sat
+idle overnight with a finished sub-issue's report held back. So every report, question and
+stop a build session makes in a parent issue run goes to the coordinator as a message the
+session sends to the coordinator's session id, and its final message only repeats it. A
+session keeps its turn open while its own commands run, so the coordinator is not woken
+each time one waits on a background test run, and the coordinator ends a turn that a note
+woke without acting when the note carries nothing the session has not already sent.
+
 **Stops are few.** Before any question reaches the requester it is tested against the
 profile's Standing answers and the decision line (section 7). A step the process already
 prescribes, such as going into acceptance after the Done judge's DONE, is not asked for.
