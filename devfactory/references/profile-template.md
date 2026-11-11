@@ -151,8 +151,9 @@ where, so the readiness checker can read them.
   - A record is written by the command itself, after its own run passed, and never by a
     session, an agent or a hand edit.
   - No record is written when the working tree is dirty (`git status --porcelain` prints
-    anything), because then the tree that ran is not the tree the key names. The run
-    still happens and reports its result.
+    anything), because then the tree that ran is not the tree the key names. On a dirty
+    tree the command never prints a record either: it runs the selected tests and reports
+    their result.
   - Run on a tree that has a passing record covering the selected tests, the command
     prints that record instead of running them.
   - The output says whether it is a fresh run or a record, and names the tree, the tests

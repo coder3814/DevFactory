@@ -387,7 +387,9 @@ the revision under evaluation.
 3.1 Every evidence row has its artifact, showing what the row promised under the stated
     condition, captured at the stated checkpoint. `[rubric: the row]`
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
-    produced it. `[machine]`
+    produced it. `[machine]` The artifact and its record are committed, the revision is an
+    ancestor of the revision under evaluation or was rebased into it unaltered, and the
+    checkpoint is one its evidence row names.
 
 **4. The work is grounded**
 4.1 Every decision embodied in the work is grounded in the spec or recorded as a delegated
