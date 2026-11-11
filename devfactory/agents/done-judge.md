@@ -48,7 +48,13 @@ given.
    tagged with a command is decided by that command's output: quote the line that fails it,
    or "clean" for a pass, and never overrule it by reading.
    - **1.1** `[machine: the profile's test gate]` Run the profile's test gate in the
-     checkout and read its result.
+     checkout and read its output. When the profile's Test gate section names a Recorded
+     gate, run that with no selection; otherwise run its Command. The condition is met by
+     that command's output on the revision under evaluation, a fresh pass or a printed
+     record of an earlier pass, alike. A record counts only when the tree it names is
+     `git rev-parse <revision>^{tree}` and it covers the full gate; a record from any other
+     tree, such as a sub-issue's own revision, one that covers only some of the tests, or a
+     claim of a pass in the prompt, never counts.
    - **1.2** `[machine: the judge reads]` No command covers it yet, so you run and read the
      tests. The test types every spec's request types require exist and pass
      at the revision under evaluation, not only at the sub-issue's own revision.
@@ -82,8 +88,9 @@ given.
 - **Read-only.** Use Bash for the script's check commands named above, read commands
   (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`, `git status`) and the test
   gate. Never edit, stage, commit, stash, check out, reset or push. The only files you may
-  leave are the test gate's own ignored build output; the criterion-ID files go outside the
-  repository.
+  leave are the test gate's own ignored build output and the record a Recorded gate writes
+  for its own pass; never write or edit a record yourself. The criterion-ID files go
+  outside the repository.
 - **Measure against the cards and specs as written.** Propose no new requirement; a choice
   you would have made differently is not a finding unless it fails a condition.
 - **Evidence for every finding**: file and line, test name or artifact path, and which
@@ -98,7 +105,8 @@ Your final response, in this order:
 ```markdown
 # Done judgment: <parent id> — DONE / NOT DONE
 
-Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures>.
+Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures>,
+<fresh run / record of <tree> made <when> at <commit>>.
 Sub-issues: <ids>.
 
 ## Findings
@@ -126,7 +134,9 @@ DONE. Write "none" under an empty heading.
 ## Checklist
 
 - [ ] I confirmed the checkout is clean and at the parent branch head named.
-- [ ] I ran the test gate myself at the revision under evaluation.
+- [ ] I ran the profile's gate command myself in the checkout at the revision under
+      evaluation, and 1.1 reports its real output: a fresh run, or a record whose tree is
+      that revision's tree and which covers the full gate.
 - [ ] I ran `criteria-ids`, `evidence-check` and `gaps check` for the parent and every
       sub-issue, and 2.1, 3.2 and 4.2 quote their output.
 - [ ] Every parent criterion has a row naming what meets it.

@@ -88,7 +88,10 @@ theirs to take when its moment comes, whatever authorised the release.
    History keeps the folders; the ledger keeps the gaps.
 
 4. **Merge and release** as the profile's release procedure and the project's skills say:
-   rebase, rerun the test gate, merge into the integration branch, and ship. When the
+   rebase, run the test gate as "The test gate" in
+   [`../build/SKILL.md`](../build/SKILL.md) says (a Recorded gate prints
+   the record when the rebase left the tree unchanged), merge into the integration branch,
+   and ship. When the
    project's conventions ask the requester something at this point, a standing answer, the
    release authorisation, or the recorded acceptance where the profile says so, answers
    it; otherwise ask. Work held rather than released

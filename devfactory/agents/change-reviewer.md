@@ -46,8 +46,14 @@ repository, and note in the report that it was given.
    output: quote the line that fails it, or "clean" for a pass, and never overrule it by
    reading.
    - **1.1** `[machine: the profile's test gate]` Run the profile's test gate in the
-     checkout, in the background if it is long, and read its result. A failure is a finding
-     with the failing tests named.
+     checkout, in the background if it is long, and read its output. When the profile's
+     Test gate section names a Recorded gate, run that with no selection; otherwise run its
+     Command. The condition is met by that command's output on the revision under
+     evaluation, a fresh pass or a printed record of an earlier pass, alike. A record
+     counts only when the tree it names is `git rev-parse <revision>^{tree}` and it covers
+     the full gate; a record from any other tree, one that covers only some of the tests, or
+     a claim of a pass in the prompt, never counts. A failure is a finding with the failing
+     tests named.
    - **1.2** `[machine: the judge reads]` No command covers it yet, so you run and read the
      tests. For each declared request type, find the tests it requires. A bug fix's test
      must fail at base: take that from an evidence artifact recording a run at
@@ -83,7 +89,8 @@ repository, and note in the report that it was given.
   commands (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`, `git status`),
   the test gate and the base-revision run described above. Never edit, stage, commit,
   stash, check out, reset or push. The only files you may leave are the test gate's own
-  ignored build output; the criterion-ID file goes outside the repository.
+  ignored build output and the record a Recorded gate writes for its own pass; never write
+  or edit a record yourself. The criterion-ID file goes outside the repository.
 - **Measure against the card and spec as written.** Something you would have built
   differently is not a finding unless it fails a condition. Propose no new requirement.
 - **Evidence for every finding**: the file and line, the test name or the artifact path.
@@ -97,7 +104,8 @@ Your final response, in this order:
 ```markdown
 # Change review: <card id> — PASS / FAIL
 
-Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures>.
+Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures>,
+<fresh run / record of <tree> made <when> at <commit>>.
 
 ## Findings
 1. **<condition>, <criterion ID or "no criterion">** <what fails, in one or two sentences>
@@ -119,7 +127,9 @@ was built.
 ## Checklist
 
 - [ ] I confirmed the checkout is clean and at the revision under evaluation.
-- [ ] I ran the test gate myself and report its real result.
+- [ ] I ran the profile's gate command myself in the checkout, and 1.1 reports its real
+      output: a fresh run, or a record whose tree is the revision's tree and which covers
+      the full gate.
 - [ ] I ran `criteria-ids`, `evidence-check` and `gaps check`, and 2.1, 3.2 and 4.2 quote
       their output.
 - [ ] Every evidence row's artifact was opened and compared with the row.

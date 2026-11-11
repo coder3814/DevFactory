@@ -86,7 +86,8 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
    and wait.
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
-5. When told it is your turn: rebase onto the parent branch, rerun the tests, fast-forward
+5. When told it is your turn: rebase onto the parent branch, run the test gate as `build`
+   says under "The test gate", fast-forward
    the parent branch with `git -C <parent worktree> merge --ff-only <branch>` run from this
    session's own worktree, never by changing into the parent worktree, report, and end your
    turn. Stay available: you, your worktree and your branch are kept until the run is
@@ -223,7 +224,7 @@ not end before step 3 has started every session.
      sees or can do, what persisted data ends up as, or scope, put those findings to the
      requester and ask how to proceed; the sub-issue does not merge meanwhile.
    - When it is a card's turn, message its session to merge as its brief says: rebase onto
-     the parent branch, rerun the tests, and fast-forward the parent branch with
+     the parent branch, run the test gate as `build` says, and fast-forward the parent branch with
      `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. When the
      fast-forward refuses, the session stops and reports it, and nothing is forced.
    - Keep the session, its worktree and its branch: they stay until `accept` ends in
@@ -237,7 +238,8 @@ not end before step 3 has started every session.
    `references/` folder, the parent card and spec path, each sub-issue's card and spec path,
    the profile path, the base revision (the integration branch commit the parent branch was
    cut from or last rebased onto), the parent branch's head, and a clean checkout at that
-   head, never how the work was built.
+   head, made as a worktree of the repository (`git worktree add --detach`) so it reads the
+   same gate records, never how the work was built.
    - A finding that belongs to one sub-issue goes by message to that sub-issue's kept
      session, which fixes it on its branch, rebased onto the parent branch. A finding no
      single sub-issue owns goes by message to the parent-fixes session. If that session is

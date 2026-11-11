@@ -49,6 +49,17 @@ messaged again to fix a finding or a refusal, before the first change. Markers a
 profile are found at the repository (worktree) root, wherever the shell's working
 directory is.
 
+**The test gate.** The full gate runs at three points and nowhere else: before the
+change review (step 8), after the rebase for a sub-issue's merge into the parent branch
+(step 10), and after the rebase for the merge into the integration branch, which
+`release` runs. At each point, commit first so the working tree is clean, then run the
+profile's Test gate. When it names a Recorded gate, run that with no selection, and take
+a printed record as the result just as you would a fresh pass, once its tree is the tree
+in hand (`git rev-parse HEAD^{tree}`); run the Forced rerun only when you have a reason to
+think something outside the tree changed the result. Never write or edit a record
+yourself. With no Recorded gate, run the Command. While building between those points, run
+only the tests the current edit touches.
+
 ## Read these first, in full
 
 - [`../../references/working-a-card.md`](../../references/working-a-card.md): loading the
@@ -100,8 +111,9 @@ directory is.
      it exercises and asserts an observable outcome (Done 2.2).
    - Produce each evidence row's artifact at the row's checkpoint, into `evidence/<ID>/`,
      with its sidecar as `spec-template.md` says.
-   - Run the profile's test gate before review, and follow the project's own rules for
-     anything else a change carries.
+   - Run only the tests the current edit touches as you go; the full gate waits for the
+     points "The test gate" names. Follow the project's own rules for anything else a
+     change carries.
 
 7. **A question.** When the work needs a decision the spec does not record:
    1. Apply "Before anything is asked" in `decision-line.md` and the spec's delegations
@@ -130,17 +142,20 @@ directory is.
 8. **Review.** When the card is built, write the criteria file with
    `devfactory criteria-ids --card <n>` into a file outside the repository, then run
    `devfactory evidence-check <spec dir> --criteria <file>` and `devfactory gaps check <spec
-   dir>`. Fix every finding they report, or, for an open gap, settle it as step 7 says,
-   before any review starts. Then start the `change-reviewer` agent by name with the Agent
+   dir>`, and run the test gate as "The test gate" says. Fix every finding they report and
+   every gate failure, or, for an open gap, settle it as step 7 says, before any review
+   starts. Then start the `change-reviewer` agent by name with the Agent
    tool; it carries its own definition
    ([`../../agents/change-reviewer.md`](../../agents/change-reviewer.md)), tools and model.
    Give it the path to the plugin's `references/` folder, the card with its criteria, the
    spec path, the profile path, the base revision (the merge-base of this branch with the
    parent branch, or with the integration branch for a standalone card, computed at review
-   time), the revision under review, and a clean checkout at that revision; never how the
-   work was built or what you think of it. Fix each finding, commit, rerun both checks, and
-   start a fresh review of the new revision. A finding that needs a decision the spec does
-   not record is a question, handled as step 7 says.
+   time), the revision under review, and a clean checkout at that revision, made as a
+   worktree of this repository (`git worktree add --detach <path> <revision>`) so it reads
+   the same gate records; never how the work was built or what you think of it. Fix each
+   finding, commit, rerun the checks and the gate, and start a fresh review of the new
+   revision. A finding that needs a decision the spec does not record is a question,
+   handled as step 7 says.
 
    After a FAIL there are at most two further rounds. When the third review still fails,
    sort its findings as "Findings after the review limit" in `decision-line.md` says,
@@ -149,7 +164,7 @@ directory is.
      evidence record or sidecar, a gap entry not written, a spec that no longer matches the
      built code while the behaviour it describes is unchanged): fix them and carry on,
      recording each gap entry as usual. A spec that no longer matches is amended through
-     `grill` in amend mode. After a code fix, run both checks and one more review; when it
+     `grill` in amend mode. After a code fix, run the checks, the gate and one more review; when it
      passes, go on to step 9. When every fix was a spec-only amendment, go on to step 9
      without a further review.
    - **Any finding that changes what an observer sees or can do, what persisted data ends
@@ -159,11 +174,14 @@ directory is.
 9. **Report**: what was built, by criterion ID; the review verdict and how many rounds it
    took, and, when the review limit was passed, each developer-side finding fixed without
    asking and whether a further review ran; the delegated calls made, from the log; the gaps raised, with their amendments;
-   the branch and revision; the test gate's result; and anything left unverified.
+   the branch and revision; the test gate's result, saying whether it was a fresh run or a
+   record; and anything left unverified.
 
 10. **Finish.**
     - **In a parent issue run**, wait. Merge only when the coordinator says it is this
-      card's turn, exactly as the brief says. Fire no other event, never merge
+      card's turn, exactly as the brief says: rebase onto the parent branch, run the test
+      gate as "The test gate" says, which prints the record when the rebase left the tree
+      unchanged, and fast-forward only on a pass. Fire no other event, never merge
       into the integration branch, and never push. After the merge, report and wait again:
       this session, its worktree and its branch stay until `release` reaps them after
       acceptance.

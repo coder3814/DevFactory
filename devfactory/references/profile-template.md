@@ -60,6 +60,10 @@ where, so the readiness checker can read them.
 ## Test gate
 - Command: <the command that proves existing behaviour, or the procedure or script that
   selects and runs it, in the project's words>
+- Recorded gate: <optional: the command that runs the gate and records each pass, or prints
+  the record of an earlier pass on the same tree, and how it is given a selection of tests>
+- Forced rerun: <with a recorded gate: the command that runs the gate again on a tree that
+  already has a record>
 
 ## Environments
 ### <name>
@@ -139,6 +143,32 @@ where, so the readiness checker can read them.
 - **Test gate** is the command, or the named procedure or script, that proves existing
   behaviour; a gate with a precondition, such as a container runtime, names it here. Done condition 1.1 runs it at
   the revision under evaluation.
+- **Recorded gate** is optional. It is a command the project supplies and owns that runs
+  the gate and keeps a record of each pass, so that a tree already proven is not tested
+  again; the plugin defines only what the command must guarantee:
+  - A record is keyed to the git tree the run tested, `git rev-parse HEAD^{tree}`, and the
+    tests it passed, such as the test projects. A record is written only for a pass.
+  - A record is written by the command itself, after its own run passed, and never by a
+    session, an agent or a hand edit.
+  - No record is written when the working tree is dirty (`git status --porcelain` prints
+    anything), because then the tree that ran is not the tree the key names. The run
+    still happens and reports its result.
+  - Run on a tree that has a passing record covering the selected tests, the command
+    prints that record instead of running them.
+  - The output says whether it is a fresh run or a record, and names the tree, the tests
+    covered and, for a record, when and at which commit it was made, so a reader can check
+    the record belongs to the revision in hand. It exits 0 on a pass, fresh or recorded,
+    and non-zero on a failure.
+  - The records are stored outside the tracked tree, where every worktree of the
+    repository and a reviewer's clean checkout read the same store, such as a folder under
+    `git rev-parse --git-common-dir`.
+
+  The full gate is the command with no selection. With no Recorded gate entry, every point
+  that runs the gate runs Command, as before.
+- **Forced rerun** runs the tests again on a tree that already has a record and records the
+  new pass, for when a result depends on something outside the tree, such as a service, a
+  database or a dependency fetched at run time, and that has changed. It is required with a
+  Recorded gate.
 - **Environments** lists every place a checkpoint can be captured. A spec's evidence row
   names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
   the row promises. "Reached by" is in the project's words: a command, a deploy, a sign-in.

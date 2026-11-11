@@ -137,7 +137,9 @@ One folder per project, `.devfactory/` at the repository root:
   column: no skill reads a card's column or moves a card.
 - **The work**: where specs live; where recorded decisions live, so the checker can read
   them (they are never kept in the profile); the test gate, the command or procedure that
-  proves existing behaviour; the environments available for checkpoints and what each can
+  proves existing behaviour, optionally with a recorded gate, a project-owned command that
+  records each pass against the git tree it tested and prints that record instead of
+  rerunning on the same tree; the environments available for checkpoints and what each can
   and cannot show; **Data access**, each population of existing data a card's rules might
   act on and how it is read without writing, which `grill` and the readiness checker run
   data rules through; the fixed-concern list extensions; the owner-step types the project
@@ -370,7 +372,8 @@ A change is Done when every condition holds, evaluated over the spec, the base r
 the revision under evaluation.
 
 **1. The tests exist and pass**
-1.1 The profile's test gate passes at the revision under evaluation. `[machine]`
+1.1 The profile's test gate passes at the revision under evaluation. `[machine]` A recorded
+    gate's record of a pass on the same tree counts as the run; one from another tree never.
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the
     declared surface unchanged; a data correction has the dry run's counts matching the

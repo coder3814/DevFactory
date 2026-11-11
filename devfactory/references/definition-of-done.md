@@ -28,6 +28,9 @@ requester at acceptance, against every criterion's evidence, never here.
 
 1.1 The profile's test gate passes at the revision under evaluation.
     `[machine: the profile's test gate]`
+    With a Recorded gate in the profile, the gate command's output on that revision decides
+    it, whether a fresh run or the record of an earlier pass on the same tree covering the
+    full gate; a record from any other tree never counts.
 
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the
@@ -94,6 +97,8 @@ requester at acceptance, against every criterion's evidence, never here.
 - **1.2** The test types the request type requires: the Done judge runs and reads them
   until a command of `scripts/devfactory.py` covers them.
 
-Condition 1.1 needs no script: the profile's test gate command decides it. Condition 2.1 is
+Condition 1.1 needs no script of the plugin's: the profile's test gate command decides it,
+and a Recorded gate is the project's own command, under the contract in
+[`profile-template.md`](profile-template.md). Condition 2.1 is
 decided by `evidence-check`, given the criterion IDs `criteria-ids` prints, because every
 criterion has an evidence row (Ready 7.1) and so an evidence folder of its own.

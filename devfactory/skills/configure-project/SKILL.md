@@ -117,6 +117,16 @@ answer, propose it as the first option rather than asking from blank.
    manifest's test script, a make target, a solution or project file, or the
    test step of a continuous-integration workflow, and propose the command that
    runs the whole existing test suite. Ask the owner to confirm or correct it.
+   Then ask whether the project has, or wants, a recorded gate: a command of its own
+   that records each pass against the git tree it ran on and prints that record instead
+   of rerunning when the same tree is tested again, so the gate is not rerun on code a
+   recorded run already passed. Explain the contract the "Recorded gate" entry in
+   `../../references/profile-template.md` gives (written only by the command after its
+   own pass, never for a dirty tree, keyed to `HEAD^{tree}` and the tests passed, stored
+   where every worktree and a reviewer's checkout read it, with a forced rerun), and that
+   the project writes and owns the command; the plugin ships none. When the owner names
+   one, record it with its Forced rerun and how it takes a selection of tests. None is a
+   valid answer: the gate points then run the Command, as before.
 9. **List the environments.** Propose environments from what the repository
     reveals, such as a local run configuration, a container compose file or a
     deploy workflow and the targets it deploys to. Ask which environments exist,
