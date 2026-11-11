@@ -239,4 +239,8 @@ revision: <commit> | checkpoint: <environment> | produced by: <command or proced
 
 `evidence-check <dir> --criteria <file>` checks the folder: a non-empty subfolder for every
 criterion ID in the file, one per line as `criteria-ids` prints them, and a sidecar in this
-form beside every artifact (Done conditions 2.1 and 3.2).
+form beside every artifact (Done conditions 2.1 and 3.2). Inside a repository it also checks
+that every file in those subfolders is committed as it stands, so a clean checkout has it,
+that each sidecar's revision is a commit HEAD descends from, or one whose change a rebase
+carried into HEAD's history unaltered (`git cherry`), and that its checkpoint is one
+the criterion's evidence plan row names, compared without regard to case.

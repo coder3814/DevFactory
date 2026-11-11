@@ -71,7 +71,10 @@ repository, and note in the report that it was given.
      artifact with the approved wireframe when the determination is non-trivial. Fail an
      artifact captured before a later commit in the change set that alters what it shows.
    - **3.2** `[machine: evidence-check]` The `evidence-check` output: each artifact has its
-     `.txt` sidecar naming revision, checkpoint and what produced it.
+     `.txt` sidecar naming revision, checkpoint and what produced it, both are committed,
+     the revision is an ancestor of the revision under evaluation or was rebased into it
+     unaltered, and the checkpoint is
+     one the evidence row names.
    - **4.1** `[judgment]` For each decision the change embodies (a behaviour, a value, a
      message, a data outcome, a structure), find where the spec grounds it or the log
      records it. A decision on the requester's side of `decision-line.md` grounded only by

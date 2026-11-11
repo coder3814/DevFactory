@@ -636,6 +636,53 @@ def list_files(d, base=None):
 SIDECAR = rx(r'^revision:\s*\S.*\|\s*checkpoint:\s*\S.*\|\s*produced by:\s*\S')
 
 
+def sidecar_fields(line):
+    fields = {}
+    for part in line.split('|'):
+        k, _, v = part.partition(':')
+        fields[k.strip().lower()] = v.strip()
+    return fields
+
+
+def norm_checkpoint(s):
+    return ' '.join((s or '').replace('**', '').replace('`', '').strip().lower().split())
+
+
+def planned_checkpoints(d):
+    """{criterion ID: set of checkpoints} from the spec's Evidence plan; empty without one."""
+    spec_file = os.path.join(d, 'spec.md')
+    if not os.path.exists(spec_file):
+        return {}
+    ev = find_section(split_sections(read_text(spec_file)), 'Evidence plan')
+    tables = parse_tables(ev['lines']) if ev else []
+    if not tables:
+        return {}
+    t = tables[0]
+    c = column(t, lambda h: h == 'criterion')
+    k = column(t, lambda h: h == 'checkpoint')
+    if c < 0 or k < 0:
+        return {}
+    plan = {}
+    for row in t['rows']:
+        point = norm_checkpoint(cell(row, k))
+        if point and not is_italic_prompt(cell(row, k)):
+            for i in criterion_ids_in(cell(row, c)):
+                plan.setdefault(i, set()).add(point)
+    return plan
+
+
+def git_lines(args, cwd, sep='\n'):
+    r = run_process(['git'] + args, cwd=cwd)
+    return [l for l in decode(r.stdout).split(sep) if l.strip()] if r.returncode == 0 else None
+
+
+def in_work_tree(d):
+    try:
+        return git_lines(['rev-parse', '--is-inside-work-tree'], d) == ['true']
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def cmd_evidence_check(opts):
     d = opts['_'][0] if opts['_'] else None
     if not d:
@@ -643,6 +690,22 @@ def cmd_evidence_check(opts):
     if not opts.get('criteria'):
         raise UsageError('give --criteria <file>')
     out = []
+    plan = planned_checkpoints(d)
+    in_git = in_work_tree(d)
+    revisions = {}
+
+    def revision_finding(rev):
+        if rev not in revisions:
+            if git_lines(['rev-parse', '--verify', '--quiet', rev + '^{commit}'], d) is None:
+                revisions[rev] = 'is not a commit in this repository'
+            elif run_process(['git', 'merge-base', '--is-ancestor', rev, 'HEAD'], cwd=d).returncode == 0:
+                revisions[rev] = None
+            elif any(l.startswith('- ') for l in git_lines(['cherry', 'HEAD', rev, rev + '^'], d) or []):
+                revisions[rev] = None  # a rebase carried this commit's change into HEAD's history unaltered
+            else:
+                revisions[rev] = 'is not an ancestor of HEAD, and no commit HEAD descends from carries its change unaltered'
+        return revisions[rev]
+
     for i in read_id_list(opts['criteria']):
         folder = os.path.join(d, 'evidence', i)
         if not os.path.isdir(folder):
@@ -653,6 +716,14 @@ def cmd_evidence_check(opts):
             out.append('evidence-empty evidence/%s/ holds nothing' % i)
             continue
         present = set(files)
+        if in_git:
+            committed = set(git_lines(['ls-tree', '-r', '-z', '--name-only', 'HEAD', '--', '.'], folder, '\0') or [])
+            changed = set(git_lines(['diff', '-z', '--name-only', '--relative', 'HEAD', '--', '.'], folder, '\0') or [])
+            for f in sorted(files):
+                if f not in committed:
+                    out.append('evidence-uncommitted evidence/%s/%s is not committed, so a clean checkout lacks it (untracked or ignored)' % (i, f))
+                elif f in changed:
+                    out.append('evidence-uncommitted evidence/%s/%s differs from its committed version' % (i, f))
         artifacts = [f for f in files if not (f.endswith('.txt') and f[:-4] in present)]
         for a in artifacts:
             side = a + '.txt'
@@ -662,8 +733,19 @@ def cmd_evidence_check(opts):
             lines = [l for l in read_text(os.path.join(folder, side)).split('\n') if l.strip() != '']
             if len(lines) != 1:
                 out.append('sidecar-invalid evidence/%s/%s must hold exactly one line' % (i, side))
-            elif not SIDECAR.search(lines[0].strip()):
+                continue
+            if not SIDECAR.search(lines[0].strip()):
                 out.append('sidecar-invalid evidence/%s/%s needs "revision: … | checkpoint: … | produced by: …"' % (i, side))
+                continue
+            fields = sidecar_fields(lines[0].strip())
+            rev = fields.get('revision', '').replace('`', '').strip()
+            problem = revision_finding(rev) if in_git else None
+            if problem:
+                out.append('sidecar-revision evidence/%s/%s names %s, which %s' % (i, side, rev, problem))
+            point = norm_checkpoint(fields.get('checkpoint'))
+            if i in plan and point not in plan[i]:
+                out.append('sidecar-checkpoint evidence/%s/%s names checkpoint "%s", but the evidence plan gives %s for %s'
+                           % (i, side, fields.get('checkpoint'), ' or '.join('"%s"' % p for p in sorted(plan[i])), i))
     return out, 1 if out else 0
 
 # ---------- receipts ----------

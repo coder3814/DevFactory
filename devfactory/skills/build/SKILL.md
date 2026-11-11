@@ -139,12 +139,16 @@ only the tests the current edit touches.
       whether the amendment changes what another card depends on, then continue from the
       amended spec.
 
-8. **Review.** When the card is built, write the criteria file with
+8. **Review.** When the card is built, commit everything, write the criteria file with
    `devfactory criteria-ids --card <n>` into a file outside the repository, then run
    `devfactory evidence-check <spec dir> --criteria <file>` and `devfactory gaps check <spec
-   dir>`, and run the test gate as "The test gate" says. Fix every finding they report and
-   every gate failure, or, for an open gap, settle it as step 7 says, before any review
-   starts. Then start the `change-reviewer` agent by name with the Agent
+   dir>`, and run the test gate as "The test gate" says. These are the checks a script can
+   make, so no review round is spent on them: evidence folders, sidecars, evidence that a
+   clean checkout would lack, a sidecar revision a rebase left behind with its change altered, a
+   checkpoint the evidence row does not name, an open or malformed gap entry, and the
+   gate. Fix every finding they report and every gate failure (an artifact whose sidecar
+   revision is stale is captured again at the current revision), or, for an open gap,
+   settle it as step 7 says, before any review starts. Then start the `change-reviewer` agent by name with the Agent
    tool; it carries its own definition
    ([`../../agents/change-reviewer.md`](../../agents/change-reviewer.md)), tools and model.
    Give it the path to the plugin's `references/` folder, the card with its criteria, the

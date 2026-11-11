@@ -2,7 +2,7 @@ import os
 import re
 import unittest
 
-from .helpers import read, run, temp_dir, write
+from .helpers import git, read, run, spec_text, temp_dir, write
 
 
 class RecordsTest(unittest.TestCase):
@@ -76,6 +76,101 @@ class RecordsTest(unittest.TestCase):
         r = run(['evidence-check', spec, '--criteria', criteria], d)
         self.assertEqual(r.code, 1)
         self.assertEqual(r.lines, ['sidecar-missing evidence/C2/run.log has no run.log.txt'])
+
+    def evidence_repo(self):
+        """A repository with a spec planning C1 and C2 at Local, and C1's committed evidence
+        naming the commit before it."""
+        d = temp_dir(self)
+        git(d, 'init', '-q', '-b', 'main')
+        spec = os.path.join(d, 'specs', '12')
+        write(os.path.join(spec, 'spec.md'), spec_text())
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'spec')
+        produced = git(d, 'rev-parse', 'HEAD')
+        criteria = os.path.join(temp_dir(self), 'criteria.txt')
+        write(criteria, 'C1\n')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt'), 'ok\n')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm test\n' % produced[:9])
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'evidence')
+        return d, spec, criteria
+
+    def test_evidence_check_passes_on_committed_evidence_at_an_ancestor_and_the_planned_checkpoint(self):
+        d, spec, criteria = self.evidence_repo()
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+
+    def test_evidence_check_fails_evidence_a_clean_checkout_would_lack(self):
+        d, spec, criteria = self.evidence_repo()
+        write(os.path.join(d, '.gitignore'), '*.log\n')
+        write(os.path.join(spec, 'evidence', 'C1', 'run.log'), 'log')
+        write(os.path.join(spec, 'evidence', 'C1', 'run.log.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm run job\n' % git(d, 'rev-parse', 'HEAD'))
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'log sidecar, log ignored')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt'), 'changed\n')
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 1)
+        self.assertEqual([l.split(' ')[:2] for l in r.lines],
+                         [['evidence-uncommitted', 'evidence/C1/out.txt'],
+                          ['evidence-uncommitted', 'evidence/C1/run.log']])
+
+    def test_evidence_check_fails_a_sidecar_revision_that_is_unknown_or_not_an_ancestor(self):
+        d, spec, criteria = self.evidence_repo()
+        git(d, 'switch', '-q', '-c', 'other')
+        write(os.path.join(d, 'other.txt'), 'x')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'elsewhere')
+        elsewhere = git(d, 'rev-parse', 'HEAD')
+        git(d, 'switch', '-q', 'main')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm test\n' % elsewhere)
+        write(os.path.join(spec, 'evidence', 'C1', 'page.png'), 'png')
+        write(os.path.join(spec, 'evidence', 'C1', 'page.png.txt'),
+              'revision: deadbeef | checkpoint: Local | produced by: a browser\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'stale sidecars')
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 1)
+        self.assertEqual(len(r.lines), 2, r.lines)
+        self.assertRegex(r.lines[0], r'^sidecar-revision evidence/C1/out\.txt\.txt names %s, which is not an ancestor of HEAD' % elsewhere)
+        self.assertRegex(r.lines[1], r'^sidecar-revision evidence/C1/page\.png\.txt names deadbeef, which is not a commit')
+
+    def test_evidence_check_accepts_a_sidecar_revision_a_rebase_carried_over_unaltered(self):
+        d, spec, criteria = self.evidence_repo()
+        git(d, 'switch', '-q', '-c', 'card')
+        write(os.path.join(d, 'feature.txt'), 'feature\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'feature')
+        before = git(d, 'rev-parse', 'HEAD')
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: Local | produced by: npm test\n' % before)
+        git(d, 'commit', '-q', '-am', 'evidence at the feature')
+        git(d, 'switch', '-q', 'main')
+        write(os.path.join(d, 'elsewhere.txt'), 'x\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'main moves on')
+        git(d, 'switch', '-q', 'card')
+        git(d, 'rebase', '-q', 'main')
+        self.assertNotEqual(git(d, 'rev-parse', 'HEAD~1'), before)
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 0, r.stdout + r.stderr)
+
+    def test_evidence_check_fails_a_sidecar_checkpoint_the_plan_does_not_give(self):
+        d, spec, criteria = self.evidence_repo()
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: `local` | produced by: npm test\n' % git(d, 'rev-parse', 'HEAD~1'))
+        git(d, 'commit', '-q', '-am', 'same checkpoint, other case')
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 0, r.stdout)
+        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'),
+              'revision: %s | checkpoint: in-process host | produced by: npm test\n' % git(d, 'rev-parse', 'HEAD~1'))
+        git(d, 'commit', '-q', '-am', 'other checkpoint')
+        r = run(['evidence-check', spec, '--criteria', criteria], d)
+        self.assertEqual(r.code, 1)
+        self.assertEqual(r.lines, ['sidecar-checkpoint evidence/C1/out.txt.txt names checkpoint "in-process host", '
+                                   'but the evidence plan gives "local" for C1'])
 
     def test_begin_writes_a_marker_and_lists_others_with_their_age_end_removes_it(self):
         d = temp_dir(self)

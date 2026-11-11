@@ -66,7 +66,9 @@ given.
      what it promised. Fail an artifact captured at a sub-issue's revision when a later
      merge changed what it shows.
    - **3.2** `[machine: evidence-check]` The same output: every artifact has its sidecar
-     naming revision, checkpoint and what produced it.
+     naming revision, checkpoint and what produced it, both are committed, the revision is
+     an ancestor of the revision under evaluation or was rebased into it unaltered, and the checkpoint is one the evidence
+     row names.
    - **4.1** `[judgment]` Every decision in the combined work is grounded in a spec or a
      log. Look for two sub-issues that made the same delegated call differently, and for a
      requester-side decision that only a log grounds.

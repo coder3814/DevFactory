@@ -60,6 +60,8 @@ requester at acceptance, against every criterion's evidence, never here.
 
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
     produced it. `[machine: evidence-check]`
+    The artifact and its record are committed, the revision is a commit the revision under
+    evaluation descends from, or one whose change a rebase carried into it unaltered, and the checkpoint is one its criterion's evidence row names.
 
 ### 4. The work is grounded
 
