@@ -174,8 +174,15 @@ not end before step 3 has started every session.
    - the readiness check of step 4 reported nothing open;
    - every wait the work order gives it is met: a sub-issue that waits on another begins
      only once that one is merged into the parent branch, and one that waits on another
-     parent's release begins only once that release is live and the parent branch is
-     rebased onto the integration branch;
+     parent issue begins once the code it waits on is on the integration branch and this
+     parent branch is rebased onto it. Have an agent check it by content, since a rebase
+     changes commit ids: `git cherry <integration branch> <other parent's branch>` lists
+     no commit marked `+`, so each commit of the other parent has one carrying the same
+     change on the integration branch, and the integration branch is an ancestor of this
+     parent branch (`git merge-base --is-ancestor`). When the other parent's branch no
+     longer exists, the agent finds its sub-issues' changes on the integration branch by
+     reading its log and the files they change. Nothing else, such as a board column, a
+     closed card or a deploy, is waited for;
    - every owner step its spec schedules before that point is done. When an owner step's
      moment arrives, ask the requester to take it, and set the session going once they say
      it is done.

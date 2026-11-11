@@ -27,7 +27,11 @@ alongside it, or says that none may.
 A parent issue waits on another parent issue only for that parent's work: code
 it builds on, or data its release must find already in place. The wait names
 the other parent and is stated against the sub-issues it holds back. A
-criterion it cites is cited by its ID.
+criterion it cites is cited by its ID. The wait is met once the code it waits
+on is on the integration branch and the waiting parent's branch is rebased
+onto it, found by the code's content, since a rebase changes commit ids;
+nothing else about the other parent, such as where its card sits or whether it
+is closed, holds the work back.
 
 The work order reflects the sub-issues as they stand. Whenever sub-issues are
 added, removed or reordered, it is revised, and the tracker's sub-issue order is

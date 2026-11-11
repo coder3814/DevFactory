@@ -107,7 +107,9 @@ The prompt that started you gives you all of these. If any is missing, say which
    question or a delegation.
 10. **Collect** every owner step with no moment in the run (8.1), and, for a parent issue,
    every work-order fault (8.2): a wait citing no allowed reason, a pair marked parallel
-   that would collide, a wait holding back work that could run.
+   that would collide, a wait holding back work that could run, such as a wait on another
+   parent that holds out for its release, its board column or its closed card instead of
+   its code being on the integration branch.
 
 ## Rules
 

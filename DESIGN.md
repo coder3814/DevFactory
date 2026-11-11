@@ -58,7 +58,10 @@ them:
 - **Work order**, on a parent issue only: its sub-issues in the order to work them, each
   saying what it waits on (one of: needs the other's result; changes the same files; both
   need something only one session can hold) and which may run alongside it. Sub-issues run
-  in parallel by default.
+  in parallel by default. A parent waits on another parent only for that parent's work, and
+  the wait is met once that code is on the integration branch and the waiting parent's
+  branch is rebased onto it, checked by content because a rebase changes commit ids; no
+  release, board column or closed card is waited for.
 
 A sub-issue carries a line naming its parent. Criteria carry **stable IDs** (`C1`, `C2`, …)
 that survive amendment: a removed criterion's ID is never reused, and a new one takes the

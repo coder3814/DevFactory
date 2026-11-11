@@ -184,7 +184,9 @@ rules that could otherwise be misread.
   hold one back, so a wait is never a habit or a hunch.
 - **A parent waits on another parent only for that parent's work.** Each
   parent's sub-issues merge into its own branch and it releases when they are
-  done, so no other wait between parents is needed.
+  done, so no other wait between parents is needed. The wait is met once that
+  work's code is on the integration branch and the waiting parent's branch is
+  rebased onto it.
 - **A parent issue is a card like any other.** Its outcome is that every
   sub-issue is done; each sub-issue names its parent in its opening line, so a
   reader of either knows the other exists. How the tracker marks the link
