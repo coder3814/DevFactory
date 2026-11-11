@@ -20,7 +20,7 @@ the Done judge decides by a mechanical reading; `[rubric]` an agent applies a na
 `[judgment]` an agent exercises adversarial judgment, looking for the way the result fails.
 
 **Intent is not gated.** Whether the result is what the requester wanted is judged by the
-requester at acceptance, criterion by criterion against the evidence, never here.
+requester at acceptance, against every criterion's evidence, never here.
 
 ## Conditions
 

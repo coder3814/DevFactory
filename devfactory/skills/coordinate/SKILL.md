@@ -1,6 +1,6 @@
 ---
 name: coordinate
-description: Coordinate a parent issue run — settle readiness before anything starts, start one session per sub-issue briefed to wait, set each going as its waits clear, relay its questions, merge results into the parent branch one at a time, have the Done judge check the combined result, then hand it to acceptance, which hands it to release. Use when the requester says to start work on a card that is a parent issue; needs the Claude desktop app.
+description: Coordinate a parent issue run — in the requester's opening turn start one session per sub-issue and one for parent fixes, each briefed to wait, settle readiness, set each session going as its waits clear, relay its questions, merge results into the parent branch one at a time, have the Done judge check the combined result, then go straight to acceptance, which hands it to release. Use when the requester says to start work on a card that is a parent issue; needs the Claude desktop app.
 allowed-tools:
   - Read
   - Glob
@@ -44,18 +44,23 @@ root, wherever the shell's working directory is.
 
 | Action | Tool |
 |---|---|
-| Start a session for a card, briefed to wait | `start_session` with `initiation: "user_asked"`, `context: "fresh"`, its own worktree (`use_worktree: true`) cut from the parent branch (`source_branch`), the `model` and `effort` the card's Suggested model and effort names, the brief below as `prompt`, and the run's goal and constraints as `background`. Record the session id and name the result returns. |
-| Tell a waiting session to begin, send it an answer, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
+| Start a session, briefed to wait | `start_session` with `initiation: "user_asked"`, `context: "fresh"`, its own worktree (`use_worktree: true`) cut from the parent branch (`source_branch`), the `model` and `effort` the card's Suggested model and effort names, the brief below as `prompt`, and the run's goal and constraints as `background`. Record the session id and name the result returns. |
+| Tell a waiting session to begin, send it an answer or a finding, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
 | Read a session's report | Its final message arrives as a `<side-sessions-event>` note quoting the report's first 400 characters; read the rest from the card and the spec it updated, or ask the session to restate a part. |
 | Stop a session | `stop_session`, then `archive_session` once its worktree and branch are gone. |
 
 The desktop app shapes the run:
 
 - **Sessions start only on a turn the requester's own message began.** On a turn a
-  notification began, a start is offered as a card that waits for a click, so a run left
-  unattended stalls. Start every sub-issue's session up front, in the requester's turn.
+  notification or an agent's report began, a start is offered as a card that waits for a
+  click, so a run left unattended stalls. So every session the run will need is started in
+  the turn of the requester's "start work" message, before anything that ends that turn:
+  one per sub-issue, and one for parent fixes. Read the parent with agents that report
+  within the turn (in the foreground), and send nothing to a background agent before the
+  sessions are started. The one start that can still wait for a click is a session for a
+  sub-issue added to the parent mid-run; say so when it happens, with the reason.
 - **Messaging works from any turn**, so set each session going when its waits are met, and
-  relay answers, from a notification turn.
+  relay answers and findings, from a notification turn.
 - **A session cannot remove the worktree it works in.** Have a separate subagent remove it.
 - **A report is a claim, not proof.** Check the branch, the spec and the card before acting
   on it or telling the requester it is done.
@@ -69,13 +74,17 @@ The desktop app shapes the run:
 The brief names the card, the parent, the spec path, the parent branch and the sub-issue's
 own branch, named by the profile's Sub-issue branch entry, and says, in this order:
 
-1. Reply "waiting" and end your turn. When messaged to begin, load the `build` skill for this
-   card and follow it from its first step, which marks the session as building before
-   anything else; its second step is the rebase onto the parent branch named here.
+1. Reply "waiting" and end your turn. You wait for the run's readiness check to settle as
+   well as for what the work order makes you wait on; the coordinator messages you when
+   both are done. When messaged to begin, load the `build` skill for this card and follow
+   it from its first step, which marks the session as building before anything else; its
+   second step is the rebase onto the parent branch named here, which brings in anything
+   the readiness check amended.
 2. The `build` skill fires `development-started` as work starts; leave every other event
    to the coordinator.
-3. A question the spec and the decision line do not answer: stop and report it to the
-   coordinator in the shape the `build` skill gives, and wait.
+3. A question the spec, the profile's Standing answers and the decision line do not
+   answer: stop and report it to the coordinator in the shape the `build` skill gives,
+   and wait.
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
 5. When told it is your turn: rebase onto the parent branch, rerun the tests, fast-forward
@@ -83,14 +92,26 @@ own branch, named by the profile's Sub-issue branch entry, and says, in this ord
    session's own worktree, never by changing into the parent worktree, report, and end your
    turn. Stay available: you, your worktree and your branch are kept until the run is
    accepted and released, and the coordinator may message you with a Done-judge finding or
-   an acceptance refusal.
+   an acceptance refusal, which you fix as `build` says under "Fixing a finding or a
+   refusal".
+
+**The parent-fixes session's brief** is the same, with these differences: its card is the
+parent issue, and its spec is the parent's; its branch is named by the profile's Sub-issue
+branch entry with the parent's id as the card's; and it is not set going when readiness
+settles. It waits until the coordinator messages it a Done-judge finding or an acceptance
+refusal that no single sub-issue owns, then follows `build` under "Fixing a finding or a
+refusal" for the parent, and after its merge waits again, kept like the others, for the
+next one.
 
 There is one coordinator per run. It never starts a session that acts as a coordinator; a
 parent issue outside this run, such as one created along the way, is a new run the
 requester starts.
 
-The requester is asked one question at a time, the recommended option first with a
-one-line reason.
+**Asking the requester.** Every question first passes "Before anything is asked" in
+[`../../references/decision-line.md`](../../references/decision-line.md): the profile's
+Standing answers, then the decision line. Only what survives both reaches the requester,
+one question at a time, the recommended option first with a one-line reason. Nothing in
+this run asks for a go-ahead to take the next step it prescribes.
 
 ## Read these first, in full
 
@@ -99,7 +120,7 @@ one-line reason.
 - [`../../references/modules/work-order.md`](../../references/modules/work-order.md): the
   waits and what may run alongside what.
 - [`../../references/decision-line.md`](../../references/decision-line.md): the test every
-  relayed question passes first.
+  question passes first, and the findings that carry on past the review limit.
 - [`../../references/definition-of-ready.md`](../../references/definition-of-ready.md) and
   [`../../references/definition-of-done.md`](../../references/definition-of-done.md).
 - [`../../references/spec-template.md`](../../references/spec-template.md).
@@ -107,33 +128,42 @@ one-line reason.
 
 ## Steps
 
-1. **Read the parent.** Have an agent read the parent issue, its work order, and every
-   sub-issue in full with its comments, and report each one's spec line, spec
-   status and what it waits on. A sub-issue that is itself a parent issue is coordinated in
-   place: its sub-issues join this run in its own work order. A sub-issue whose spec status
-   is not `approved` is not built in this run, wherever it sits on the board: tell the
-   requester which
-   ones wait and why. The parent stays open until they are done.
+Steps 1 to 3 run in the turn of the requester's "start work" message, and that turn does
+not end before step 3 has started every session.
 
-2. **Settle readiness.** First have an agent fire `work-started` for the parent and for
-   each sub-issue this run covers. Then follow `check-ready` over the parent, at
-   development start. It ran
+1. **Read the parent.** Have an agent, in the foreground, read the parent issue, its work
+   order, and every sub-issue in full with its comments, and report each one's spec line,
+   spec status and what it waits on. A sub-issue that is itself a parent issue is
+   coordinated in place: its sub-issues join this run in its own work order. A sub-issue
+   whose spec status is not `approved` is not built in this run, wherever it sits on the
+   board: tell the requester which ones wait and why. The parent stays open until they are
+   done. Note whether the requester's starting instruction authorises the release ahead of
+   time, such as "drive all the way to the end": step 10 acts on it.
+
+2. **Create the parent branch.** Have an agent, in the foreground, fire `work-started` for
+   the parent and for each sub-issue this run covers, then create the parent branch and its
+   worktree as the profile's Branches and merging says, cut from the integration branch,
+   which carries the specs. No one works in the parent worktree. Sub-issues merge into the
+   parent branch, never into the integration branch.
+
+3. **Start every session up front.** Start one session for each sub-issue this run builds,
+   and the parent-fixes session, all of them in the requester's turn, each with
+   `start_session` as "Sessions" says and briefed to wait with the briefs above. Each runs
+   on the model and effort its card's Suggested model and effort names (the parent's for
+   the parent-fixes session), or the profile's default. Link each one for the requester.
+
+4. **Settle readiness.** Follow `check-ready` over the parent, at development start. It ran
    when the parent was created and each time a card was added, so it should find nothing;
    anything it finds is settled with the requester and folded now. Every read and write it
-   calls for is delegated to an agent. No session starts until it reports nothing open.
+   calls for is delegated to an agent, which may run in the background now that every
+   session is started. No session is set going until it reports nothing open. When its
+   folds committed anything to the integration branch, have an agent rebase the parent
+   branch onto it before any session begins. A sub-issue the check finds no longer Ready
+   keeps its session waiting until its spec is approved again; one that leaves the run has
+   its session stopped and archived.
 
-3. **Create the parent branch.** Have an agent create the parent branch and its worktree as
-   the profile's Branches and merging says, cut from the integration branch, which carries
-   the specs. No one works in the parent worktree. Sub-issues merge into the parent branch,
-   never into the integration branch.
-
-4. **Start every session up front.** Start one session for each sub-issue this run builds,
-   all of them in the requester's turn and before the first begins, each with
-   `start_session` as "Sessions" says and briefed to wait with the brief above. Each runs on
-   the model and effort its card's Suggested model and effort names, or the profile's
-   default. Link each one for the requester.
-
-5. **Set each going.** Message a session to begin when both hold:
+5. **Set each going.** Message a sub-issue's session to begin when all of these hold:
+   - the readiness check of step 4 reported nothing open;
    - every wait the work order gives it is met: a sub-issue that waits on another begins
      only once that one is merged into the parent branch, and one that waits on another
      parent's release begins only once that release is live and the parent branch is
@@ -147,11 +177,16 @@ one-line reason.
    sub-issue begins, have an agent fire `development-started` for the parent, and for any
    nested parent whose sub-issue it is.
 
+   A sub-issue added to the parent during the run is checked by `check-ready` as a card
+   added to a parent issue, and needs a session of its own: start it, briefed to wait,
+   when the requester next sends a message, or offer it on a notification turn and tell
+   the requester the start waits for their click.
+
 6. **Relay questions.** A question pauses only the sub-issue that raised it. Read it in the
    shape `build` gives it.
-   - Test it against the decision line and the spec first. A question the developer's side
-     or the spec already answers goes back to the session with what answers it, and nothing
-     is asked.
+   - Test it as "Asking the requester" says, against the spec as well. A question a
+     standing answer, the developer's side or the spec already answers goes back to the
+     session with what answers it, and nothing is asked.
    - Otherwise put it to the requester as the session gave it: the question, the options
      with the recommendation first, and the Ready condition that failed. When several
      sessions raise the same gap, ask for the rule once.
@@ -180,9 +215,12 @@ one-line reason.
    never merge over each other, and a sub-issue that waits on another merges after the one
    it waits on.
    - When a session reports its review passed, have an agent check the report against the
-     branch, the spec's log and gap record, and the review verdict. When a session reports
-     that its third review still failed, put the findings to the requester and ask how to
-     proceed; the sub-issue does not merge meanwhile.
+     branch, the spec's log and gap record, and the review verdict. A session whose review
+     limit was reached with every finding on the developer's side has fixed them and
+     carried on as `build` step 8 says; its report says so, and it is checked the same way.
+   - When a session reports findings past its review limit that change what an observer
+     sees or can do, what persisted data ends up as, or scope, put those findings to the
+     requester and ask how to proceed; the sub-issue does not merge meanwhile.
    - When it is a card's turn, message its session to merge as its brief says: rebase onto
      the parent branch, rerun the tests, and fast-forward the parent branch with
      `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. When the
@@ -198,31 +236,43 @@ one-line reason.
    `references/` folder, the parent card and spec path, each sub-issue's card and spec path,
    the profile path, the base revision (the integration branch commit the parent branch was
    cut from or last rebased onto), the parent branch's head, and a clean checkout at that
-   head, never how the work was built. A finding that belongs to one sub-issue goes to
-   that sub-issue's kept session, which fixes it on its branch, rebased onto the parent
-   branch; a finding no single sub-issue owns is fixed by a new session started and
-   briefed as a sub-issue's is, in a worktree cut from the parent branch. A session can
-   start only in the requester's turn, so on a notification turn tell the requester the
-   start waits for their click, with the reason. Either is
-   reviewed by its change reviewer and merged as step 8 says; a finding that
-   is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once the
-   findings are merged. After a NOT DONE there are at most two further rounds: when the
-   third judgment is still NOT DONE, stop and report it to the requester with its findings,
-   and wait. On DONE, have an agent fire `done` for the parent and for each nested
-   parent in it.
+   head, never how the work was built.
+   - A finding that belongs to one sub-issue goes by message to that sub-issue's kept
+     session, which fixes it on its branch, rebased onto the parent branch. A finding no
+     single sub-issue owns goes by message to the parent-fixes session. If that session is
+     gone, send it to the kept session of the sub-issue whose files the finding touches
+     most, naming the parent's spec as the one it fixes against. No session is started for
+     a finding.
+   - Each fix is reviewed by its change reviewer and merged as step 8 says; a finding that
+     is a readiness miss gets a gap entry through `grill` in amend mode. Judge again once
+     the findings are merged.
+   - After a NOT DONE there are at most two further rounds. When the third judgment is
+     still NOT DONE, sort its findings by the decision line's "Findings after the review
+     limit". When every finding is on the developer's side, have them fixed as above and
+     carry on without asking: after a code fix, review and judge once more; when every fix
+     was a spec-only amendment, merge it as step 8 says without a further review and go
+     straight to step 10, with no further judgment. Escalate to the requester, and wait, only
+     with findings that change what an observer sees or can do, what persisted data ends
+     up as, or scope, or when the extra judgment is still NOT DONE.
+   - On DONE, or when a spec-only round past the limit is merged, have an agent fire
+     `done` for the parent and for each nested parent in it.
 
-10. **Accept.** Follow `accept` for the parent run. It ends by asking the requester whether to
-    release; when they say yes, start `release` yourself, never on your own judgment. It runs in this session, under this
-    coordinator's marker and its own, and does every command through a session or a
-    subagent. A refusal `accept` sorts as a defect or a
-    request change is built as step 9's findings are: by the kept session of the sub-issue
-    it belongs to, or by a new session cut from the parent branch when no sub-issue owns
-    it, reviewed and merged the same way, and then goes back to `accept`.
+10. **Accept.** Go straight into `accept` for the parent run once the Done judge says DONE,
+    or once step 9 sends a spec-only round on; ask nothing first. `accept` runs in this
+    session, under this coordinator's marker and its own, and does every command through
+    a session or a subagent. It ends in the release: when step 1 noted a release
+    authorised ahead of time, or the requester's acceptance authorises it, start `release`
+    without asking again; otherwise `accept` asks once, and on a yes start `release`
+    yourself, never on your own judgment. A refusal `accept` sorts as a defect or a request
+    change is built as step 9's findings are: by the kept session of the sub-issue it
+    belongs to, or by the parent-fixes session when no sub-issue owns it, reviewed and
+    merged the same way, and then goes back to `accept`.
 
-11. **Stop.** Once `release` has reaped, confirm that every session and agent you started
-    has stopped, and that each agent stopped its own. Report anything you cannot confirm has
-    stopped. Run `devfactory markers --clear-stale` to remove any marker left behind past
-    its lifetime, then run `devfactory end coordinate`.
+11. **Stop.** Once `release` has reaped, confirm that every session and agent you started,
+    the parent-fixes session included, has stopped, and that each agent stopped its own.
+    Report anything you cannot confirm has stopped. Run `devfactory markers --clear-stale`
+    to remove any marker left behind past its lifetime, then run `devfactory end
+    coordinate`.
 
 ## Throughout
 
@@ -233,6 +283,6 @@ one-line reason.
   requester with its output, and the work carries on. The parent closes only when every
   one of its sub-issues is released.
 - **Progress.** Report to the requester at each phase: what is running, what is done, what
-  is waiting and on what.
+  is waiting and on what. A report asks nothing.
 - **Work no card asks for.** Work found along the way that no card asks for becomes a
   standalone card through `create-card`, never a new sub-issue of this parent.

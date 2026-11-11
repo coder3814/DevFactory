@@ -56,7 +56,7 @@ development re-runs a check only when something it reads has changed, and then o
 check.
 
 **Runs the build unattended.** For a parent issue, a coordinator starts one Claude desktop
-session per sub-issue, sets each going as its waits clear, relays the rare question that
+session per sub-issue, all in your opening turn, sets each going as its waits clear, relays the rare question that
 survives the spec and the decision line, merges results into the parent branch one at a
 time, and has a separate judge apply the Definition of Done to the combined result. For a
 single card, one session builds it and a separate reviewer passes it. No agent accepts its
@@ -85,7 +85,7 @@ scripts, so two checkers agree by construction.
   would raise about the same content.
 - **One approval, one acceptance.** The rewritten wording of a card is not re-approved on
   every edit; your answer is the acceptance, and you judge intent once at the end against the
-  evidence plan, criterion by criterion.
+  evidence plan, every criterion shown with its evidence and accepted in one answer.
 - **Rules that hold under load.** The guards block what prose rules only discourage.
 - **A process that learns.** Every miss is recorded against the condition that let it through,
   and the gaps become the next grilling's checklist.

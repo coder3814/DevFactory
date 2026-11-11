@@ -28,7 +28,10 @@ parent branch, or a standalone card's own branch, which `build` left unmerged. U
 coordinator, every command, write and event below is done by a session or a subagent
 it starts, as `coordinate` says. This skill runs only on the requester's explicit instruction
 in the conversation, never on an agent's own judgment: a session may invoke it once the
-requester has said to release, and never otherwise.
+requester has said to release, and never otherwise. The instruction may come ahead of
+time, in the requester's starting instruction for the run or the card, or in their
+acceptance answer, as `accept` step 6 says; a release so authorised is not asked about
+again.
 
 `devfactory` below means running the plugin's script with `python`: the script is
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
@@ -43,8 +46,13 @@ refreshes it, so run `devfactory begin release` again whenever you resume after 
 Markers and the profile are found at the repository (worktree) root, wherever the shell's
 working directory is.
 
-The requester is asked one question at a time, the recommended option first with a
-one-line reason.
+**Before asking anything**, apply "Before anything is asked" in
+[`../../references/decision-line.md`](../../references/decision-line.md): read the profile's
+Standing answers and its Branches and merging, and when one of them answers the question,
+act on it and cite it. Only what neither answers, and is the requester's to decide, is
+asked: one question at a time, the recommended option first with a one-line reason. An
+owner step the release procedure gives the requester, such as a production write, is still
+theirs to take when its moment comes, whatever authorised the release.
 
 ## Read these first, in full
 
@@ -54,6 +62,8 @@ one-line reason.
   and merging with the release procedure, the gap ledger, and Standing answers.
 - [`../../references/spec-template.md`](../../references/spec-template.md): the gap entry's
   form.
+- [`../../references/decision-line.md`](../../references/decision-line.md): what is asked,
+  and what a standing answer or the developer's side settles.
 
 ## Steps
 
@@ -61,9 +71,10 @@ one-line reason.
    procedure and every project skill it names for merging or releasing. Confirm that each
    card to release is in Acceptance with the requester's acceptance recorded on it.
 
-2. **Settle what the profile leaves open.** When the profile's release procedure does not
-   say how this work is released (where it merges, what ships it, what is checked once it
-   is live), ask the requester, once, for each thing it leaves open. Then propose the answer
+2. **Settle what the profile leaves open.** When neither the profile's release procedure
+   nor its Standing answers say how this work is released (where it merges, what ships it,
+   what is checked once it is live), ask the requester, once, for each thing they leave
+   open. Then propose the answer
    for the release procedure or as a standing answer and, when the requester accepts, write
    it to the profile with where it came from.
 
@@ -78,8 +89,9 @@ one-line reason.
 
 4. **Merge and release** as the profile's release procedure and the project's skills say:
    rebase, rerun the test gate, merge into the integration branch, and ship. When the
-   project's conventions ask the requester something at this point, the recorded acceptance
-   answers it where the profile says so; otherwise ask. Work held rather than released
+   project's conventions ask the requester something at this point, a standing answer, the
+   release authorisation, or the recorded acceptance where the profile says so, answers
+   it; otherwise ask. Work held rather than released
    keeps its cards accepted and open until the held release goes out.
 
 5. **Close and fire.** Once the release is live, close each released card and fire
@@ -96,4 +108,14 @@ one-line reason.
    Stop each session with `stop_session` before its worktree goes. A session cannot remove
    the worktree it works in, so have a subagent working from another checkout remove each
    one, then archive the session with `archive_session` once its worktree and branch are
-   gone. Report anything you cannot confirm is gone.
+   gone. Reaping asks nothing a standing answer or this step settles:
+   - A branch whose work reached the integration branch by a rebase, so that `git branch
+     -d` refuses it, is removed the way the profile's Branches and merging or a standing
+     answer (such as "How is a finished branch removed?") says, force-deletion included,
+     once its commits' changes are confirmed on the integration branch. Ask only when
+     neither says.
+   - A reaped worktree whose only uncommitted changes are regenerated build output (files
+     the project's build or test gate writes, such as compiled assets, caches or test
+     reports) is removed with that output discarded, without asking. Any other uncommitted
+     change is reported and its worktree kept.
+   Report anything you cannot confirm is gone.

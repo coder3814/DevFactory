@@ -104,10 +104,11 @@ directory is.
      anything else a change carries.
 
 7. **A question.** When the work needs a decision the spec does not record:
-   1. Apply the decision line and the spec's delegations first. A question on the
-      developer's side is decided and logged as step 5 says, not asked. A question on the
-      requester's side that a recorded decision, the profile or the spec already answers is
-      followed, and the answer is cited in the log.
+   1. Apply "Before anything is asked" in `decision-line.md` and the spec's delegations
+      first. A question a standing answer in the profile settles is followed, and the entry
+      cited in the log. A question on the developer's side is decided and logged as step 5
+      says, not asked. A question on the requester's side that a recorded decision, the
+      profile or the spec already answers is followed, and the answer is cited in the log.
    2. A question that survives stops this card's work. Report it in this shape and wait:
 
       ```text
@@ -138,13 +139,26 @@ directory is.
    parent branch, or with the integration branch for a standalone card, computed at review
    time), the revision under review, and a clean checkout at that revision; never how the
    work was built or what you think of it. Fix each finding, commit, rerun both checks, and
-   start a fresh review of the new revision. After a FAIL there are at most two further
-   rounds: when the third review still fails, stop and report it with its findings, and
-   wait. A finding that needs a
-   decision the spec does not record is a question, handled as step 7 says.
+   start a fresh review of the new revision. A finding that needs a decision the spec does
+   not record is a question, handled as step 7 says.
+
+   After a FAIL there are at most two further rounds. When the third review still fails,
+   sort its findings as "Findings after the review limit" in `decision-line.md` says,
+   without asking anyone:
+   - **Every finding on the developer's side** (a missing or weak test, an incomplete
+     evidence record or sidecar, a gap entry not written, a spec that no longer matches the
+     built code while the behaviour it describes is unchanged): fix them and carry on,
+     recording each gap entry as usual. A spec that no longer matches is amended through
+     `grill` in amend mode. After a code fix, run both checks and one more review; when it
+     passes, go on to step 9. When every fix was a spec-only amendment, go on to step 9
+     without a further review.
+   - **Any finding that changes what an observer sees or can do, what persisted data ends
+     up as, or scope**, or the extra review still failing: stop and report the findings,
+     and wait.
 
 9. **Report**: what was built, by criterion ID; the review verdict and how many rounds it
-   took; the delegated calls made, from the log; the gaps raised, with their amendments;
+   took, and, when the review limit was passed, each developer-side finding fixed without
+   asking and whether a further review ran; the delegated calls made, from the log; the gaps raised, with their amendments;
    the branch and revision; the test gate's result; and anything left unverified.
 
 10. **Finish.**
@@ -155,7 +169,23 @@ directory is.
       acceptance.
     - **A standalone card**: the review's PASS is its Done verdict, since the change
       reviewer applies every Definition of Done condition but 6, which only a parent issue
-      has. Fire `done` and stop building without merging: follow `accept`, which
-      hands to `release`, and `release` merges the work once.
+      has; so is step 8's carrying on after spec-only amendments past the review limit.
+      Fire `done` and stop building without merging: go straight into `accept`, asking
+      nothing first, which hands to `release`, and `release` merges the work once.
+
+## Fixing a finding or a refusal
+
+In a parent issue run the coordinator may message a kept session with a Done-judge finding
+or an acceptance refusal to fix; the parent-fixes session the coordinator starts receives
+the ones no single sub-issue owns, and its card and spec are the parent's. Run
+`devfactory begin build`, rebase onto the parent branch, and fix only what the message
+names, against the card and spec the brief gives. A sub-issue's session has already run
+steps 1 to 4 and runs them again only as far as reading anything changed. The parent-fixes
+session runs steps 1 to 3 for the parent the first time it is messaged, and skips step 4:
+the coordinator fired `development-started` for the parent. Write any gap entry the message asks for.
+Then review the fix as step 8 says, with the base revision computed against the parent
+branch, report as step 9 says, and merge only when the coordinator says it is your turn,
+as step 10 says. When the coordinator says the fix is a spec-only amendment past the Done
+judge's limit, amend the spec through `grill` in amend mode and report without a review.
 
 Stop every agent you started before you finish, and tell each to stop its own.

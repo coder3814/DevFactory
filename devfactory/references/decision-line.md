@@ -2,7 +2,9 @@
 
 Who decides what, stated once. The readiness checker uses it to tell a question grilling
 must ask from one it may delegate; the build session uses it to decide instead of asking;
-the coordinator uses it to send back a question the session could have answered.
+the coordinator uses it to send back a question the session could have answered; and every
+skill that asks the requester anything applies it first, as "Before anything is asked"
+says.
 
 **The requester decides** what an observer of the system sees or can do; what persisted data
 ends up as; and scope.
@@ -28,6 +30,42 @@ miss.
 
 A question on the requester's side that a recorded decision, the profile or the spec already
 answers is not asked either: the answer is followed and cited.
+
+## Before anything is asked
+
+Every question any skill would put to the requester, a go-ahead included, first goes
+through two tests, in this order:
+
+1. **The profile's Standing answers.** When an entry answers it, act on that answer and
+   cite the entry; nothing is asked.
+2. **This line.** When the question is on the developer's side, decide it, log it as below,
+   and carry on; nothing is asked.
+
+Only a question on the requester's side that neither settles reaches the requester. A
+skill also asks nothing it does not need an answer to: a go-ahead for the next step the
+skill already prescribes, such as starting acceptance once the Done judge says DONE, is
+not asked. The stops that remain are these:
+
+- a question about what an observer of the system sees or can do, what persisted data ends
+  up as, or scope;
+- an owner step whose moment has arrived, such as a production write, which only the
+  requester takes;
+- the acceptance itself;
+- the release, unless the requester has already authorised it (`accept`, step 6);
+- the profile writes `curate` proposes, asked once per curation.
+
+## Findings after the review limit
+
+A change review or a Done judgment that still fails after its two further rounds is not
+by itself a reason to ask. A finding is on the developer's side when fixing it changes
+nothing an observer sees or can do, nothing persisted data ends up as, and not the scope:
+a missing or weak test, an incomplete evidence record or sidecar, a gap entry not
+written, or a spec that no longer matches the built code while the behaviour it describes
+is unchanged. When every finding is on the developer's side, it is fixed and the work
+carries on: a code fix gets one more review, and a spec-only amendment goes on without
+one. Each fix records its gap entry as usual. A finding that changes what an observer sees
+or can do, what persisted data ends up as, or scope goes to the requester, with the rest
+of that round's findings.
 
 ## Recording a delegated call
 

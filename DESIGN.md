@@ -232,7 +232,7 @@ receipt says a check need not run again.
 | Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved` |
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
 | Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. | the Done judge agent | Done verdict |
-| Acceptance | The owner judges the result against the evidence, criterion by criterion. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
+| Acceptance | The owner judges the result against the evidence: every criterion is shown with its artifact, and one question accepts them all or names the refused ones. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
 | Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated. | `release` | Cards closed |
 
 Three definitions gate the work, one per hand-off: the Definition of Request
@@ -255,14 +255,34 @@ that waits on another merges after the card it waits on. A standalone card is no
 when its review passes; `release` merges it once, after acceptance.
 
 **Loops are bounded.** After a change review or the Done judge fails, the work gets at most
-two further rounds. A third failure stops it and reports the findings to the coordinator,
-or to the requester for a standalone card.
+two further rounds. A third failure asks nothing when every finding is on the developer's
+side (a missing test, an incomplete evidence record, a spec that no longer matches the
+built code with no change to what an observer sees): the findings are fixed, a code fix
+gets one more review or judgment, and a spec-only amendment goes straight on to
+acceptance. Only findings that change what an observer sees or can do, what persisted data
+ends up as, or scope stop the work and go to the requester, through the coordinator in a
+parent issue run.
 
 **Sessions are kept.** In a parent issue run, each sub-issue's session, worktree and branch
 are kept until the run is accepted and released. A Done-judge finding or a refusal that
 belongs to one sub-issue is fixed by that sub-issue's kept session, on its branch rebased
-onto the parent branch; one no sub-issue owns is fixed by a new session cut from the parent
-branch. Either is reviewed and merged as any sub-issue's work is.
+onto the parent branch; one no sub-issue owns is fixed by the run's parent-fixes session,
+started with the others and waiting for such findings. Either is reviewed and merged as any
+sub-issue's work is.
+
+**Every session starts in the requester's turn.** The Claude desktop app starts a session
+only on a turn the requester's own message began; on a notification turn a start waits for
+a click. So the coordinator starts every sub-issue's session and the parent-fixes session
+in the turn of the "start work" message, each briefed to wait for the readiness check and
+for its work-order waits, and then sets each going by message, which works from any turn.
+A sub-issue added mid-run is the one start that can wait for a click.
+
+**Stops are few.** Before any question reaches the requester it is tested against the
+profile's Standing answers and the decision line (section 7). A step the process already
+prescribes, such as going into acceptance after the Done judge's DONE, is not asked for.
+The release is asked once, or not at all when the requester authorised it ahead of time,
+in their starting instruction or their acceptance answer. `curate` asks once per pass,
+with every proposal numbered, and drops what the profile already holds or has declined.
 
 ## 4. Definition of Ready
 
@@ -436,13 +456,15 @@ outcome that is missing, and that sorts it:
   one accepted as specified. Amended into this card only when the addition is inseparable
   from the outcome under review.
 
-Acceptance is asked against the evidence plan, criterion by criterion, so a refusal arrives
-already classified.
+Acceptance is asked against the evidence plan: every criterion is shown with its artifact
+and promise, caveats flagged, and one question accepts them all or names the refused ones
+by ID, so a refusal arrives already classified.
 
 ## 7. The decision line and the standing answers
 
 **The decision line** (principle 5) is stated once in `references/decision-line.md` and
-applied by the readiness checker, the build session and the coordinator. The requester
+applied by the readiness checker, the build session and the coordinator, and by every
+skill before it asks the requester anything, after the standing answers. The requester
 decides: what an observer of the system sees or can do; what persisted data ends up as;
 scope. The developer decides: internal structure; anything a recorded decision, the
 profile, a design system or an existing pattern in the code already answers; anything the
@@ -479,8 +501,8 @@ DevFactory/
                             checker; ask; stamp; commit; write the spec line
       check-ready/          the readiness check alone, for a card or every sub-issue of a
                             parent; reports, asks, folds
-      coordinate/           a parent issue on the Claude desktop app: settle, start one
-                            session per sub-issue, relay, merge, judge, accept
+      coordinate/           a parent issue on the Claude desktop app: start every
+                            session up front, settle, relay, merge, judge, accept
       build/                one card in one session: check the stamp, make the delegated
                             calls, build, review, report
       accept/               walk the owner through acceptance against the evidence plan;

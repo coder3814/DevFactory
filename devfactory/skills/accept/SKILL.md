@@ -1,6 +1,6 @@
 ---
 name: accept
-description: Walk the requester through accepting a card or a parent issue run, criterion by criterion against the evidence plan, and sort any refusal into a defect, a request change or a new request. Use when a parent run has the Done judge's DONE verdict, or a standalone card has passed its change review.
+description: Show the requester every criterion of a card or a parent issue run with its evidence, ask once whether to accept them all or which to refuse, ask whether the whole is what was wanted, sort any refusal into a defect, a request change or a new request, and hand to release, without asking again when the release is authorised ahead of time. Use when a parent run has the Done judge's DONE verdict, or a standalone card has passed its change review.
 allowed-tools:
   - Read
   - Glob
@@ -17,7 +17,8 @@ allowed-tools:
 
 The requester judges intent here, once, against the evidence. Nothing is checked by taste:
 each criterion is shown with the artifact its evidence row promised, so a refusal arrives
-already naming what it refuses. Under a coordinator, every read, write and event below
+already naming what it refuses. Every criterion is shown at once and asked about in one
+question, never one criterion at a time. Under a coordinator, every read, write and event below
 is done by a session or a subagent it starts, as `coordinate` says.
 
 `devfactory` below means running the plugin's script with `python`: the script is
@@ -31,8 +32,11 @@ requester's answer, or to report, run `devfactory end accept` first, and
 Marker lifetime (12 hours by default), and `begin` refreshes it. Markers and the profile
 are found at the repository (worktree) root, wherever the shell's working directory is.
 
-The requester is asked one question at a time, the recommended option first with a
-one-line reason.
+Every question first passes "Before anything is asked" in
+[`../../references/decision-line.md`](../../references/decision-line.md): the profile's
+Standing answers, then the decision line. What survives is asked one question at a time,
+the recommended option first with a one-line reason, except that steps 2 and 3 are put
+together when the platform can ask both at once.
 
 ## Read these first, in full
 
@@ -52,15 +56,21 @@ one-line reason.
    Start only once the result is Done: the Done judge's DONE for a parent run, the change
    review's PASS for a standalone card. Leave every card where it sits on the board.
 
-2. **Walk the criteria.** Take the parent's criteria first, then each sub-issue's in the
-   work order. For each criterion show its ID and text, the evidence row's artifact (the
-   image itself, the test and its result, the log or query output), what the row promised it
-   shows and under what condition, and the revision and checkpoint from its sidecar. Ask
-   whether to accept it. Recommend accepting when the artifact shows what the row promised;
-   when it does not, say so and recommend refusing.
+2. **Show every criterion, then ask once.** In one message, take the parent's criteria
+   first, then each sub-issue's in the work order. For each criterion show its ID and text,
+   the evidence row's artifact (the image itself, the test and its result, the log or query
+   output), what the row promised it shows and under what condition, and the revision and
+   checkpoint from its sidecar. Flag each caveat where it applies: an artifact that does
+   not show what its row promised, a checkpoint or revision other than the one the row
+   names, or anything left unverified. Then ask one question: accept every criterion, or
+   name the refused ones by ID. Recommend accepting all when every artifact shows what its
+   row promised; when one does not, name it and recommend refusing it. When the release is
+   not yet authorised (step 6), offer accepting all and releasing as an option of its own.
 
-3. **Ask about the whole.** After the last criterion, ask whether the result is the outcome
-   the requester wanted, or something is missing that no criterion covers.
+3. **Ask about the whole.** Ask whether the result is the outcome the requester wanted, or
+   something is missing that no criterion covers. When the platform can ask more than one
+   question at once, such as the `AskUserQuestion` tool, ask this together with step 2's
+   question; otherwise ask it next.
 
 4. **Sort a refusal.** A refusal names the criterion the result fails or the outcome that is
    missing; when it names neither, ask which. State the class below with its reason, and
@@ -71,21 +81,22 @@ one-line reason.
    with its output. A refusal that becomes a new card fires nothing.
    - **Fails a stated criterion.** A defect, not a change. Send it back to the build
      session, or in a parent run to the coordinator, which has it fixed as its Done
-     findings are: by the kept session of the sub-issue it belongs to, or by a new session
-     cut from the parent branch when no sub-issue owns it. Add a gap entry to that
+     findings are: by the kept session of the sub-issue it belongs to, or by the run's
+     parent-fixes session when no sub-issue owns it. Add a gap entry to that
      criterion's spec at stage Acceptance, let through by the Done condition that should
      have caught it, resolved by an amendment that records the fix and its commit and
      changes nothing else; write it with `devfactory gaps add <spec dir> --stage
      Acceptance --question <the refusal> --condition <Done condition> --resolved
-     <version>`, each value quoted as one argument. The fix is reviewed and judged again, and the refused criterion, with any other the fix touched, is asked
-     again.
+     <version>`, each value quoted as one argument. The fix is reviewed and judged again,
+     and the refused criterion, with any other the fix touched, is shown and asked again
+     as step 2 says, in one question.
    - **Meets every criterion but is not what was wanted.** A request change. Record the
      requester's words on the card through `add-to-card` in settled mode, the words being
      the acceptance, and let its hand-off to `grill` re-derive bring the spec along for the
      conditions those criteria feed. The build continues, through review and, in a parent
      run, the Done judge, to a second acceptance: in a parent run, by the kept session of
-     the sub-issue it belongs to, or by a new session cut from the parent branch when no
-     sub-issue owns it, as a Done finding is built. The gap entry, at stage Acceptance, notes that
+     the sub-issue it belongs to, or by the run's parent-fixes session when no sub-issue
+     owns it, as a Done finding is built. The gap entry, at stage Acceptance, notes that
      Ready was earned on a spec that did not ground the outcome, names the Ready condition
      that let it through, and is resolved by the re-derivation's amendment; it is written
      with `devfactory gaps add` the same way, at stage Acceptance.
@@ -103,7 +114,12 @@ one-line reason.
    parent run's sessions, worktrees and branches stay until `release` reaps them.
 
 6. **Hand to release.** `release` runs only on the requester's word, never on an agent's
-   own judgment. Tell the requester the work is accepted and ready to release, quoting
-   their words, and ask whether to release; when they say yes, start `release` in this
-   session yourself. Whether their
-   acceptance also answers a release question is the profile's to say.
+   own judgment. The requester's word may come ahead of time: their starting instruction
+   for the run or the card (such as "you have pre-approval to drive all the way to the
+   end"), or their acceptance answer, such as the accept-and-release option of step 2.
+   When it has, tell the requester the work is accepted, quoting their words, and start
+   `release` in this session without asking again, quoting the words that authorised it.
+   When it has not, tell them the work is accepted and ready to release, quoting their
+   words, and ask once whether to release; when they say yes, start `release` in this
+   session yourself. Whether their acceptance also answers a question the release
+   procedure asks is the profile's to say.

@@ -104,6 +104,9 @@ where, so the readiness checker can read them.
 
 ## Standing answers
 - **<the question, as it was asked>** <the answer, and where it came from>
+
+## Declined proposals
+- **<the proposal, as curate made it>** declined <date>, after <run or card>: <the requester's words>
 ```
 
 ### The board
@@ -192,6 +195,18 @@ decision, the owner).
 The plugin ships no answers; it ships the rule: **a question answered twice in gap records
 becomes an entry.** `curate` proposes entries from the gap records, and the owner accepts
 them. A spec that relies on an entry names it under Project bindings used.
+
+Every question any skill would put to the requester is first tested against these entries,
+as "Before anything is asked" in [`decision-line.md`](decision-line.md) says: when an entry
+answers it, the skill acts on the entry and cites it, and nothing is asked.
+
+### Declined proposals
+
+What the requester chose not to write when `curate` proposed it, one entry per proposal:
+the proposal, the date, the run or card it followed, and the requester's words. `curate`
+writes this section and reads it before proposing, so a proposal declined in one run is
+not asked again in the next unless gap entries dated after the decline support it. No
+other skill reads it.
 
 ## Team modules
 

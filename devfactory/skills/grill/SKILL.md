@@ -143,7 +143,10 @@ tools and model. Pass every input that definition requires:
   check's report and the spec version it measured, re-checking those findings and the
   changed text only; or **re-derive**, with the conditions this re-derivation re-runs.
 
-**Asking the requester.** Ask one question at a time. Each question says what you need to
+**Asking the requester.** A question first passes "Before anything is asked" in
+`../../references/decision-line.md`: a standing answer that settles it is followed and
+cited, and one on the developer's side is delegated, not asked. Ask one question at a
+time. Each question says what you need to
 know and why the spec needs it, gives the options, and puts your recommendation first with a
 one-line reason. When several cards share a gap, ask for the rule once, not the case per card.
 Never invent an answer. A question the requester cannot answer yet stays open in your report

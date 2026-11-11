@@ -1,6 +1,6 @@
 ---
 name: check-ready
-description: Check that a card, or a parent issue and every sub-issue not yet released, is still Ready to build without a single further question — catch any card that changed since its spec was stamped, have the readiness checker measure the specs together, settle every question and owner step with the requester one at a time, and fix the work order. Use when a parent issue is created, when a card is added to one, and at development start, when the coordinator runs it before starting any session.
+description: Check that a card, or a parent issue and every sub-issue not yet released, is still Ready to build without a single further question — catch any card that changed since its spec was stamped, have the readiness checker measure the specs together, settle every question and owner step with the requester one at a time, and fix the work order. Use when a parent issue is created, when a card is added to one, and at development start, when the coordinator runs it after starting every session briefed to wait and before setting any going.
 allowed-tools:
   - Read
   - Glob
@@ -45,7 +45,8 @@ This is the readiness check on its own, over specs that `grill` has already writ
 at three moments: when a parent issue is created; when a card is added to a parent issue,
 re-checking every sub-issue and not only the new one, because a new card can raise questions
 for the others; and at development start, when `coordinate` runs it before any session
-starts. A spec it measures has usually earned Ready already, so it should find nothing, and
+begins work: the coordinator has already started every session, briefed to wait for this
+check. A spec it measures has usually earned Ready already, so it should find nothing, and
 anything it does find against a Ready spec is a readiness miss, recorded as a gap.
 
 1. **Load the profile** as "Load the project profile" in `working-a-card.md` says.
