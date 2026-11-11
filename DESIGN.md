@@ -63,6 +63,14 @@ them:
   branch is rebased onto it, checked by content because a rebase changes commit ids; no
   release, board column or closed card is waited for.
 
+A parent issue's outcome is that every sub-issue is done, so its criteria never restate
+that or any step of the run (sub-issues merged or reviewed, the gate passing together); they
+state only what the combined result shows beyond its sub-issues' criteria, and a parent may
+have none. The Done judge establishes the process facts under 6.1, so a parent run captures
+no evidence for them. Seven parent runs showed why: a criterion "every sub-issue of this
+parent is done" got an evidence row nobody captured, and caused ten Done findings and six
+extra sessions.
+
 A sub-issue carries a line naming its parent. Criteria carry **stable IDs** (`C1`, `C2`, …)
 that survive amendment: a removed criterion's ID is never reused, and a new one takes the
 next number. Work orders, comments, gap records and evidence cite the ID, never the
@@ -424,8 +432,10 @@ the revision under evaluation.
     scaffolding. `[judgment]`
 
 **6. For a parent issue**
-6.1 Every parent criterion is met by the combined result, including what no single sub-issue
-    could show. `[judgment]`
+6.1 Every sub-issue is done in the combined result, and every parent criterion is met by
+    it, including what no single sub-issue could show. `[judgment]` The Done judge
+    establishes the first part itself: each sub-issue's change is merged and conditions 1
+    to 5 hold for it on the parent branch. No artifact is captured for these process facts.
 
 Exclusions: intent is not gated; the owner judges it at acceptance. Nothing is checked by
 taste; every check carries a mode.

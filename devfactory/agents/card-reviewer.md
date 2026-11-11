@@ -110,7 +110,10 @@ Check, in the standard's order, then placement and team fields:
     person can check is fine if it says exactly what they should see. A criterion
     longer than one sentence, one carrying a sub-list, and one that states an
     edge case are breaches; an edge case the criteria do not cover is at most a
-    suggestion.
+    suggestion. On a parent issue, a criterion that restates its outcome or a
+    step of the run (every sub-issue done, merged or reviewed, the tests passing
+    on the combined result) is a breach, to be removed; a parent whose criteria
+    section says it has none beyond its sub-issues' meets the module.
     **Stable IDs:** every criterion opens with an ID of the form `C1`, `C2`, and
     no two share one. For a rewrite of an existing card, compare with the
     criteria as they stand on the card now: each criterion that is kept,

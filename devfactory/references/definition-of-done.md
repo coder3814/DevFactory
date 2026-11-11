@@ -88,8 +88,13 @@ requester at acceptance, against every criterion's evidence, never here.
 
 ### 6. For a parent issue
 
-6.1 Every parent criterion is met by the combined result, including what no single sub-issue
-    could show. `[judgment]`
+6.1 Every sub-issue is done in the combined result, and every parent criterion is met by
+    it, including what no single sub-issue could show. `[judgment]`
+    Every sub-issue done is the parent's outcome under the card standard, never a parent
+    criterion, and the Done judge establishes it itself from the revision under
+    evaluation: each sub-issue's change is merged into it, and conditions 1 to 5 hold
+    there for each sub-issue's card and spec. No artifact is captured for these process
+    facts; the judge's verdict is their record.
 
 ## Exclusions
 

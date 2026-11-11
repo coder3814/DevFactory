@@ -275,7 +275,9 @@ that, every time you commit the spec folder, write the line again with that comm
    what they share.
 2. **Then the parent's own spec**, by New steps 1 to 12, holding what no single sub-issue
    carries: its dispositions, an evidence row for each parent criterion, the owner steps of
-   the run, and the project bindings it relies on. The checker measures the parent and every
+   the run, and the project bindings it relies on. It plans no row or artifact for the run's
+   process facts (each sub-issue merged and reviewed, the test gate passing on the parent
+   branch), which the Done judge establishes itself under Done 6.1. The checker measures the parent and every
    sub-issue together, which is what tests the work order (condition 8.2).
 3. **Approval covers the set.** Approval is asked only when every sub-issue is Ready and the
    parent is Ready, and one approval question covers them all. On approval, set every spec

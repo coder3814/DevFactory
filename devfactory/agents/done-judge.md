@@ -84,7 +84,16 @@ given.
      rewriting it; release steps that each spec sequences differently.
    - **5.1** `[judgment]` Every change serves a criterion, a delegated call or scaffolding;
      look for duplicate implementations of one thing by two sub-issues.
-   - **6.1** `[judgment]` Every parent criterion is met by the combined result. For each,
+   - **6.1** `[judgment]` Every sub-issue is done in the combined result: establish it
+     yourself, never from an artifact or a session's report. Each sub-issue's change is in
+     the revision under evaluation (its commits, or ones carrying the same changes, in
+     `git log <base>..<revision>`; `git cherry` where its branch still exists), and the
+     conditions above hold for its card and spec there. No evidence is expected for these
+     process facts, and their absence is never a finding. A parent card written before the
+     card standard ruled it out may still carry a criterion restating them: leave its ID
+     out of the parent's criteria file in step 3, decide it by this determination, and
+     name it in the Parent criteria table as met or not met by 6.1, with no artifact asked
+     for. Then every parent criterion is met by the combined result. For each,
      name the tests and artifacts that show it, and fail any no sub-issue's evidence covers
      or that holds for each part but not across them: a contract one sub-issue changed that
      another consumes the old way, a flow that crosses sub-issues and breaks at the seam.

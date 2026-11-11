@@ -60,7 +60,9 @@ the code it shows, so no review round is spent finding stale evidence.
 session per sub-issue, all in your opening turn, sets each going as its waits clear, hears
 from each session by a message it sends rather than its final message, relays the rare question that
 survives the spec and the decision line, merges results into the parent branch one at a
-time, and has a separate judge apply the Definition of Done to the combined result. For a
+time, and has a separate judge apply the Definition of Done to the combined result, which
+establishes for itself that every sub-issue is merged and done, so the run captures no
+evidence of its own process. For a
 single card, one session builds it and a separate reviewer passes it. No agent accepts its
 own work.
 

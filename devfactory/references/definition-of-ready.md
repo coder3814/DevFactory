@@ -144,6 +144,9 @@ These conditions apply when the request's rules act on existing data.
 
 7.1 Every criterion has an evidence row naming artifact, what it shows, condition, how it is
     generated and the checkpoint. `[machine: spec-lint --criteria]`
+    A parent's rows cover its own criteria only. Nothing is planned for the run's process
+    facts (each sub-issue merged and reviewed, the gate passing on the parent branch),
+    which Done 6.1 has the Done judge establish itself; a row for one fails 7.4.
 
 7.2 Every row could be failed by a delivered artifact. `[judgment]`
     A row fails this when what it promises to show would appear whether or not the criterion

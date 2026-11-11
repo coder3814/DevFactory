@@ -109,7 +109,11 @@ The prompt that started you gives you all of these. If any is missing, say which
    every work-order fault (8.2): a wait citing no allowed reason, a pair marked parallel
    that would collide, a wait holding back work that could run, such as a wait on another
    parent that holds out for its release, its board column or its closed card instead of
-   its code being on the integration branch.
+   its code being on the integration branch. On a parent's spec, an evidence row for a
+   process fact of the run (sub-issues merged or reviewed, the gate passing on the parent
+   branch) fails 7.4, to be cut, since the Done judge establishes those itself; a parent
+   criterion that states one is a breach of the card standard, reported for the card to
+   drop it, never a question.
 
 ## Rules
 

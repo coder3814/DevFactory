@@ -74,7 +74,11 @@ Where a part is written never changes its rules.
 
 A parent issue is a card whose outcome is that every one of its sub-issues is
 done. It meets this standard like any other card, and carries a work order as
-well. Each sub-issue opens its description with one line naming its parent,
+well. Because this standard already makes that its outcome, its criteria never
+restate it: none says that every sub-issue is done, merged, reviewed or passing
+the tests together. Its criteria state only what the combined result shows that
+no single sub-issue's criteria do, and a parent with nothing of that kind has
+none. Each sub-issue opens its description with one line naming its parent,
 before its summary. How a card is marked as a parent or a sub-issue on the
 tracker is the profile's, in its board section and the binding it names.
 
@@ -189,7 +193,9 @@ rules that could otherwise be misread.
   rebased onto it.
 - **A parent issue is a card like any other.** Its outcome is that every
   sub-issue is done; each sub-issue names its parent in its opening line, so a
-  reader of either knows the other exists. How the tracker marks the link
+  reader of either knows the other exists. That outcome is never written as a
+  criterion: the Done judge establishes it from the branch itself, so a
+  criterion for it would only demand evidence of a process fact. How the tracker marks the link
   differs by tracker, so it is the profile's.
 - **The card points at its spec in one line and holds none of it.** The card
   stays small and outcome-shaped; everything a builder needs beyond that is in

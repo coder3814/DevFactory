@@ -105,7 +105,8 @@ to wait for the coordinator. Then it says, in this order:
 parent issue, and its spec is the parent's; its branch is named by the profile's Sub-issue
 branch entry with the parent's id as the card's; it fires no event, `development-started`
 included, since the coordinator fires the parent's; and it is not set going when readiness
-settles. It waits until the coordinator messages it a Done-judge finding or an acceptance
+settles. It waits until the coordinator messages it to capture the parent's own evidence
+rows once every sub-issue is merged (step 9), or a Done-judge finding or an acceptance
 refusal that no single sub-issue owns, then follows `build` under "Fixing a finding or a
 refusal" for the parent, and after its merge waits again, kept like the others, for the
 next one.
@@ -244,7 +245,13 @@ not end before step 3 has started every session.
      acceptance, and `release` reaps them.
    - Then have an agent fire `done` for the sub-issue.
 
-9. **Judge the combined result.** When every sub-issue this run builds is merged, start the
+9. **Judge the combined result.** The run captures no evidence of its own process: that
+   each sub-issue merged and passed its review, and that the gate passes on the parent
+   branch, are facts the Done judge establishes itself under Done 6.1, so nothing is
+   captured or committed for them before it runs. When the parent's spec has evidence rows
+   for parent criteria, message the parent-fixes session, once every sub-issue is merged,
+   to capture them on its branch rebased onto the parent branch, check them as `build` step
+   8 says, and merge as step 8 says; then judge. When every sub-issue this run builds is merged, start the
    `done-judge` agent by name with the Agent tool; it carries its own definition
    ([`../../agents/done-judge.md`](../../agents/done-judge.md)), tools and model. Give it the
    path to the plugin's

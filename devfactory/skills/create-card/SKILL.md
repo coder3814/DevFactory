@@ -62,7 +62,9 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    for each card.
 3. Shape it into a draft from the template, as "Shape a draft" describes: the
    criteria numbered from `C1`, the parent line on a sub-issue, the work order
-   on a parent issue, the suggested model and effort, and the values the
+   on a parent issue with criteria only for what the combined result shows
+   beyond its sub-issues' (never that every sub-issue is done, which is its
+   outcome already), the suggested model and effort, and the values the
    profile's team modules recommend. Leave out what you do not know rather than
    inventing it. Write the draft to a scratch file, the title on the first line
    and the description below it, and run `devfactory criteria-ids --text <file>`;

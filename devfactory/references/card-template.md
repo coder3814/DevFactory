@@ -68,6 +68,10 @@ included but is not, or the reverse, and where it is tracked if known.*
   never reused; a new criterion takes the next number above the highest the
   card has ever carried. Never renumber.*
 
+*On a parent issue, only what the combined result shows beyond its sub-issues'
+criteria; never that every sub-issue is done, merged, reviewed or passing the
+tests together. With nothing beyond them, one line saying so.*
+
 ### Work order *(on a parent issue only)*
 
 1. *Sub-issue — waits on nothing, or on which sub-issue and why: needs its

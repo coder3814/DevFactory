@@ -29,6 +29,13 @@ is answered. Where a reader might expect an out-of-scope behaviour to change, a
 criterion may state that it stays as it is. A criterion only a person can check
 is fine, provided it says exactly what they should see.
 
+On a parent issue, the criteria state only what the combined result shows that
+no sub-issue's criteria do, such as a flow that crosses sub-issues. That every
+sub-issue is done is the parent's outcome by the card standard, never a
+criterion, and neither is a step of the run: sub-issues merged, reviews passed,
+the tests passing on the combined result. A parent with nothing beyond its
+sub-issues' criteria has none, and its section says so in one line.
+
 Each criterion opens with its stable ID: `C1`, `C2`, and so on. An ID stays with
 its criterion for the life of the card, through every amendment: a criterion
 restated, generalised or narrowed keeps its ID; a criterion split keeps its ID
