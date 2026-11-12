@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """SessionStart: in a project with a DevFactory profile (at the repository root of cwd), prints
-the profile path, the event hooks in .devfactory/hooks/, the skills to use, the decision
+the profile path, the event hooks in .devfactory/hooks/, every skill by its full name
+(devfactory:<name>) with what it is for, the decision
 line, the active markers and any stale ones, in under 25 lines. Silent on a missing profile,
 on "Session context: off", and on any error.
 """
@@ -42,8 +43,12 @@ def main():
     out.append('Event hooks in .devfactory/hooks/: %s.' % ', '.join(found) if found
                else 'Event hooks: none in .devfactory/hooks/; the plugin moves no card on the board.')
 
-    out.append('Skills: use create-card / add-to-card / re-evaluate-card for cards, grill for '
-               'specs, coordinate for a parent issue, build for one card, accept, release.')
+    out.append('Skills: devfactory:start to start work on a card (it hands a parent issue to '
+               'devfactory:coordinate and a standalone card to devfactory:build); '
+               'devfactory:create-card / devfactory:add-to-card / devfactory:re-evaluate-card '
+               'for cards; devfactory:grill for specs; devfactory:check-ready for readiness; '
+               'devfactory:accept; devfactory:release; devfactory:curate after a release; '
+               'devfactory:configure-project for the profile.')
     out.append('Decision line: the requester decides what an observer sees or can do, what '
                'persisted data ends up as, and scope; the developer decides internal structure, '
                'anything a recorded decision, the profile or existing code already answers, and '

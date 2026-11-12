@@ -23,7 +23,10 @@ class SessionContextTest(unittest.TestCase):
         self.assertLess(len(lines), 25, '%d lines' % len(lines))
         self.assertEqual(lines[0], 'DevFactory profile: %s' % os.path.join(cwd, '.devfactory', 'profile.md'))
         self.assertEqual(lines[1], 'Event hooks: none in .devfactory/hooks/; the plugin moves no card on the board.')
-        self.assertTrue(any('create-card / add-to-card / re-evaluate-card' in l for l in lines))
+        skills = next(l for l in lines if l.startswith('Skills: '))
+        for name in sorted(os.listdir(os.path.join(os.path.dirname(__file__), '..', '..', 'skills'))) + ['start']:
+            with self.subTest(skill=name):
+                self.assertRegex(skills, r'devfactory:%s\b' % name)
         self.assertTrue(any(l.startswith('Decision line: the requester decides') for l in lines))
         self.assertRegex(lines[-1], r'No card skill is running')
 

@@ -1,3 +1,4 @@
+import base64
 import os
 import unittest
 
@@ -19,14 +20,167 @@ PROFILE = '\n'.join([
 
 
 class GuardGitTest(unittest.TestCase):
-    def run_guard(self, cwd, command):
-        return bash(self, 'guard_git.py', cwd, command)
+    def run_guard(self, cwd, command, tool='Bash'):
+        return bash(self, 'guard_git.py', cwd, command, tool)
 
     def on(self, branch, markers=(), profile=PROFILE):
         return project(self, profile=profile, markers=markers, branch=branch)
 
     def deny(self, out, pattern=r'^DevFactory: '):
         assert_deny(self, out, pattern)
+
+    def with_history(self, branch, markers=(), others=('card-7',)):
+        """A repository on branch with two commits and the other branches at its first."""
+        cwd = self.on(branch, markers)
+        for b in others:
+            git(cwd, 'branch', b)
+        git(cwd, 'commit', '-q', '--allow-empty', '-m', 'two')
+        return cwd
+
+    def test_the_powershell_tool_is_guarded_with_its_own_quoting_and_separators(self):
+        session = self.on('card-7')
+        target = self.on('main')
+        self.deny(self.run_guard(session, 'git push origin card-7', 'PowerShell'), r'release skill')
+        for c in ['cd %s; git merge card-7' % target, 'Set-Location -Path "%s"\ngit merge card-7' % target,
+                  "git -C '%s' merge --ff-only card-7" % target, 'git status; git -C %s reset --hard' % target,
+                  'if ($true) { git -C %s merge card-7 }' % target]:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(session, c, 'PowerShell'), r'integration branch')
+        self.assertEqual(self.run_guard(session, 'git log --oneline; git status', 'PowerShell'), '')
+        self.assertEqual(self.run_guard(target, "git commit -m 'it''s done; git push'", 'PowerShell'), '')
+        self.assertEqual(self.run_guard(target, 'git commit -m "say `"hi`"; git push"', 'PowerShell'), '')
+
+    def test_a_skill_begun_earlier_in_the_same_command_counts_as_its_fresh_marker(self):
+        cwd = self.on('main')
+        for c, tool in [
+            ('devfactory begin release && git push origin main', 'Bash'),
+            ('python "C:/plugin dir/scripts/devfactory.py" begin coordinate; git reset --hard HEAD', 'Bash'),
+            ('python /c/plugin/scripts/devfactory.py begin grill\ngit merge --ff-only spec-12', 'Bash'),
+            ('python $env:CLAUDE_PLUGIN_ROOT\\scripts\\devfactory.py begin curate; git merge --ff-only x', 'PowerShell'),
+        ]:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(cwd, c, tool), '')
+        for c in ['git push origin main && devfactory begin release',
+                  'devfactory begin release || git push origin main',
+                  'devfactory begin build && git push',
+                  'devfactory begin grill && git merge spec-12']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+
+    def test_update_ref_of_a_protected_branch_or_of_head_on_one_is_denied(self):
+        card = self.with_history('card-7', others=('main', 'parent-12'))
+        self.deny(self.run_guard(card, 'git update-ref refs/heads/main HEAD'), r'update-ref changes main')
+        self.deny(self.run_guard(card, 'git update-ref -d refs/heads/parent-12'), r'parent branch')
+        self.deny(self.run_guard(card, 'git update-ref -m x refs/heads/main abc1234'), r'integration branch')
+        self.deny(self.run_guard(card, 'git update-ref --stdin'), r'stdin')
+        self.assertEqual(self.run_guard(card, 'git update-ref refs/heads/card-8 HEAD'), '')
+        self.assertEqual(self.run_guard(card, 'git update-ref HEAD HEAD~1'), '')
+        main = self.with_history('main')
+        self.deny(self.run_guard(main, 'git update-ref HEAD HEAD~1'), r'integration branch')
+        self.assertEqual(self.run_guard(main, 'git update-ref --no-deref HEAD HEAD~1'), '')
+        self.assertEqual(self.run_guard(self.on('main', ['release']), 'git update-ref refs/heads/main HEAD'), '')
+
+    def test_a_reset_to_another_revision_in_any_mode_is_denied_one_that_moves_no_branch_allowed(self):
+        cwd = self.with_history('main')
+        for c in ['git reset HEAD~1', 'git reset --soft HEAD~1', 'git reset --mixed card-7',
+                  'git reset --keep HEAD~1', 'git reset --merge card-7', 'git reset -q HEAD~1']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c), r'reset.* changes main, the integration branch')
+        for c in ['git reset', 'git reset HEAD', 'git reset --soft HEAD', 'git reset main', 'git reset -- a.txt',
+                  'git reset HEAD~1 -- a.txt', 'git reset HEAD~1 a.txt', 'git reset a.txt', 'git reset -p HEAD~1',
+                  'git reset --keep']:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(cwd, c), '')
+        self.assertEqual(self.run_guard(self.with_history('card-7', others=('main',)), 'git reset --soft HEAD~1'), '')
+
+    def test_checkout_b_and_switch_c_of_a_protected_branch_are_denied(self):
+        cwd = self.with_history('card-7', others=('main', 'parent-12'))
+        for c in ['git checkout -B main', 'git checkout -B main card-7', 'git switch -C parent-12 card-7',
+                  'git switch --force-create=main']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+        for c in ['git checkout -B card-8', 'git switch -C card-8 main', 'git checkout -b card-9 main',
+                  'git switch -c card-9']:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(cwd, c), '')
+
+    def test_branch_rename_or_delete_of_a_protected_branch_is_denied(self):
+        cwd = self.with_history('card-7', others=('main', 'parent-12', 'card-8'))
+        for c in ['git branch -m main old-main', 'git branch -M parent-12 parent-13', 'git branch -d main',
+                  'git branch -D card-8 parent-12', 'git branch --delete main', 'git branch --move main x',
+                  'git branch -M card-8 main', 'git branch -C card-8 main']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+        for c in ['git branch -m card-8 card-10', 'git branch -m card-11', 'git branch -d card-8',
+                  'git branch -c card-8 card-12', 'git branch -m card-8 main-copy']:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(cwd, c), '')
+        self.deny(self.run_guard(self.on('main'), 'git branch -m trunk'), r'branch -m changes main')
+        self.assertEqual(self.run_guard(self.on('main', ['coordinate']), 'git branch -D main'), '')
+
+    def test_a_git_command_inside_another_shell_is_judged(self):
+        cwd = self.on('main')
+        encoded = base64.b64encode('git merge card-7'.encode('utf-16-le')).decode('ascii')
+        for c in ['bash -c "git push"', "sh -c 'git merge card-7'", 'bash -lc "cd . && git reset --hard"',
+                  'powershell -Command "git merge card-7"', 'pwsh -NoProfile -c git push',
+                  'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "git commit --amend --no-edit"',
+                  'powershell -EncodedCommand %s' % encoded, 'powershell -enc %s' % encoded,
+                  'bash -c "bash -c \'git push\'"']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+        self.deny(self.run_guard(cwd, 'powershell -Command "git merge card-7"', 'PowerShell'))
+        for c in ['bash -c "git status"', 'powershell -Command "git log -1"', 'bash script.sh',
+                  'bash -c "echo git push"']:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(cwd, c), '')
+
+    def test_a_git_c_alias_invocation_is_refused_as_unresolvable(self):
+        cwd = self.on('card-7')
+        for c in ['git -c alias.p=push p', 'git -c alias.st=status st', 'git -c ALIAS.m=merge m main',
+                  'git --config-env=alias.p=CMD p']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c), r'alias')
+        self.assertEqual(self.run_guard(cwd, 'git -c core.autocrlf=false status'), '')
+        self.assertEqual(self.run_guard(self.on('card-7', ['release']), 'git -c alias.p=push p'), '')
+        self.assertEqual(self.run_guard(self.on('card-7', profile=None), 'git -c alias.p=push p'), '')
+
+    def test_a_checkout_or_switch_earlier_in_the_command_sets_the_branch_later_parts_are_judged_against(self):
+        card = self.with_history('card-7', others=('main', 'parent-12'))
+        for c in ['git checkout main && git merge card-7', 'git switch main; git merge --ff-only card-7',
+                  'git checkout parent-12\ngit reset --hard', 'git checkout - && git checkout main && git merge x',
+                  'git checkout -B main && git commit --amend']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(card, c))
+        main = self.with_history('main', others=('card-7',))
+        for c in ['git checkout card-7 && git merge main', 'git switch card-7 && git reset --hard HEAD~1',
+                  'git checkout -b card-9 && git merge card-7', 'git switch --detach && git merge card-7',
+                  'git checkout HEAD~1 && git merge card-7']:
+            with self.subTest(command=c):
+                self.assertEqual(self.run_guard(main, c), '')
+        for c in ['git checkout -- a.txt && git merge card-7', 'git checkout a.txt && git merge card-7',
+                  'git checkout card-7 a.txt && git merge card-7']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(main, c), r'integration branch')
+
+    def test_a_build_session_gains_nothing_from_release_or_coordinate_in_another_root(self):
+        target = self.on('main', ['coordinate'])
+        build = self.on('card-7', ['build'])
+        self.deny(self.run_guard(build, 'git -C "%s" merge --ff-only card-7' % target), r'integration branch')
+        self.deny(self.run_guard(build, 'git -C "%s" reset --hard' % target))
+        self.deny(self.run_guard(build, 'git -C "%s" push' % self.on('main', ['release'])), r'never pushes')
+        # A coordinator's or release's own agents, with no build marker in their root, work as today.
+        self.assertEqual(self.run_guard(self.on('card-7'), 'git -C "%s" merge --ff-only card-7' % target), '')
+        self.assertEqual(self.run_guard(self.on('card-7', ['grill']), 'git -C "%s" reset --hard' % target), '')
+        self.assertEqual(self.run_guard(self.on('main', ['build', 'coordinate']), 'git merge card-7'), '')
+
+    def test_curate_may_commit_or_fast_forward_onto_the_integration_branch_and_nothing_else(self):
+        cwd = self.on('main', ['curate'])
+        self.assertEqual(self.run_guard(cwd, 'git commit -m "profile: standing answer"'), '')
+        self.assertEqual(self.run_guard(cwd, 'git merge --ff-only curate-1'), '')
+        for c in ['git merge curate-1', 'git reset --hard HEAD', 'git commit --amend --no-edit', 'git push']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+        self.deny(self.run_guard(self.on('parent-12', ['curate']), 'git merge --ff-only curate-1'))
 
     def test_git_push_without_a_marker_is_denied(self):
         self.deny(self.run_guard(self.on('card-7'), 'git push origin card-7'), r'release skill')

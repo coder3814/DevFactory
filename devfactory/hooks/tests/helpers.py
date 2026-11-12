@@ -88,12 +88,13 @@ def run_hook(test, hook, data, env=None):
     return r.stdout.decode('utf-8')
 
 
-def bash(test, hook, cwd, command):
+def bash(test, hook, cwd, command, tool='Bash'):
+    """Runs a PreToolUse hook on a shell tool's command; tool is 'Bash' or 'PowerShell'."""
     return run_hook(test, hook, {
         'session_id': 'test',
         'cwd': cwd,
         'hook_event_name': 'PreToolUse',
-        'tool_name': 'Bash',
+        'tool_name': tool,
         'tool_input': {'command': command},
     })
 
