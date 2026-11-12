@@ -136,15 +136,18 @@ never reaches them.
    follows, and commit that on its own on the integration branch, so a run curating at the
    same time drops them. Then ask one question covering them all: which numbers to carry
    out and which to skip, with your recommendation for each and a one-line reason.
-   Recommend writing a class 3 or 5 proposal, recommend each retirement, and recommend
-   skipping a class 4 proposal for this question, with the document named, since the change
-   belongs there and `curate` does not make it. Offer one option that carries out every
+   Recommend writing a class 3 or 5 proposal, recommend each retirement, and for a class 4
+   proposal recommend sending it to the document it names, for the owner to change there,
+   since `curate` does not edit it. Offer one option that carries out every
    recommendation, never "write every one" when the proposals' classes differ. Ask nothing
    when none remains. On the answer:
    - write each accepted class 5 proposal to Standing answers, and each accepted class 3
      proposal to the section it belongs in, as the rule alone with one short citation of
-     the card numbers it came from, such as "(#1088, #1096)"; quotes, spec versions,
+     the card numbers it came from, such as "(#12, #31)"; quotes, spec versions,
      commit ids and dates stay in the gap ledger and git;
+   - report each accepted class 4 proposal as a change for the owner to make in the
+     document it names, and record it under Declined proposals as "sent to <document>", so
+     it is not proposed again;
    - delete each accepted retirement's entry outright, leaving no pointer, and name in the
      commit message where its substance now lives;
    - record each skipped proposal or retirement under Declined proposals with the date, the

@@ -55,7 +55,10 @@ The profile records only departures from the defaults, as the template says:
 an answer that is the default writes no line, and a section left at its
 default is left out. Where the project already records an answer, in its
 instructions (`CLAUDE.md`), its recorded decisions or its skills, write a
-pointer to it, such as "as CLAUDE.md's push sections say", never a copy.
+pointer to it, such as "as CLAUDE.md's push sections say", never a copy,
+except in a field the plugin's script or hooks read as a value (the
+integration branch, the parent-branch pattern, the specs path and Not code
+paths, the Hooks lines, the Marker lifetime), which holds the value itself.
 
 1. **Begin.** Run `devfactory begin configure-project`. When whoever started you handed
    over answers the owner has already given (a brief that names the board, the test gate,

@@ -15,7 +15,10 @@ Two rules keep it short:
 - **Point, don't copy.** Any entry may be a pointer to where the project already records
   it, such as "as CLAUDE.md's push sections say" or "per decision 0042", instead of a copy;
   readers follow the pointer. Policy the project keeps in its instructions, its recorded
-  decisions or its skills is pointed to, never repeated here.
+  decisions or its skills is pointed to, never repeated here. The exception is a field the
+  plugin's script or hooks read as a value, which holds the value itself: the integration
+  branch, the parent-branch pattern, the specs path and Not code paths, the Hooks lines and
+  the Marker lifetime.
 
 ## Where it lives
 

@@ -65,7 +65,9 @@ repository, and note in the report that it was given.
      the revision under evaluation, run it, and remove the directory. If neither is
      possible, 1.2 is unchecked for that test.
    - **2.1** `[machine: evidence-check]` The `evidence-check` output: every criterion ID
-     `criteria-ids` printed has a non-empty `evidence/C<n>/` folder.
+     `criteria-ids` printed has a non-empty `evidence/C<n>/` folder, except a criterion
+     every row of which is post-release, which it reports `evidence-pending` and which is
+     no finding (Done 3.1).
    - **2.2** `[judgment]` Read each test that a criterion relies on. Fail one that asserts
      internal calls or structure, so a different implementation behind the same interface
      would fail it, or that would pass whether or not the criterion holds.

@@ -173,20 +173,23 @@ One folder per project, `.devfactory/` at the repository root:
   data rules through; the fixed-concern list extensions; the owner-step types the project
   has.
 - **Wireframe fidelity**: what the approved design artifact fixes (section 2.5), with a
-  **Design review** line saying how a wireframe is shown to the requester and approved.
+  **Design review** line saying how a wireframe is shown to the requester and approved,
+  and, with a design card, a **Design artifacts** line naming where approved artifacts are
+  kept.
 - **Branches and merging**: the integration branch, the worktree layout, how a parent branch
   and a sub-issue branch are named, who merges what and when, and the release procedure
   (the project's steps or the skill it names).
 - **Sessions**: the default model and effort.
 - **Hooks**: a line only for a hook that is off, all being on by default, and the Marker
   lifetime only when it is not 12 hours.
+- **Standing answers** (section 7).
 
 The profile records only departures from the defaults, and any entry may point to where
 the project already records it (its instructions, a recorded decision, a skill) instead of
-copying it. Permissions are not kept in it: the read-only allowlist entries
+copying it, except in a field the plugin's script or hooks read as a value (the branch
+names, the specs path and Not code paths, the Hooks lines). Permissions are not kept in it: the read-only allowlist entries
 `configure-project` writes to the project's `.claude/settings.json` are their record. A
 write to the tracker or to a branch is never pre-approved.
-- **Standing answers** (section 7).
 
 `configure-project` writes the profile from the board, the repository and the owner's
 answers. It takes the answers its caller already holds and asks only the rest, commits the

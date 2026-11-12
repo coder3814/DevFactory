@@ -39,7 +39,9 @@ requester at acceptance, against every criterion's evidence, never here.
     declared surface unchanged; a data correction has the dry run's counts matching the
     apply's. `[machine: the judge reads]`
     A mixed request takes the union of its types' requirements. For "other", the spec states
-    the test types.
+    the test types. A criterion whose every evidence row is post-release, which Ready 7.4
+    allows only when no test could fail it, needs no test; its post-release row is its
+    proof, pending until `release` captures it (3.1).
 
 ### 2. The tests test the spec
 

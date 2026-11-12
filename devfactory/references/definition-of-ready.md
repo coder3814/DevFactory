@@ -113,7 +113,8 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     a bundle's size or a query count, each sub-issue's disposition states the figure its
     own change measured and names the siblings that also move it, and the parent's
     disposition states the finished figure, measured on the parent branch once every one
-    of them is merged, with its evidence row under the parent criterion it bears on. It is
+    of them is merged, with its evidence row under the parent criterion it bears on where
+    one does; it adds no criterion (4.3). It is
     never keyed to the sub-issue that merges last, since sub-issues merge in the order they
     finish. How the figure is measured and shared out is the developer's side of the
     decision line, never a question for the requester.

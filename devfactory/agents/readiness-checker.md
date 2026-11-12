@@ -120,12 +120,13 @@ The prompt that started you gives you all of these. If any is missing, say which
    process fact of the run (sub-issues merged or reviewed, the gate passing on the parent
    branch) fails 7.4, to be cut, since the Done judge establishes those itself; a parent
    criterion that states one is a breach of the card standard, reported for the card to
-   drop it, never a question. Across a parent's sub-issues, find every figure more than one
-   of them moves (load, size, count, cost): each moving sub-issue's disposition must state
-   the figure its own change measured and name the others, and the parent's disposition
-   must state the finished figure measured on the parent branch once all of them are
-   merged, with an evidence row for it; one that is missing fails 4.2, keyed to a
-   "last to merge" sub-issue fails 4.2, and either is a delegation, never a question.
+   drop it, never a question. Across a parent's sub-issues, find every figure that the
+   dispositions of more than one of them state (a load, a size, a count, a cost): each such
+   disposition must state the figure its own change measured and name the others, and the
+   parent's disposition must state the finished figure measured on the parent branch once
+   all of them are merged, with an evidence row under the parent criterion it bears on
+   where one does, never a new criterion (4.3). One that is missing, or one keyed to a
+   "last to merge" sub-issue, fails 4.2, and either is a delegation, never a question.
 
 ## Rules
 

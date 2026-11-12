@@ -64,7 +64,9 @@ given.
      tests. The test types every spec's request types require exist and pass
      at the revision under evaluation, not only at the sub-issue's own revision.
    - **2.1** `[machine: evidence-check]` The `evidence-check` output for the parent and
-     every sub-issue: every criterion ID has a non-empty `evidence/C<n>/` folder.
+     every sub-issue: every criterion ID has a non-empty `evidence/C<n>/` folder, except
+     a criterion every row of which is post-release, reported `evidence-pending` and no
+     finding (Done 3.1).
    - **2.2** `[judgment]` Tests assert observable outcomes; look especially at tests that
      pass only because another sub-issue's code is stubbed or absent.
    - **3.1** `[rubric: the row]` Every evidence row of every spec has its artifact showing
