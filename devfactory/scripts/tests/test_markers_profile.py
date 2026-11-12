@@ -85,12 +85,54 @@ class MarkersProfileTest(unittest.TestCase):
         self.assertEqual(r.code, 0, r.stderr)
         self.assertRegex(r.lines[0], r'^active build since \S+ \(1h ago\)$')
         self.assertRegex(r.lines[1], r'^refreshed grill \(was 20h old, stale\)$')
-        stamp = parse_iso(read(os.path.join(d, '.devfactory', '.active', 'grill')))
+        stamp = parse_iso(read(os.path.join(d, '.devfactory', '.active', 'grill')).split('\n')[0])
         self.assertLess((datetime.datetime.now(datetime.timezone.utc) - stamp).total_seconds(), 60)
 
         marker(d, 'coordinate', 13)
         r = run(['begin', 'build'], d)
         self.assertRegex(r.lines[1], r'^stale coordinate since \S+ \(13h ago, older than 12h; the guards ignore it\)$')
+
+    def test_begin_prints_and_stores_the_plugin_version_and_reports_a_marker_from_another(self):
+        d = temp_dir(self)
+        version = devfactory.plugin_version()
+        self.assertRegex(version, r'^\d+\.\d+\.\d+')
+        file = os.path.join(d, '.devfactory', '.active', 'start')
+        r = run(['begin', 'start'], d)
+        self.assertEqual(r.lines, ['began start %s' % version], r.stderr)
+        self.assertEqual(read(file).split('\n')[1:], ['plugin %s' % version, ''])
+        r = run(['begin', 'start'], d)
+        self.assertEqual(r.lines[1:], ['began start %s' % version])
+        write(file, iso_ago(1) + '\nplugin 0.0.1\n')
+        r = run(['begin', 'start'], d)
+        self.assertEqual(r.lines[1:], ['began start %s' % version, 'plugin-changed 0.0.1 %s' % version])
+        marker(d, 'curate', 1)
+        r = run(['begin', 'curate'], d)
+        self.assertEqual(r.lines[-1], 'plugin-changed unknown %s' % version, 'a marker without a version')
+        self.assertEqual(run(['end', 'curate'], d).code, 0)
+        self.assertFalse(os.path.exists(os.path.join(d, '.devfactory', '.active', 'curate')))
+
+    def test_markers_lists_a_versioned_marker_in_the_form_the_hooks_read(self):
+        d = temp_dir(self)
+        run(['begin', 'start'], d)
+        r = run(['markers'], d)
+        self.assertEqual(len(r.lines), 1)
+        self.assertRegex(r.lines[0], r'^active start since \S+ \(\d+s ago\)$')
+
+    def test_profile_reads_the_profile_at_a_revision(self):
+        d = temp_dir(self)
+        git(d, 'init', '-q')
+        write(os.path.join(d, '.devfactory', 'profile.md'), PROFILE.replace('\n', '\r\n'))
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'profile')
+        write(os.path.join(d, '.devfactory', 'profile.md'), PROFILE.replace('* Integration branch: `main`', '* Integration branch: `trunk`'))
+        args = ['profile', '--section', 'Branches and merging', '--field', 'Integration branch']
+        self.assertEqual(run(args, d).lines, ['`trunk`'])
+        r = run(args + ['--rev', 'HEAD'], d)
+        self.assertEqual(r.lines, ['`main`'], r.stderr)
+        self.assertEqual(run(['profile', '--rev', 'HEAD', '--section', 'Environments'], d).lines, ['### Local', '- Can show: everything'])
+        r = run(args + ['--rev', 'nowhere'], d)
+        self.assertEqual(r.code, 2)
+        self.assertIn('no profile at nowhere:.devfactory/profile.md', r.stderr)
 
     def test_markers_lists_each_with_its_age_honours_the_lifetime_and_clears_the_stale_ones(self):
         d = temp_dir(self)

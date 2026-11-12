@@ -39,7 +39,7 @@ class RecordsTest(unittest.TestCase):
         r = run(['gaps', 'add', spec, '--stage', 'Acceptance', '--question', 'The file name is wrong.', '--condition', 'Done 3.1'], d)
         self.assertEqual(r.code, 0, r.stderr)
         gaps = read(os.path.join(spec, 'gaps.md'))
-        self.assertRegex(gaps, r'^## \d{4}-\d{2}-\d{2} — Development\n\n- \*\*Question or refusal:\*\* Which format\?\n- \*\*Let through by:\*\* Ready 3\.2\n- \*\*Resolved by:\*\* 2\n\n## ')
+        self.assertRegex(gaps, r'^## \d{4}-\d{2}-\d{2} — Development\n\n- \*\*Question or refusal:\*\* Which format\?\n- \*\*Let through by:\*\* Ready 3\.2\n- \*\*Kind:\*\* miss\n- \*\*Resolved by:\*\* 2\n\n## ')
         self.assertRegex(gaps, r'- \*\*Resolved by:\*\* open\n\Z')
 
         r = run(['gaps', 'check', spec], d)
@@ -51,12 +51,62 @@ class RecordsTest(unittest.TestCase):
         write(ledger, '## #3 (bug fix) — 2026-10-01 — Done\r\n\r\n- **Question or refusal:** Old.\r\n- **Let through by:** Done 4.2\r\n- **Resolved by:** 2\r\n')
         r = run(['gaps', 'ledger', spec, '--card', '#12', '--types', 'feature', '--ledger', ledger], d)
         self.assertEqual(r.code, 0, r.stderr)
+        self.assertEqual(r.lines, ['appended 2 skipped 0'])
         text = read(ledger)
         headings = [l for l in re.split(r'\r?\n', text) if l.startswith('## ')]
         self.assertEqual(len(headings), 3)
         self.assertRegex(headings[1], r'^## #12 \(feature\) — \d{4}-\d{2}-\d{2} — Development$')
         self.assertRegex(headings[2], r'^## #12 \(feature\) — \d{4}-\d{2}-\d{2} — Acceptance$')
-        self.assertRegex(text, r'- \*\*Question or refusal:\*\* The file name is wrong\.\n- \*\*Let through by:\*\* Done 3\.1\n- \*\*Resolved by:\*\* open\n\Z')
+        self.assertRegex(text, r'- \*\*Question or refusal:\*\* The file name is wrong\.\n- \*\*Let through by:\*\* Done 3\.1\n- \*\*Kind:\*\* miss\n- \*\*Resolved by:\*\* open\n\Z')
+
+    def test_gaps_ledger_skips_an_entry_the_ledger_already_holds_for_the_card(self):
+        d = temp_dir(self)
+        spec = os.path.join(d, 'specs', '12')
+        os.makedirs(spec)
+        run(['gaps', 'add', spec, '--stage', 'Development', '--question', 'Which format?', '--condition', 'Ready 3.2', '--resolved', '2'], d)
+        run(['gaps', 'add', spec, '--stage', 'Done', '--question', 'Which name?', '--condition', 'Done 4.2', '--resolved', '3'], d)
+        ledger = os.path.join(d, '.devfactory', 'gaps.md')
+        args = ['gaps', 'ledger', spec, '--types', 'feature', '--ledger', ledger]
+        self.assertEqual(run(args + ['--card', '#12'], d).lines, ['appended 2 skipped 0'])
+        before = read(ledger)
+        self.assertEqual(run(args + ['--card', '12'], d).lines, ['appended 0 skipped 2'])
+        self.assertEqual(read(ledger), before)
+        self.assertEqual(run(args + ['--card', '#13'], d).lines, ['appended 2 skipped 0'], 'another card holds its own')
+        run(['gaps', 'add', spec, '--stage', 'Release', '--question', 'Which date?', '--condition', 'Done 3.1', '--resolved', '4'], d)
+        self.assertEqual(run(args + ['--card', '#12'], d).lines, ['appended 1 skipped 2'])
+
+    def test_gaps_add_takes_one_condition_of_either_definition_and_a_kind(self):
+        d = temp_dir(self)
+        spec = os.path.join(d, 'spec')
+        os.makedirs(spec)
+        add = ['gaps', 'add', spec, '--stage', 'Development', '--question', 'Which format?']
+        for bad in ['Ready 9.9', 'Done 9.9', 'Ready 1', '3.2', 'ready 3.2', 'Ready 3.2, Done 4.1', 'the spec missed it']:
+            r = run(add + ['--condition', bad], d)
+            self.assertEqual(r.code, 2, bad)
+            self.assertIn('--condition', r.stderr)
+        self.assertIn('"Ready <id>" or "Done <id>"', run(add + ['--condition', '3.2'], d).stderr)
+        self.assertIn('definition-of-ready.md has no condition 9.9', run(add + ['--condition', 'Ready 9.9'], d).stderr)
+        self.assertFalse(os.path.exists(os.path.join(spec, 'gaps.md')))
+        self.assertEqual(run(add + ['--condition', 'Ready 9.3', '--kind', 'request-change'], d).code, 0)
+        self.assertEqual(run(add + ['--condition', 'Done 4.3'], d).code, 0)
+        self.assertEqual(run(add + ['--condition', 'Done 4.3', '--kind', 'wish'], d).code, 2)
+        kinds = re.findall(r'- \*\*Kind:\*\* (\S+)', read(os.path.join(spec, 'gaps.md')))
+        self.assertEqual(kinds, ['request-change', 'miss'])
+
+    def test_entries_with_a_free_text_condition_and_no_kind_still_parse_and_ledger(self):
+        d = temp_dir(self)
+        spec = os.path.join(d, 'spec')
+        write(os.path.join(spec, 'gaps.md'), '## 2026-10-01 — Done\r\n\r\n- **Question or refusal:** Old.\r\n'
+                                             '- **Let through by:** 4.2, the spec said nothing\r\n- **Resolved by:** 2\r\n')
+        self.assertEqual(run(['gaps', 'check', spec], d).code, 0)
+        write(os.path.join(spec, 'spec.md'), spec_text())
+        self.assertEqual(run(['spec-lint', spec], d).lines, [])
+        ledger = os.path.join(d, 'ledger.md')
+        r = run(['gaps', 'ledger', spec, '--card', '#3', '--types', 'bug fix', '--ledger', ledger], d)
+        self.assertEqual(r.lines, ['appended 1 skipped 0'], r.stderr)
+        self.assertNotIn('Kind', read(ledger))
+        self.assertEqual(run(['gaps', 'ledger', spec, '--card', '#3', '--types', 'bug fix', '--ledger', ledger], d).lines,
+                         ['appended 0 skipped 1'])
 
     def test_evidence_check_passes_with_sidecars_and_fails_on_a_missing_one(self):
         d = temp_dir(self)
@@ -321,13 +371,14 @@ class RecordsTest(unittest.TestCase):
 
         r = run(['begin', 'grill'], d)
         self.assertEqual(r.code, 0, r.stderr)
-        self.assertEqual(r.lines, [])
-        stamp = read(os.path.join(active, 'grill')).strip()
+        self.assertEqual(len(r.lines), 1)
+        self.assertRegex(r.lines[0], r'^began grill \S+$')
+        stamp = read(os.path.join(active, 'grill')).split('\n')[0]
         self.assertRegex(stamp, r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')
 
         r = run(['begin', 'build'], d)
         self.assertEqual(r.code, 0)
-        self.assertEqual(len(r.lines), 1)
+        self.assertEqual(len(r.lines), 2)
         self.assertRegex(r.lines[0], r'^active grill since \S+ \(\d+[smhd] ago\)$')
 
         r = run(['end', 'grill'], d)

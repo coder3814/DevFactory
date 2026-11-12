@@ -52,8 +52,12 @@ GAP_STAGES = ['Approval', 'Development', 'Done', 'Acceptance', 'Release']
 GAP_FIELDS = [
     {'key': 'question', 'label': 'Question or refusal'},
     {'key': 'condition', 'label': 'Let through by'},
+    {'key': 'kind', 'label': 'Kind', 'optional': True},
     {'key': 'resolved', 'label': 'Resolved by'},
 ]
+GAP_KINDS = ['miss', 'request-change']
+DEFINITIONS = {'Ready': 'definition-of-ready.md', 'Done': 'definition-of-done.md'}
+REVIEW_VERDICTS = ['PASS', 'FAIL', 'DONE', 'NOT DONE']
 
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 
@@ -338,13 +342,52 @@ def parse_gaps(text):
         if e['stage'] not in GAP_STAGES:
             errors.append('line %d: stage "%s" is not one of %s' % (e['line'], e['stage'], ', '.join(GAP_STAGES)))
         for g in GAP_FIELDS:
-            if not e['fields'].get(g['key']):
+            if not g.get('optional') and not e['fields'].get(g['key']):
                 errors.append('line %d: entry has no "%s"' % (e['line'], g['label']))
     return {'entries': entries, 'errors': errors}
 
 
 def format_gap_body(fields):
-    return '\n'.join('- **%s:** %s' % (g['label'], fields.get(g['key'])) for g in GAP_FIELDS)
+    return '\n'.join('- **%s:** %s' % (g['label'], fields.get(g['key'])) for g in GAP_FIELDS
+                     if not g.get('optional') or fields.get(g['key']))
+
+
+def plugin_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+
+
+def condition_ids(definition):
+    """The condition ids ("1.1", "9.3") under "## Conditions" in a definition file of the
+    plugin's references, read at run time so the check follows the definition."""
+    file = os.path.join(plugin_dir(), 'references', DEFINITIONS[definition])
+    ids = set()
+    inside = False
+    for line in read_text(file).split('\n'):
+        if rx(r'^##\s').match(line):
+            inside = clean_heading(line[2:]).lower() == 'conditions'
+            continue
+        m = rx(r'^(\d+\.\d+)\s').match(line) if inside else None
+        if m:
+            ids.add(m.group(1))
+    return ids
+
+
+CONDITION_FORM = 'one condition written "Ready <id>" or "Done <id>", such as "Ready 3.2" or "Done 4.3"'
+
+
+def condition(value, flag, definitions=('Ready', 'Done')):
+    """A condition written "<Ready|Done> <id>" whose id the definition holds, else a usage error
+    that shows the form."""
+    m = rx(r'^(Ready|Done) (\d+\.\d+)\Z').match((value or '').strip())
+    if not m or m.group(1) not in definitions:
+        if definitions == ('Done',):
+            raise UsageError('%s must be written "Done <id>", such as "Done 4.3", where <id> is a condition '
+                             'in definition-of-done.md; got "%s"' % (flag, value))
+        raise UsageError('%s must be %s, where <id> is a condition in definition-of-ready.md or '
+                         'definition-of-done.md; got "%s"' % (flag, CONDITION_FORM, value))
+    if m.group(2) not in condition_ids(m.group(1)):
+        raise UsageError('%s "%s": %s has no condition %s' % (flag, value, DEFINITIONS[m.group(1)], m.group(2)))
+    return '%s %s' % (m.group(1), m.group(2))
 
 
 def append_block(file, block):
@@ -589,9 +632,13 @@ def cmd_gaps(opts):
                 raise UsageError('gaps add needs --%s' % k)
         if opts['stage'] not in GAP_STAGES:
             raise UsageError('--stage must be one of %s' % ', '.join(GAP_STAGES))
+        kind = opts.get('kind') or 'miss'
+        if kind not in GAP_KINDS:
+            raise UsageError('--kind must be one of %s' % ', '.join(GAP_KINDS))
         fields = {
             'question': one_line(opts['question']),
-            'condition': one_line(opts['condition']),
+            'condition': condition(opts['condition'], '--condition'),
+            'kind': kind,
             'resolved': one_line(opts.get('resolved') or 'open'),
         }
         append_block(os.path.join(d, 'gaps.md'), '## %s — %s\n\n%s' % (today(), opts['stage'], format_gap_body(fields)))
@@ -611,15 +658,42 @@ def cmd_gaps(opts):
                 raise UsageError('gaps ledger needs --%s' % k)
         gaps = load_gaps(d)
         if not gaps:
-            return ['appended 0'], 0
+            return ['appended 0 skipped 0'], 0
         if gaps['errors']:
             return ['gaps-parse %s' % e for e in gaps['errors']], 1
-        blocks = ['## %s (%s) — %s — %s\n\n%s' % (opts['card'], opts['types'], e['date'], e['stage'], format_gap_body(e['fields']))
-                  for e in gaps['entries']]
+        held = ledger_gap_keys(opts['ledger'])
+        blocks = []
+        skipped = 0
+        for e in gaps['entries']:
+            if (card_key(opts['card']), e['date'], e['stage'], e['fields'].get('question')) in held:
+                skipped += 1
+                continue
+            blocks.append('## %s (%s) — %s — %s\n\n%s' % (opts['card'], opts['types'], e['date'], e['stage'], format_gap_body(e['fields'])))
         if blocks:
             append_block(opts['ledger'], '\n\n'.join(blocks))
-        return ['appended %d' % len(blocks)], 0
+        return ['appended %d skipped %d' % (len(blocks), skipped)], 0
     raise UsageError('unknown gaps subcommand "%s"' % sub)
+
+
+LEDGER_GAP_HEADING = rx(r'^##\s+(.+?)\s+\(.*\)\s+[—–-]\s+(\d{4}-\d{2}-\d{2})\s+[—–-]\s+(.+?)\s*\Z')
+
+
+def card_key(card):
+    return re.sub(r'^#', '', str(card).strip(), count=1)
+
+
+def ledger_gap_keys(file):
+    """(card, date, stage, question) of every entry the gap ledger holds."""
+    if not os.path.exists(file):
+        return set()
+    keys = set()
+    for s in split_sections(read_text(file))['sections']:
+        m = LEDGER_GAP_HEADING.match('## ' + s['title'])
+        if m:
+            entry = parse_gaps('## %s — %s\n%s' % (m.group(2), m.group(3), '\n'.join(s['lines'])))['entries']
+            if entry:
+                keys.add((card_key(m.group(1)), m.group(2), m.group(3), entry[0]['fields'].get('question')))
+    return keys
 
 
 def list_files(d, base=None):
@@ -817,32 +891,183 @@ def cmd_evidence_check(opts):
                            % (i, side, fields.get('checkpoint'), ' or '.join('"%s"' % p for p in sorted(plan[i])), i))
     return out + notes, 1 if out else 0
 
+
+def cmd_spec_only(opts):
+    d = opts['_'][0] if opts['_'] else None
+    if not d:
+        raise UsageError('give the spec folder')
+    if not opts.get('base'):
+        raise UsageError('give --base <rev>')
+    if not os.path.isdir(d) or not in_work_tree(d):
+        raise UsageError('%s is not a folder in a git work tree' % d)
+    root = git_lines(['rev-parse', '--show-toplevel'], d)[0]
+    prefix = (git_lines(['rev-parse', '--show-prefix'], d) or [''])[0].strip().rstrip('/')
+    if not prefix:
+        raise UsageError('%s is the repository root, not a spec folder' % d)
+    base = commit_hash(root, opts['base'], '--base')
+    paths = git_lines(['diff', '--name-only', '-z', base, 'HEAD'], root, '\0')
+    if paths is None:
+        raise UsageError('git diff %s HEAD failed' % opts['base'])
+    outside = sorted(p for p in paths if not p.startswith(prefix + '/'))
+    if outside:
+        return ['outside %s' % p for p in outside], 1
+    return ['spec-only'], 0
+
+# ---------- reviews.md ----------
+
+
+REVIEW_HEADING = rx(r'^##\s+(\d{4}-\d{2}-\d{2})\s+[—–-]\s+round\s+(\d+)\s+[—–-]\s+(PASS|FAIL|DONE|NOT DONE)\s*\Z')
+
+
+def finding_line(line, where):
+    """A findings line "<Done id> | <criterion ID or -> | <text>", normalised, else a usage error."""
+    parts = [p.strip() for p in rx(r'^\s*[-*]\s+').sub('', line, count=1).split('|', 2)]
+    form = 'a finding is written "Done <id> | <criterion ID or -> | <text>"'
+    if len(parts) != 3 or not parts[2]:
+        raise UsageError('%s: %s; got "%s"' % (where, form, line.strip()))
+    if not rx(r'^(C\d+|-)\Z').match(parts[1]):
+        raise UsageError('%s: %s, and "%s" is neither a criterion ID nor -' % (where, form, parts[1]))
+    return '%s | %s | %s' % (condition(parts[0], where, ('Done',)), parts[1], parts[2])
+
+
+def parse_reviews(text):
+    """reviews.md as blocks {heading, lines} of "## <date> — round <n> — <verdict>" and their
+    "- " finding lines."""
+    blocks = []
+    errors = []
+    for idx, line in enumerate(to_lf(text).split('\n')):
+        n = idx + 1
+        if rx(r'^##\s').match(line):
+            m = REVIEW_HEADING.match(line)
+            if not m:
+                errors.append('line %d: heading is not "## <date> — round <n> — <verdict>"' % n)
+                blocks.append(None)
+                continue
+            blocks.append({'heading': '%s — round %s — %s' % m.groups(), 'lines': []})
+            continue
+        if line.strip() == '' or (rx(r'^#\s').match(line) and not blocks):
+            continue
+        if blocks and blocks[-1] and rx(r'^- \S').match(line):
+            blocks[-1]['lines'].append(line.strip())
+            continue
+        if blocks and blocks[-1] is None:
+            continue
+        errors.append("line %d: text outside a review's finding lines" % n)
+    return {'blocks': [b for b in blocks if b], 'errors': errors}
+
+
+def format_review(heading, lines, level='##'):
+    return '%s %s' % (level, heading) + ('\n\n' + '\n'.join(lines) if lines else '')
+
+
+def cmd_reviews(opts):
+    pos = opts['_']
+    sub = pos[0] if len(pos) > 0 else None
+    d = pos[1] if len(pos) > 1 else None
+    if sub not in ('add', 'ledger') or not d:
+        raise UsageError('give reviews add|ledger <dir>')
+    if not os.path.isdir(d):
+        raise UsageError('no folder %s' % d)
+    file = os.path.join(d, REVIEWS)
+    if sub == 'add':
+        for k in ['round', 'verdict']:
+            if not opts.get(k):
+                raise UsageError('reviews add needs --%s' % k)
+        if not rx(r'^[1-9]\d*\Z').match(opts['round']):
+            raise UsageError('--round must be a whole number from 1, got "%s"' % opts['round'])
+        if opts['verdict'] not in REVIEW_VERDICTS:
+            raise UsageError('--verdict must be one of %s' % ', '.join(REVIEW_VERDICTS))
+        lines = []
+        if opts.get('findings'):
+            for i, l in enumerate(read_text(opts['findings']).split('\n')):
+                if l.strip():
+                    lines.append('- ' + finding_line(l, '%s line %d' % (opts['findings'], i + 1)))
+        append_block(file, format_review('%s — round %s — %s' % (today(), opts['round'], opts['verdict']), lines))
+        return [], 0
+    for k in ['card', 'ledger']:
+        if not opts.get(k):
+            raise UsageError('reviews ledger needs --%s' % k)
+    if not os.path.exists(file):
+        return ['appended 0 skipped 0'], 0
+    reviews = parse_reviews(read_text(file))
+    if reviews['errors']:
+        return ['reviews-parse %s' % e for e in reviews['errors']], 1
+    return ledger_reviews(opts['ledger'], opts['card'], reviews['blocks']), 0
+
+
+def ledger_reviews(ledger, card, blocks):
+    """Appends the blocks, as "### " blocks, under the ledger's "## <card>" heading, adding the
+    heading when the ledger has none, and skips a block whose heading is already under it."""
+    raw = read_raw(ledger) if os.path.exists(ledger) else ''
+    nl = '\r\n' if '\r\n' in raw else '\n'
+    lines = to_lf(raw[1:] if raw.startswith('﻿') else raw).split('\n')
+    start = next((i for i, l in enumerate(lines)
+                  if rx(r'^##\s+(.+?)\s*\Z').match(l) and card_key(rx(r'^##\s+(.+?)\s*\Z').match(l).group(1)) == card_key(card)), -1)
+    end = len(lines)
+    held = set()
+    if start >= 0:
+        end = next((i for i in range(start + 1, len(lines)) if rx(r'^##\s').match(lines[i])), len(lines))
+        for l in lines[start + 1:end]:
+            m = rx(r'^###\s+(.+?)\s*\Z').match(l)
+            if m:
+                held.add(m.group(1))
+    new = [b for b in blocks if b['heading'] not in held]
+    if new:
+        text = '\n\n'.join(format_review(b['heading'], b['lines'], '###') for b in new)
+        if start < 0:
+            append_block(ledger, '## %s\n\n%s' % (card, text))
+        else:
+            body = lines[:end]
+            while body and body[-1].strip() == '':
+                body.pop()
+            rest = lines[end:]
+            out = body + [''] + text.split('\n') + ([''] + rest if rest else [''])
+            with open(ledger, 'wb') as f:
+                f.write(utf8(nl.join(out)))
+    return ['appended %d skipped %d' % (len(new), len(blocks) - len(new))]
+
 # ---------- receipts ----------
 
 RECEIPTS = 'receipts.md'
+REVIEWS = 'reviews.md'
 RECEIPT_CHECKS = {'request': 'Request', 'ready': 'Ready'}
 RECEIPT_FIELDS = {
     'request': ['Card revision', 'Card facts', 'Standard', 'Profile'],
-    'ready': ['Specs', 'Specs content', 'Gap sources', 'Standard', 'Profile', 'Repo commit'],
+    'ready': ['Specs', 'Specs content', 'Gap sources', 'Standard', 'Profile', 'Repo commit', 'Parent card'],
 }
+# A receipt field written only when its check was given what it fingerprints.
+OPTIONAL_RECEIPT_FIELDS = {'Parent card'}
 STATUS_ROW = rx(r'^(\|\s*\*\*Status\*\*\s*\|).*$', re.M)
 
 
-def standard_version():
-    """The plugin's version and a hash of the references and agents the checks judge by, so an
-    edit to them changes the receipt even without a version bump."""
-    plugin = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+def plugin_version():
     try:
-        version = str(json.loads(read_text(os.path.join(plugin, '.claude-plugin', 'plugin.json'))).get('version') or 'unknown')
-    except (OSError, ValueError, AttributeError):
-        version = 'unknown'
+        return str(json.loads(read_text(os.path.join(plugin_dir(), '.claude-plugin', 'plugin.json'))).get('version') or 'unknown')
+    except (OSError, ValueError, AttributeError, UsageError):
+        return 'unknown'
+
+
+def standard_hash():
+    """A hash of the references and agents the checks judge by. A receipt records this alone,
+    so a version bump that changes neither keeps it matching."""
     files = []
     for sub in ('references', 'agents'):
-        d = os.path.join(plugin, sub)
+        d = os.path.join(plugin_dir(), sub)
         if os.path.isdir(d):
             for f in sorted(list_files(d)):
                 files.append((sub + '/' + f, read_text(os.path.join(d, f))))
-    return '%s %s' % (version, hash_files(files))
+    return hash_files(files)
+
+
+def standard_version():
+    """The plugin's version and the standard's hash."""
+    return '%s %s' % (plugin_version(), standard_hash())
+
+
+def standard_matches(stored, now):
+    """A stored Standard matches the hash, or its older "<version> <hash>" form does."""
+    stored = (stored or '').strip()
+    return stored == now or stored.rsplit(' ', 1)[-1] == now
 
 
 def hash_files(files):
@@ -866,13 +1091,10 @@ def profile_hash(root):
 
 
 def facts_hash(file):
-    """Order and spacing do not matter, except that sub-issue lines keep their order, which is
-    the tracker's sub-issue order the work order is judged against."""
+    """Order and spacing do not matter, sub-issue lines included: the work order on the card is
+    the order, and the tracker's own sub-issue order is not kept in step."""
     lines = [re.sub(r'\s+', ' ', l).strip() for l in read_text(file).split('\n')]
-    lines = [l for l in lines if l]
-    subs = [l for l in lines if l.startswith('sub-issue ')]
-    rest = sorted(l for l in lines if not l.startswith('sub-issue '))
-    return sha256('\n'.join(rest + subs))
+    return sha256('\n'.join(sorted(l for l in lines if l)))
 
 
 def specs_path(root):
@@ -891,7 +1113,7 @@ def specs_content_hash(root, dirs):
         if not os.path.isdir(full):
             raise UsageError('no spec folder %s' % d)
         for f in sorted(list_files(full)):
-            if f == RECEIPTS:
+            if f in (RECEIPTS, REVIEWS):
                 continue
             content = read_text(os.path.join(full, f))
             if f == 'spec.md':
@@ -942,24 +1164,54 @@ def read_spec_list(root, file):
     return sorted(set(out))
 
 
-def receipt_fingerprint(check, opts, root):
+def commit_hash(root, rev, flag):
+    """The full hash of a revision that names a commit in the repository, else a usage error."""
+    lines = git_lines(['rev-parse', '--verify', '--quiet', rev + '^{commit}'], root) if rev else None
+    if not lines:
+        raise UsageError('%s %s is not a commit in this repository' % (flag, rev))
+    return lines[0].strip()
+
+
+def parent_revision(opts):
+    """The parent card's revision from --parent <id> (read with gh) or --parent-text <file>, or
+    None when neither is given."""
+    if opts.get('parent-text'):
+        card = split_text_card(read_text(opts['parent-text']))
+    elif opts.get('parent'):
+        card = gh_issue(opts['parent'], opts.get('repo'))
+    else:
+        return None
+    return card_revision(card['title'], card['body'])
+
+
+def receipt_fingerprint(check, sub, opts, root):
     if check == 'request':
         if not opts.get('facts'):
             raise UsageError('give --facts <file>')
         card = read_card(opts)
         return {'Card revision': card_revision(card['title'], card['body']),
                 'Card facts': facts_hash(opts['facts']),
-                'Standard': standard_version(),
+                'Standard': standard_hash(),
                 'Profile': profile_hash(root)}
     if not opts.get('specs'):
         raise UsageError('give --specs <file>')
+    if sub == 'write':
+        if not opts.get('commit'):
+            raise UsageError('receipt write --check ready needs --commit <rev>, the commit the checker read')
+        commit = commit_hash(root, opts['commit'], '--commit')
+    else:
+        commit = git_head(root)
     dirs = read_spec_list(root, opts['specs'])
-    return {'Specs': ', '.join(dirs),
-            'Specs content': specs_content_hash(root, dirs),
-            'Gap sources': gap_sources_hash(root),
-            'Standard': standard_version(),
-            'Profile': profile_hash(root),
-            'Repo commit': git_head(root)}
+    out = {'Specs': ', '.join(dirs),
+           'Specs content': specs_content_hash(root, dirs),
+           'Gap sources': gap_sources_hash(root),
+           'Standard': standard_hash(),
+           'Profile': profile_hash(root),
+           'Repo commit': commit}
+    parent = parent_revision(opts)
+    if parent:
+        out['Parent card'] = parent
+    return out
 
 
 def parse_receipts(text):
@@ -984,7 +1236,7 @@ def format_receipts(receipts):
         title = RECEIPT_CHECKS[check]
         if title in receipts:
             r = receipts[title]
-            names = RECEIPT_FIELDS[check] + ['Checked']
+            names = [n for n in RECEIPT_FIELDS[check] if n not in OPTIONAL_RECEIPT_FIELDS or n in r] + ['Checked']
             blocks.append('## %s\n\n' % title + '\n'.join('- %s: %s' % (n, r.get(n, '')) for n in names))
     return '\n\n'.join(blocks) + '\n'
 
@@ -1000,7 +1252,7 @@ def cmd_receipt(opts):
     root = project_root()
     file = os.path.join(d, RECEIPTS)
     receipts = parse_receipts(read_text(file)) if os.path.exists(file) else {}
-    now = receipt_fingerprint(check, opts, root)
+    now = receipt_fingerprint(check, sub, opts, root)
     title = RECEIPT_CHECKS[check]
     if sub == 'write':
         os.makedirs(d, exist_ok=True)
@@ -1011,13 +1263,20 @@ def cmd_receipt(opts):
     old = receipts.get(title)
     if not old:
         return ['no-receipt %s' % check], 1
+    if 'Parent card' in old and 'Parent card' not in now:
+        raise UsageError('the ready receipt records a Parent card; give --parent <id> or --parent-text <file>')
     out = []
     for name in RECEIPT_FIELDS[check]:
+        if name in OPTIONAL_RECEIPT_FIELDS and name not in old and name not in now:
+            continue
         if name == 'Repo commit':
             if not code_unchanged(root, old.get(name, '')):
                 out.append('differs Repo commit %s %s' % (old.get(name, ''), now[name]))
-        elif old.get(name, '') != now[name]:
-            out.append('differs %s %s %s' % (name, old.get(name, ''), now[name]))
+        elif name == 'Standard':
+            if not standard_matches(old.get(name), now[name]):
+                out.append('differs Standard %s %s' % (old.get(name, ''), now[name]))
+        elif old.get(name, '') != now.get(name, ''):
+            out.append('differs %s %s %s' % (name, old.get(name, ''), now.get(name, '')))
     return (out, 1) if out else (['match %s' % check], 0)
 
 # ---------- the project root, profile and markers ----------
@@ -1078,7 +1337,14 @@ def profile_field_line(line):
     return None
 
 
-def read_profile(root):
+def read_profile(root, rev=None):
+    """The profile in the working tree, or at a revision (git show <rev>:.devfactory/profile.md)."""
+    if rev:
+        r = run_process(['git', 'show', '%s:.devfactory/profile.md' % rev], cwd=root)
+        if r.returncode != 0:
+            raise UsageError('no profile at %s:.devfactory/profile.md: %s' % (rev, decode(r.stderr).strip()))
+        text = decode(r.stdout)
+        return profile_sections(to_lf(text[1:] if text.startswith('﻿') else text))
     file = profile_file(root)
     if not os.path.exists(file):
         raise UsageError('no profile at %s' % file)
@@ -1137,12 +1403,15 @@ def list_markers(root):
         st = os.stat(file)
         if not os.path.isfile(file):
             continue
-        t = parse_iso_ms(read_raw(file))
+        lines = [l.strip() for l in to_lf(read_raw(file)).split('\n') if l.strip()]
+        t = parse_iso_ms(lines[0]) if lines else None
         if t is None:
             t = st.st_mtime * 1000
+        m = rx(r'^plugin (\S+)\Z').match(lines[1]) if len(lines) > 1 else None
         ms = now_ms() - t
         out.append({'name': name, 'file': file, 'time': iso_from_ms(t), 'age': age(ms),
-                    'stale': ms > lifetime * 3600000, 'lifetime': lifetime})
+                    'stale': ms > lifetime * 3600000, 'lifetime': lifetime,
+                    'version': m.group(1) if m else None})
     return out
 
 
@@ -1161,17 +1430,26 @@ def skill_name(opts):
 
 
 def cmd_begin(opts):
+    """Writes the marker as two lines, the time and "plugin <version>"; the markers listing the
+    hooks read is unchanged by the second."""
     name = skill_name(opts)
     root = project_root()
+    version = plugin_version()
     os.makedirs(marker_dir(root), exist_ok=True)
     out = []
+    changed = None
     for m in list_markers(root):
         if m['name'] == name:
             out.append('refreshed %s (was %s old%s)' % (name, m['age'], ', stale' if m['stale'] else ''))
+            if m['version'] != version:
+                changed = 'plugin-changed %s %s' % (m['version'] or 'unknown', version)
         else:
             out.append(describe_marker(m))
     with open(os.path.join(marker_dir(root), name), 'wb') as f:
-        f.write((iso_from_ms(now_ms()) + '\n').encode('utf-8'))
+        f.write(('%s\nplugin %s\n' % (iso_from_ms(now_ms()), version)).encode('utf-8'))
+    out.append('began %s %s' % (name, version))
+    if changed:
+        out.append(changed)
     return out, 0
 
 
@@ -1203,7 +1481,7 @@ def cmd_markers(opts):
 
 def cmd_profile(opts):
     root = project_root()
-    profile = read_profile(root)
+    profile = read_profile(root, opts.get('rev'))
     section = opts.get('section')
     if section and profile_section_lines(profile, section) is None:
         raise UsageError('profile has no section "%s"' % section)
@@ -1290,15 +1568,29 @@ def cmd_event(opts):
 
 
 BOOLEAN = {'clear-stale', 'post-release'}
+HELP = {'help', '--help', '-h'}
 
 
-def parse_args(argv):
+class HelpRequested(Exception):
+    pass
+
+
+def parse_args(argv, command=None):
+    """The positionals under "_" and each flag's value. With a command, a flag it does not take
+    is a usage error, judged before the flag's value is read."""
     opts = {'_': []}
     i = 0
     while i < len(argv):
         a = argv[i]
+        if a in ('--help', '-h'):
+            raise HelpRequested()
         if a.startswith('--'):
             eq = a.find('=')
+            name = a[2:eq] if eq > 0 else a[2:]
+            if command:
+                label, flags = command_flags(command, opts)
+                if flags is not None and name not in flags:
+                    raise UsageError('unknown flag --%s for %s' % (name, label))
             if eq > 0:
                 opts[a[2:eq]] = a[eq + 1:]
             elif a[2:] in BOOLEAN:
@@ -1311,23 +1603,77 @@ def parse_args(argv):
         else:
             opts['_'].append(a)
         i += 1
+    if command:
+        # A flag given before its subcommand is judged once the subcommand is known.
+        label, flags = command_flags(command, opts)
+        for k in sorted(opts):
+            if flags is not None and k != '_' and k not in flags:
+                raise UsageError('unknown flag --%s for %s' % (k, label))
     return opts
 
 
+CARD = {'card', 'repo', 'text'}
+RECEIPT_FLAGS = CARD | {'check', 'facts', 'specs', 'parent', 'parent-text'}
+# Each command with the flags it takes; a dict gives each subcommand its own.
 COMMANDS = {
-    'stamp': cmd_stamp,
-    'stamp-check': cmd_stamp_check,
-    'spec-lint': cmd_spec_lint,
-    'criteria-ids': cmd_criteria_ids,
-    'gaps': cmd_gaps,
-    'evidence-check': cmd_evidence_check,
-    'begin': cmd_begin,
-    'end': cmd_end,
-    'markers': cmd_markers,
-    'profile': cmd_profile,
-    'event': cmd_event,
-    'receipt': cmd_receipt,
+    'stamp': (cmd_stamp, CARD),
+    'stamp-check': (cmd_stamp_check, CARD | {'spec'}),
+    'spec-lint': (cmd_spec_lint, {'criteria'}),
+    'criteria-ids': (cmd_criteria_ids, CARD),
+    'gaps': (cmd_gaps, {'add': {'stage', 'question', 'condition', 'resolved', 'kind'},
+                        'check': set(),
+                        'ledger': {'card', 'types', 'ledger'}}),
+    'evidence-check': (cmd_evidence_check, {'criteria', 'base', 'post-release'}),
+    'spec-only': (cmd_spec_only, {'base'}),
+    'reviews': (cmd_reviews, {'add': {'round', 'verdict', 'findings'},
+                              'ledger': {'card', 'ledger'}}),
+    'receipt': (cmd_receipt, {'write': RECEIPT_FLAGS | {'commit'},
+                              'check': RECEIPT_FLAGS}),
+    'begin': (cmd_begin, set()),
+    'end': (cmd_end, set()),
+    'markers': (cmd_markers, {'clear-stale'}),
+    'profile': (cmd_profile, {'section', 'field', 'rev'}),
+    'event': (cmd_event, {'card'}),
 }
+
+USAGE = '''usage: devfactory <command> [<args>]
+
+commands:
+  stamp (--card <n> [--repo <owner/name>] | --text <file>)
+  stamp-check (--card <n> [--repo <owner/name>] | --text <file>) --spec <dir>
+  spec-lint <dir> [--criteria <file>]
+  criteria-ids (--card <n> [--repo <owner/name>] | --text <file>)
+  gaps add <dir> --stage <Approval|Development|Done|Acceptance|Release> --question <q>
+      --condition <"Ready <id>"|"Done <id>"> [--resolved <v>] [--kind miss|request-change]
+  gaps check <dir>
+  gaps ledger <dir> --card <n> --types <t> --ledger <file>
+  evidence-check <dir> --criteria <file> [--base <rev>] [--post-release]
+  spec-only <dir> --base <rev>
+  reviews add <dir> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE> [--findings <file>]
+  reviews ledger <dir> --card <n> --ledger <file>
+  receipt write <dir> --check request (--card <n> [--repo <owner/name>] | --text <file>) --facts <file>
+  receipt write <dir> --check ready --specs <file> --commit <rev>
+      [--parent <id> [--repo <owner/name>] | --parent-text <file>]
+  receipt check <dir> --check request (--card <n> [--repo <owner/name>] | --text <file>) --facts <file>
+  receipt check <dir> --check ready --specs <file> [--parent <id> [--repo <owner/name>] | --parent-text <file>]
+  begin <skill>
+  end <skill>
+  markers [--clear-stale]
+  profile [--section <heading>] [--field <name>] [--rev <ref>]
+  event <%s> --card <id>
+  help, --help, -h, <command> --help: print this and exit 0
+
+A flag a command does not take is a usage error (exit 2).''' % '|'.join(EVENTS)
+
+
+def command_flags(command, opts):
+    """The command's name as an error names it, and the flags it takes, or None for a
+    subcommand the command itself reports as unknown."""
+    flags = COMMANDS[command][1]
+    if not isinstance(flags, dict):
+        return command, flags
+    sub = opts['_'][0] if opts['_'] else None
+    return ('%s %s' % (command, sub), flags[sub]) if sub in flags else (command, None)
 
 
 def write_out(stream, text):
@@ -1339,13 +1685,18 @@ def write_out(stream, text):
 def main(argv):
     command = argv[0] if argv else None
     try:
-        fn = COMMANDS.get(command)
-        if not fn:
-            raise UsageError('unknown command "%s"; commands: %s' % (command or '', ', '.join(COMMANDS)))
-        out, code = fn(parse_args(argv[1:]))
+        if command is None or command in HELP:
+            raise HelpRequested()
+        if command not in COMMANDS:
+            raise UsageError('unknown command "%s"; commands: %s' % (command, ', '.join(COMMANDS)))
+        opts = parse_args(argv[1:], command)
+        out, code = COMMANDS[command][0](opts)
         if out:
             write_out(sys.stdout, '\n'.join(out) + '\n')
         return code
+    except HelpRequested:
+        write_out(sys.stdout, USAGE + '\n')
+        return 0
     except UsageError as e:
         write_out(sys.stderr, 'devfactory: %s\n' % e)
         return 2
