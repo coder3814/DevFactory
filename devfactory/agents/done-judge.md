@@ -67,7 +67,9 @@ given.
      pass only because another sub-issue's code is stubbed or absent.
    - **3.1** `[rubric: the row]` Every evidence row of every spec has its artifact showing
      what it promised. Fail an artifact captured at a sub-issue's revision when a later
-     merge changed what it shows.
+     merge changed what it shows. A row marked post-release is pending, as Done 3.1 says: its
+     missing artifact is no finding and leaves nothing unchecked. List it under Pending in
+     the report.
    - **3.2** `[machine: evidence-check]` The same output: every artifact has its sidecar
      naming revision, checkpoint and what produced it, both are committed, the revision is
      an ancestor of the revision under evaluation or was rebased into it unaltered, and the
@@ -131,6 +133,9 @@ Sub-issues: <ids>.
 
 ## Unchecked
 - <condition>, <card id> <criterion ID>: <what could not be checked and why>.
+
+## Pending
+- <card id> <criterion ID>: <the post-release row, its checkpoint, captured by release after the deploy>.
 
 ## Parent criteria
 | Criterion | Met by | Result |

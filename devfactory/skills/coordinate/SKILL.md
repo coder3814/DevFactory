@@ -48,7 +48,7 @@ root, wherever the shell's working directory is.
 | Tell a waiting session to begin, send it an answer or a finding, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
 | Read a session's report | The session sends every report, question and stop as a message (the brief says so), which wakes this session on any turn. A `<side-sessions-event>` note quoting a session's final message is not the channel: the app holds those notes back after many in a row with no message from the requester. On a note that carries nothing the session has not already sent by message, such as a session ending a turn to wait, do nothing and end the turn. When a session's note or final message shows a report it did not send, message it to send its report. Read what a report leaves out from the card and the spec it updated, or ask the session to restate a part. |
 | Stop a session | `stop_session`. |
-| Finish a session | `mark_completed`, then `archive_session`, which stops it and lets the app remove its worktree. Only `release` step 7 does this for the run's sessions, under the release authorisation; its worktrees and branches are removed after the sessions are archived. |
+| Finish a session | `mark_completed`, then `archive_session`, which stops it and lets the app remove its worktree. Only `release` step 8 does this for the run's sessions, under the release authorisation; its worktrees and branches are removed after the sessions are archived. |
 
 The desktop app shapes the run:
 

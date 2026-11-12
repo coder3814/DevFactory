@@ -160,7 +160,12 @@ These conditions apply when the request's rules act on existing data.
     has. `[judgment]`
     A row fails this when it asks for seed data, scripts, review pages or environment
     capability that a lighter existing check, such as a test or a reading of the change,
-    would prove as well. The spec never asks for a change to the profile.
+    would prove as well. The spec never asks for a change to the profile. A row marked
+    post-release is lighter than none only when no checkpoint before release could fail
+    the criterion, such as a value that exists only in the live system; one a test, a
+    reading of the change or a pre-release environment could fail fails this. A
+    post-release row is captured read-only by `release` once the deploy is live, at the
+    environment it names, and its capture never needs a push of its own.
 
 ### 8. The owner's part is scheduled
 

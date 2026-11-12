@@ -57,6 +57,10 @@ requester at acceptance, against every criterion's evidence, never here.
     condition, captured at the stated checkpoint. `[rubric: the row]`
     When the interface determination is non-trivial, the approved wireframe is the reference
     an interface artifact is compared with.
+    A row marked post-release in the evidence plan is pending, not missing: its checkpoint
+    exists only once the release is live, so 2.1, 3.1 and 3.2 do not ask for its artifact,
+    `evidence-check` reports it `evidence-pending`, and `release` captures it after the
+    deploy.
 
 3.2 Each artifact records the revision, the checkpoint and the command or procedure that
     produced it. `[machine: evidence-check]`

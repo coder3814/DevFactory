@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session (marked completed, then archived without asking), worktree and branch. Use only when the requester says in the conversation to release a card or a parent issue run they have accepted; never on an agent's own judgment.
+description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, capture post-release evidence read-only once the release is live, close the cards and fire their released events, curate the gap records, and reap every session (marked completed, then archived without asking), worktree and branch. Use only when the requester says in the conversation to release a card or a parent issue run they have accepted; never on an agent's own judgment.
 allowed-tools:
   - Read
   - Glob
@@ -16,6 +16,7 @@ allowed-tools:
   - Bash(git merge-base *)
   - Bash(git worktree list *)
   - Bash(git branch --list *)
+  - Bash(git cherry *)
 ---
 
 # Release accepted work
@@ -40,7 +41,7 @@ is `../../scripts/devfactory.py` relative to this skill's folder.
 **Markers.** Run `devfactory begin release` as your first action and keep the marker for
 the whole release, through every wait and question: the git guard allows the push, and the
 merge onto the integration branch, only while it is there. Run `devfactory end release` as
-your last action, after step 7, or when you stop and report with the release abandoned. A
+your last action, after step 8, or when you stop and report with the release abandoned. A
 marker expires after the profile's Marker lifetime (12 hours by default), and `begin`
 refreshes it, so run `devfactory begin release` again whenever you resume after a wait.
 Markers and the profile are found at the repository (worktree) root, wherever the shell's
@@ -72,9 +73,10 @@ theirs to take when its moment comes, whatever authorised the release.
    card to release is in Acceptance with the requester's acceptance recorded on it.
 
 2. **Settle what the profile leaves open.** When neither the profile's release procedure
-   nor its Standing answers say how this work is released (where it merges, what ships it,
-   what is checked once it is live), ask the requester, once, for each thing they leave
-   open. Then propose the answer
+   nor its Standing answers say how this work is released (where it merges, what ships
+   it), ask the requester, once, for each thing they leave open. What is checked once the
+   release is live is the evidence plan's post-release rows, which step 5 captures, and is
+   never asked. Then propose the answer
    for the release procedure or as a standing answer and, when the requester accepts, write
    it to the profile with where it came from.
 
@@ -82,10 +84,14 @@ theirs to take when its moment comes, whatever authorised the release.
    carries, the parent's and each sub-issue's in a run, first append every entry in its
    spec's `gaps.md` to the project ledger with `devfactory gaps ledger <spec dir> --card <n>
    --types <the spec's request types> --ledger .devfactory/gaps.md`, which writes the
-   headings `spec-template.md` lays the ledger out with; then delete the spec folder.
-   Both go in the release commit: the commit that brings the work onto the integration
-   branch, or one of its own just before the work goes out when it is already there.
-   History keeps the folders; the ledger keeps the gaps.
+   headings `spec-template.md` lays the ledger out with. When its evidence plan has rows
+   marked post-release, write `.devfactory/post-release/<card>/plan.md` holding those rows
+   under an `## Evidence plan` heading, as `spec-template.md` says under `evidence/`. Then
+   delete the spec folder, and every `.devfactory/post-release/<card>/` folder an earlier
+   release captured and committed; one whose capture is not committed stays and is
+   reported. All of it goes in the release commit: the commit that brings the work onto
+   the integration branch, or one of its own just before the work goes out when it is
+   already there. History keeps the folders; the ledger keeps the gaps.
 
 4. **Merge and release** as the profile's release procedure and the project's skills say:
    rebase, run the test gate as "The test gate" in
@@ -97,15 +103,33 @@ theirs to take when its moment comes, whatever authorised the release.
    it; otherwise ask. Work held rather than released
    keeps its cards accepted and open until the held release goes out.
 
-5. **Close and fire.** Once the release is live, close each released card and fire
+5. **Check after release.** For each `.devfactory/post-release/<card>/plan.md` step 3
+   wrote, once the deploy is live, capture every row read-only at the environment it
+   names, reached as the profile's Environments entry says, by the row's Generated by
+   procedure, into `evidence/<ID>/` beside the plan, each artifact with its sidecar naming
+   the released commit and the environment. Capture each environment in one pass, as
+   `build` step 6 says. When only the requester can reach the environment, the capture is
+   the owner step the spec scheduled after the deploy: ask them to take it now and record
+   what they return. Write the criterion IDs to a file outside the repository and run
+   `devfactory evidence-check .devfactory/post-release/<card> --criteria <that file>
+   --post-release`. Commit the folder on the integration branch and push nothing: it goes
+   out with the next release, which deletes it. Show the requester each artifact with what
+   its row promised. When one shows its criterion does not hold, add a gap entry with
+   `devfactory gaps add .devfactory/post-release/<card> --stage Release --question <what
+   it showed> --condition "Done 3.1"`, append it to the ledger with `devfactory gaps ledger`
+   as step 3 does, commit both with the capture, leave that card open and report it; what
+   follows is the requester's to decide.
+
+6. **Close and fire.** Once the release is live, and step 5 found every post-release row
+   holding, close each released card and fire
    `released` for it with `devfactory event released --card <n>`, as
    `../../references/events.md` says; a hook that fails is reported with its output. A
    parent issue, nested ones included, closes and fires only when every one of its
    sub-issues is released.
 
-6. **Curate.** Run `curate`.
+7. **Curate.** Run `curate`.
 
-7. **Stop and reap.** Once the release is live and the cards are closed, end every
+8. **Stop and reap.** Once the release is live and the cards are closed, end every
    session and agent the work started: each sub-issue's session, the parent-fixes session
    and the sessions a parent run kept until acceptance, or a standalone card's build
    session. The requester's authorisation to release, whether given ahead of time or in
@@ -133,10 +157,11 @@ theirs to take when its moment comes, whatever authorised the release.
    deletes its own branch, then marks itself completed and archives itself. Reaping asks
    nothing a standing answer or this step settles:
    - A branch whose work reached the integration branch by a rebase, so that `git branch
-     -d` refuses it, is removed the way the profile's Branches and merging or a standing
-     answer (such as "How is a finished branch removed?") says, force-deletion included,
-     once its commits' changes are confirmed on the integration branch. Ask only when
-     neither says.
+     -d` refuses it, is confirmed by content and then removed with `git branch -D`,
+     without asking: `git cherry <integration branch> <branch>` lists no commit marked
+     `+`, so every commit of it has one carrying the same change on the integration
+     branch, the check `coordinate` step 5 uses. Ask only when the check lists a `+`
+     commit, naming each.
    - A reaped worktree whose only uncommitted changes are regenerated build output is
      removed with that output discarded, without asking. Any other uncommitted change is
      reported and its worktree kept.

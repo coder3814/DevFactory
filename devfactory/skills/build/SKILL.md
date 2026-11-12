@@ -219,7 +219,7 @@ only the tests the current edit touches.
       has; so is step 8's carrying on after spec-only amendments past the review limit.
       Fire `done` and stop building without merging: go straight into `accept`, asking
       nothing first, which hands to `release`, and `release` merges the work once and ends
-      by marking this session completed and archiving it, as its step 7 says.
+      by marking this session completed and archiving it, as its step 8 says.
 
 ## Fixing a finding or a refusal
 

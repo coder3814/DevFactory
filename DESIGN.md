@@ -43,6 +43,12 @@ which the plugin reads and never embeds.
     and a passing check leaves a receipt: a fingerprint of everything it read. A later stage
     compares the fingerprint instead of judging again, and re-runs the check only when
     something it reads has changed.
+11. **The process keeps its records in its own files.** Evidence, gap records, receipts
+    and check results live in DevFactory's files in the repository, under the spec folder
+    or `.devfactory/`, even when a record is temporary and cleaned up later; never on a
+    card or anywhere else outside the repository. As the owner put it (the owner,
+    2026-11-11): "I don't ever want to use an external resource, such as cards, for this
+    type of information. This should be internal."
 
 ## 2. The objects
 
@@ -132,7 +138,8 @@ In this order, general to specific:
    each resolved.
 7. **Evidence plan**: one row per criterion: how it is shown (test, image, log, query,
    output), what the artifact will show, under what condition, how it is generated, and the
-   environment (checkpoint) it is captured in.
+   environment (checkpoint) it is captured in. A row only the live release can show is
+   marked post-release, and only when no checkpoint before release could fail it.
 8. **Owner steps**: each step only the requester can take (approve a mock-up, sign in
    somewhere, run something in production) with the moment in the run it happens.
 9. **Project bindings used**: the profile entries this spec relies on, by name.
@@ -254,7 +261,7 @@ receipt says a check need not run again.
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
 | Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Past the review or judgment limit, a round whose findings were all fixed by spec-only amendments goes on to acceptance as Done. | the Done judge agent | Done verdict, or a spec-only round past the limit |
 | Acceptance | The owner judges the result against the evidence: every criterion is shown with its artifact, and one question accepts them all or names the refused ones. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
-| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions marked completed and archived under the release authorisation, then worktrees and branches removed; gap records curated. | `release` | Cards closed |
+| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger, and post-release rows kept in `.devfactory/post-release/<card>/`; specs deleted; once live, post-release rows captured read-only there and committed to go out with the next release, which deletes them; sessions marked completed and archived under the release authorisation, then worktrees and branches removed; gap records curated. | `release` | Cards closed |
 
 Three definitions gate the work, one per hand-off: the Definition of Request
 (`references/definition-of-request.md`) before a spec is written, the Definition of Ready

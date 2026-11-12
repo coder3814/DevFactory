@@ -48,7 +48,7 @@ SECTIONS = [
     {'name': 'Project bindings used'},
     {'name': 'Amendments'},
 ]
-GAP_STAGES = ['Approval', 'Development', 'Done', 'Acceptance']
+GAP_STAGES = ['Approval', 'Development', 'Done', 'Acceptance', 'Release']
 GAP_FIELDS = [
     {'key': 'question', 'label': 'Question or refusal'},
     {'key': 'condition', 'label': 'Let through by'},
@@ -644,31 +644,44 @@ def sidecar_fields(line):
     return fields
 
 
+POST_RELEASE = rx(r'\(\s*post-release\s*\)\s*$', re.I)
+
+
 def norm_checkpoint(s):
-    return ' '.join((s or '').replace('**', '').replace('`', '').strip().lower().split())
+    s = ' '.join((s or '').replace('**', '').replace('`', '').strip().lower().split())
+    return POST_RELEASE.sub('', s).strip()
 
 
 def planned_checkpoints(d):
-    """{criterion ID: set of checkpoints} from the spec's Evidence plan; empty without one."""
+    """({criterion ID: set of checkpoints}, {criterion IDs every row of which is post-release})
+    from the Evidence plan of the folder's spec.md, or of the plan.md a release keeps for its
+    post-release rows; both empty without one."""
     spec_file = os.path.join(d, 'spec.md')
     if not os.path.exists(spec_file):
-        return {}
+        spec_file = os.path.join(d, 'plan.md')
+    if not os.path.exists(spec_file):
+        return {}, set()
     ev = find_section(split_sections(read_text(spec_file)), 'Evidence plan')
     tables = parse_tables(ev['lines']) if ev else []
     if not tables:
-        return {}
+        return {}, set()
     t = tables[0]
     c = column(t, lambda h: h == 'criterion')
     k = column(t, lambda h: h == 'checkpoint')
     if c < 0 or k < 0:
-        return {}
+        return {}, set()
     plan = {}
+    before = set()
+    after = set()
     for row in t['rows']:
-        point = norm_checkpoint(cell(row, k))
-        if point and not is_italic_prompt(cell(row, k)):
+        raw = cell(row, k)
+        point = norm_checkpoint(raw)
+        if point and not is_italic_prompt(raw):
+            late = bool(POST_RELEASE.search(' '.join(raw.replace('**', '').replace('`', '').split())))
             for i in criterion_ids_in(cell(row, c)):
                 plan.setdefault(i, set()).add(point)
-    return plan
+                (after if late else before).add(i)
+    return plan, after - before
 
 
 def git_lines(args, cwd, sep='\n'):
@@ -715,7 +728,9 @@ def cmd_evidence_check(opts):
     if not opts.get('criteria'):
         raise UsageError('give --criteria <file>')
     out = []
-    plan = planned_checkpoints(d)
+    plan, pending = planned_checkpoints(d)
+    capture = bool(opts.get('post-release'))
+    notes = []
     in_git = in_work_tree(d)
     revisions = {}
     base = opts.get('base')
@@ -755,6 +770,9 @@ def cmd_evidence_check(opts):
 
     for i in read_id_list(opts['criteria']):
         folder = os.path.join(d, 'evidence', i)
+        if i in pending and not capture and not (os.path.isdir(folder) and list_files(folder)):
+            notes.append('evidence-pending %s is planned post-release only; release captures it once the deploy is live' % i)
+            continue
         if not os.path.isdir(folder):
             out.append('evidence-missing %s has no evidence/%s/ folder' % (i, i))
             continue
@@ -797,7 +815,7 @@ def cmd_evidence_check(opts):
             if i in plan and point not in plan[i]:
                 out.append('sidecar-checkpoint evidence/%s/%s names checkpoint "%s", but the evidence plan gives %s for %s'
                            % (i, side, fields.get('checkpoint'), ' or '.join('"%s"' % p for p in sorted(plan[i])), i))
-    return out, 1 if out else 0
+    return out + notes, 1 if out else 0
 
 # ---------- receipts ----------
 
@@ -1271,7 +1289,7 @@ def cmd_event(opts):
 # ---------- entry point ----------
 
 
-BOOLEAN = {'clear-stale'}
+BOOLEAN = {'clear-stale', 'post-release'}
 
 
 def parse_args(argv):

@@ -72,7 +72,10 @@ repository, and note in the report that it was given.
      artifact with the approved wireframe when the determination is non-trivial. Whether
      an artifact predates a later change to the code is 3.2's, which `evidence-check`
      decides; do not judge it again here, and read the artifact as showing the code at the
-     revision under evaluation.
+     revision under evaluation. A row marked post-release in the evidence plan is pending: its
+     checkpoint exists only once the release is live, `evidence-check` reports it
+     `evidence-pending`, and its missing artifact is no finding and leaves nothing
+     unchecked. List it under Pending in the report.
    - **3.2** `[machine: evidence-check]` The `evidence-check` output: each artifact has its
      `.txt` sidecar naming revision, checkpoint and what produced it, both are committed,
      the revision is an ancestor of the revision under evaluation or was rebased into it
@@ -119,6 +122,9 @@ Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n 
 
 ## Unchecked
 - <condition>, <criterion ID>: <what could not be checked and why>.
+
+## Pending
+- <criterion ID>: <the post-release row, its checkpoint, captured by release after the deploy>.
 
 ## Conditions
 | Condition | Result |

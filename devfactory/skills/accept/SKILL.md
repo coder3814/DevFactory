@@ -64,7 +64,10 @@ together when the platform can ask both at once.
    output), what the row promised it shows and under what condition, and the revision and
    checkpoint from its sidecar. Flag each caveat where it applies: an artifact that does
    not show what its row promised, a checkpoint or revision other than the one the row
-   names, or anything left unverified. Then ask one question: accept every criterion, or
+   names, or anything left unverified. A row marked post-release in the evidence plan has
+   no artifact yet: show it as pending, with its checkpoint and what `release` will capture
+   there once the deploy is live, never as a caveat against accepting. Then ask one
+   question: accept every criterion, or
    name the refused ones by ID. Recommend accepting all when every artifact shows what its
    row promised; when one does not, name it and recommend refusing it. When the release is
    not yet authorised (step 6), offer accepting all and releasing as an option of its own.
