@@ -216,7 +216,17 @@ that, every time you commit the spec folder, write the line again with that comm
      trivial because, or not applicable because. When non-trivial, produce `wireframe.*`
      beside `spec.md` at the profile's wireframe fidelity, and get the requester's approval
      of it, in the project's own design-review way when the profile names one, before the
-     checker runs. Record the approval date under "Interface surface".
+     checker runs. Under design-card fidelity a development card produces none: it cites
+     the design card's approved artifact by its path in the profile's Design artifacts
+     folder, and a design card's own artifact is written there, not beside `spec.md`.
+     Record under "Interface surface" the approval with the blob id of the revision it
+     approved (`git hash-object <file>`) and its date. When the artifact changes after its
+     approval, put it to the requester again before the checker runs and cite the new
+     approval; a cited approval whose blob id is not the artifact's as it stands fails
+     Ready 6.2. Treat per-item content the artifact shows that no stored field holds as
+     sample data: name the stored field behind each piece and where its values come from,
+     and where none holds it, note what persisted data should hold as a question for
+     step 7.
    Commit nothing yet.
 6. **Check, fresh.** Dispatch the readiness checker as "Dispatching the checker" says, kind
    fresh, at creation. At creation the spec has no stamp, so the checker marks 9.2 not

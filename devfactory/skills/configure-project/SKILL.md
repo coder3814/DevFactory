@@ -158,9 +158,12 @@ answer, propose it as the first option rather than asking from blank.
     wireframe, which fixes structure, fields, states and interaction but not
     aesthetics, and ask whether the project's design review works at another
     fidelity: a finished mock-up, or a design card of its own whose approved
-    mock-up a development card's spec references. Then ask how a wireframe is shown to the requester and approved,
-    proposing any procedure or skill the contributor rules name, and record it
-    as the Design review line.
+    mock-up a development card's spec references. Record only what the artifact
+    fixes, never when one is required, which Ready conditions 6.1 and 6.2 decide.
+    With a design card, ask where approved design artifacts are kept, outside
+    the specs path, and record it as the Design artifacts line. Then ask how a
+    wireframe is shown to the requester and approved, proposing any procedure or
+    skill the contributor rules name, and record it as the Design review line.
 14. **Set branches and merging.** Read the project's contributor rules, if any,
     such as a contributing guide or agent instructions, and propose the
     integration branch, the worktree layout, how a parent issue's branch is

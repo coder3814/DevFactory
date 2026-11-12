@@ -86,13 +86,20 @@ The prompt that started you gives you all of these. If any is missing, say which
    population the spec names, read-only, through the access the profile's "Data access"
    section states for it, and look for rows no stated rule covers. Never write to it. If
    the profile states no access, or the only access would write, report 5.2 unchecked.
-8. **Condition 9.2**: `stamp-check` decides it, and either half failing fails it. It tests
+8. **Condition 6.2, when it applies**: its presence part includes the approval's revision.
+   Run `git hash-object <artifact>` on the artifact the spec cites, in the spec folder or
+   the profile's Design artifacts folder, and compare it with the blob id the spec's
+   Interface surface records as approved; a missing blob id, or one that differs, fails
+   6.2, and the change since approval is a question for the requester. Every per-item
+   piece of content the artifact shows needs the stored field behind it named; one with
+   none named fails 6.2, and what persisted data should hold is the requester's.
+9. **Condition 9.2**: `stamp-check` decides it, and either half failing fails it. It tests
    ancestry against HEAD where it runs, so first confirm `git rev-parse HEAD` at the
    repository path is the head commit you were given; if it is not, 9.2 is unchecked. At
    creation and in a re-derive check, when it is not applicable, run
    `devfactory stamp --card <id>` instead and report under the card the revision it prints
    and the branch head you checked, for the dispatching skill to stamp.
-9. **Sort what must be decided** under `decision-line.md`. For each failure that needs a
+10. **Sort what must be decided** under `decision-line.md`. For each failure that needs a
    decision:
    - an answer a recorded decision, the profile, a standing answer, a design system or an
      existing pattern in the code already gives: cite it as the resolution; it is neither
@@ -105,7 +112,7 @@ The prompt that started you gives you all of these. If any is missing, say which
    it settles. Never ask the requester something the line gives the developer. A 3.4
    finding, something beyond the card, needs no decision: report what to cut, never a
    question or a delegation.
-10. **Collect** every owner step with no moment in the run (8.1), and, for a parent issue,
+11. **Collect** every owner step with no moment in the run (8.1), and, for a parent issue,
    every work-order fault (8.2): a wait citing no allowed reason, a pair marked parallel
    that would collide, a wait holding back work that could run, such as a wait on another
    parent that holds out for its release, its board column or its closed card instead of
@@ -118,7 +125,8 @@ The prompt that started you gives you all of these. If any is missing, say which
 ## Rules
 
 - **Read-only.** Use Bash only for the script's check commands named above, read commands
-  (`git log`, `git show`, `git diff`, `git grep`, `git rev-parse`, `git merge-base`) and
+  (`git log`, `git show`, `git diff`, `git grep`, `git rev-parse`, `git merge-base`,
+  `git hash-object` without `-w`) and
   read-only queries of the data population. Never edit, stage, commit, stash, check out,
   reset or push, never write to the tracker or to data, and start no agents. The one file
   you may write is the temporary criterion-ID file, outside the repository.

@@ -81,8 +81,11 @@ with any requested change to it listed and excluded.*
 
 **Determination:** *non-trivial / trivial, because … / not applicable, because …*
 
-**Wireframe** *(non-trivial only)*: *its path beside this file, the pages or screens it
-covers, and when it was approved.*
+**Wireframe** *(non-trivial only)*: *its path beside this file, or under design-card
+fidelity the approved artifact's path in the profile's Design artifacts folder; the pages
+or screens it covers; the blob id of the revision approved (`git hash-object <file>`) and
+when it was approved; and, for each piece of per-item content it shows, the stored field
+that holds it and where its values come from.*
 
 ## Data population *(when the card's rules act on existing data)*
 
@@ -167,7 +170,12 @@ mismatch means the card's text changed, never that two readers hashed differentl
 A static, dependency-free file matched to the surface, such as an HTML page for a web
 interface or a text sketch for a terminal one. It grounds structure, fields, states and
 interaction; it fixes aesthetics only when the profile's wireframe fidelity says so. Several
-screens may share one file or take one each, named under Interface surface.
+screens may share one file or take one each, named under Interface surface. Text, names,
+counts and other per-item content in it are sample data: the spec names the stored field
+behind each (Ready 6.2), and the build never writes the sample into the code. Under
+design-card fidelity the design card's approved artifact is kept in the profile's Design
+artifacts folder instead, outside the spec folder, so the release that deletes the design
+card's spec keeps it for the development cards that cite it.
 
 ### `gaps.md`
 

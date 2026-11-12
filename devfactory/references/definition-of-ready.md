@@ -139,6 +139,16 @@ These conditions apply when the request's rules act on existing data.
     States are those the card's change reaches, such as empty, loading, error or populated;
     parts of the surface the card does not change are not reopened. The
     wireframe fixes structure, not aesthetics, unless the profile chooses another fidelity.
+    An approval names the revision of the artifact it approved, its git blob id (`git
+    hash-object <file>`, which a commit keeps, so `git rev-parse <commit>:<path>` gives it
+    back), and the spec cites the approval of the revision the build follows: present means
+    the cited blob id is the artifact's as it stands. A change to the artifact after its
+    approval goes back to the requester before Ready, since it changes what an observer
+    sees. Per-item content the wireframe shows that no stored field holds, such as a sample
+    name, count or description, is the wireframe's sample data, never a requirement met by
+    writing it into the code: before Ready the spec names the stored field each shows and
+    where its values come from, and what persisted data ends up as is the requester's
+    call.
 
 ### 7. The evidence plan is complete
 

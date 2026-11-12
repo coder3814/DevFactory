@@ -85,6 +85,7 @@ where, so the readiness checker can read them.
 ## Wireframe fidelity
 - <wireframe; or finished mock-up; or design card: a card of its own whose approved mock-up this
   card's spec references>
+- Design artifacts: <with design card only: the folder approved design artifacts are kept in>
 - Design review: <how a wireframe is shown to the requester and approved>
 
 ## Branches and merging
@@ -190,12 +191,16 @@ where, so the readiness checker can read them.
   project then disposes of each one. Optional.
 - **Owner-step types** names the kinds of step only the requester can take in this project,
   so a spec can schedule one by its type.
-- **Wireframe fidelity** is what the approved design artifact fixes. The default is a wireframe:
+- **Wireframe fidelity** is what the approved design artifact fixes, never when one is
+  required: Ready conditions 6.1 and 6.2 decide that. The default is a wireframe:
   structure, fields, states and interaction, not aesthetics. A project may instead require a
   finished mock-up, or a **design card**: the design is a card of its own, grilled and accepted
   first, and the development card's spec names that card's approved mock-up as its interface
   artifact, so Ready condition 6.2 is met by the reference rather than by a file in the spec
-  folder. Its **Design review** line is
+  folder. With a design card, **Design artifacts** names the folder, outside the specs path,
+  where each design card's approved artifact is kept, so the release that deletes the
+  design card's spec folder keeps it; a development card's spec cites it there by path and
+  by the blob id of the revision approved. Its **Design review** line is
   how a wireframe is shown to the requester and approved, in the project's steps or the
   skill that holds them; `grill` follows it when the interface determination is
   non-trivial.

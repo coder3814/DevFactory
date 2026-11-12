@@ -196,11 +196,18 @@ The approved design artifact grounds Ready condition 6.2. The profile chooses wh
 - **Finished mock-up**: the artifact is a complete design.
 - **Design card**: the design is a card of its own, grilled and accepted first, and the
   development card's spec references that card's approved mock-up, which meets condition
-  6.2 without a file in the spec folder. As the owner put it (the owner, 2026-11-07): "When
+  6.2 without a file in the spec folder. The profile names the folder approved design
+  artifacts are kept in, outside the specs path, so the design card's release keeps them. As the owner put it (the owner, 2026-11-07): "When
   coming up with a design, that should be a card of its own. It can move from a wireframe
   but should have a full, fleshed-out, approved mockup in the equivalent of completed HTML
   for any interface change. That completed HTML would then be used in the implementation of
   a development card."
+
+Fidelity is what the artifact fixes, never when one is required; conditions 6.1 and 6.2
+decide that. Every approval names the revision of the artifact it approved by its git blob
+id, the spec cites the approval of the revision the build follows, and a change after
+approval goes back to the requester before Ready. Per-item content a wireframe shows is
+sample data: the spec names the stored field behind it.
 
 ### 2.6 The definitions
 
