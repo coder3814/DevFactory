@@ -125,11 +125,12 @@ the user so rather than reading another project's item.
 A parent issue's sub-issues are linked to it through GitHub's sub-issues API,
 which names the sub-issue by its numeric id, not its number:
 
-- **An issue's numeric id:** `gh api repos/{owner}/{repo}/issues/{n} --jq .id`.
+- **An issue's numeric id:** `gh api -X GET repos/{owner}/{repo}/issues/{n} --jq
+  .id`.
 - **Link:** `gh api -X POST repos/{owner}/{repo}/issues/{parent}/sub_issues -F
   sub_issue_id=<the sub-issue's numeric id>`.
-- **List:** `gh api repos/{owner}/{repo}/issues/{parent}/sub_issues`, which
-  returns 30 at a time; add `--paginate` for more.
+- **List:** `gh api -X GET repos/{owner}/{repo}/issues/{parent}/sub_issues
+  --paginate`, which reads every page of 30.
 - **Unlink:** `gh api -X DELETE repos/{owner}/{repo}/issues/{parent}/sub_issue
   -F sub_issue_id=<the sub-issue's numeric id>`.
 

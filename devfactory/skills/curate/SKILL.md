@@ -1,6 +1,6 @@
 ---
 name: curate
-description: Read the project's gap and review records, the ledgers of released cards' gaps and reviews and every live record, count each event once, group the misses by the Ready or Done condition that let them through with request changes listed apart, group review findings by Done condition and by text that repeats across cards, test every standing answer and curated profile line for retirement, classify each proposal as plugin-general, the developer's side of the decision line, a profile section, a project document or a standing answer, drop what the plugin, the project's documents or the profile already hold or the requester has declined, and put the writes and retirements in one numbered question, writing to the profile only what the requester accepts, recording what they skip and reporting plugin defects and decision-line misses without writing them. Use after a release, or when the requester asks what the gap records show.
+description: Read the project's gap ledger and every live gap record, and the review ledger of released cards, count each event once, group the misses by the Ready or Done condition that let them through with request changes listed apart, group review findings by Done condition and by text that repeats across cards, test every standing answer and curated profile line for retirement, classify each proposal as plugin-general, the developer's side of the decision line, a profile section, a project document or a standing answer, drop what the plugin, the project's documents or the profile already hold or the requester has declined, and put the writes and retirements in one numbered question, writing to the profile only what the requester accepts, recording what they skip and reporting plugin defects and decision-line misses without writing them. Use after a release, or when the requester asks what the gap records show.
 allowed-tools:
   - Read
   - Glob
@@ -53,11 +53,12 @@ A file you have already read in full in this session, under the plugin version `
 printed, need not be read again.
 
 - [`../../references/spec-template.md`](../../references/spec-template.md): the gap entry's
-  form and the review record's.
+  form and the review ledger's.
 - [`../../references/definition-of-ready.md`](../../references/definition-of-ready.md) and
   [`../../references/definition-of-done.md`](../../references/definition-of-done.md): the
   conditions entries name.
-- [`../../references/decision-line.md`](../../references/decision-line.md).
+- [`../../references/decision-line.md`](../../references/decision-line.md), with
+  "Classifying a proposal".
 - [`../../references/profile-template.md`](../../references/profile-template.md): the gap
   ledger, Standing answers and the rule for when a question becomes one, Declined proposals,
   and that the profile records only departures from the defaults and may point to where the
@@ -80,8 +81,8 @@ printed, need not be read again.
    integration branch: the gap ledger `.devfactory/gaps.md`, which holds every released
    card's entries under headings naming its card, and the review ledger
    `.devfactory/reviews.md`, which holds every released card's review blocks under its
-   card's heading; and each live `gaps.md` and `reviews.md` under the profile's specs path,
-   a parent run's records folder included. Keep each gap entry's card, its stage, its date,
+   card's heading and is the only review record curate reads; and each live `gaps.md`
+   under the profile's specs path, a parent run's records folder included. Keep each gap entry's card, its stage, its date,
    its Kind (an entry with no Kind is a miss) and its request types: from the ledger
    heading for a released entry, from the spec header for a live one. Keep each review
    finding's card, round, verdict, Done condition, criterion ID and text.
@@ -107,29 +108,11 @@ printed, need not be read again.
 5. **Draw the proposals**, each resting on the entries that support it: checker emphasis,
    a condition that let through more than one event, with the request types it let them
    through for; a question asked and answered; a missing project fact; a question that
-   was really the developer's call; and a review finding whose text repeats across cards. Then classify each by the first of these tests that
-   holds:
-   1. **Plugin-general.** It would hold on a project with a different tracker, no mock-ups
-      and no production; or it changes how a plugin skill, agent or condition behaves; or
-      the reader it targets does not read Standing answers, as "Who reads what" says.
-      Write nothing to the profile. Report it as a plugin defect naming the plugin file and
-      section and stating the rule in general terms, with no project case in it.
-   2. **The developer's side of the decision line.** Answering it changes nothing an
-      observer sees or can do, nothing persisted data ends up as, and not the scope.
-      Report it as a decision-line miss, with what already answered it (a recorded
-      decision, the profile, a pattern in the code, a delegation), and write nothing.
-   3. **A profile section.** It is a project fact the profile template has a section for (an
-      environment, the test gate, an owner-step type, data access, a convention), and the
-      profile does not hold it. Propose it for that section.
-   4. **A project document.** It governs the deployed system or the product, or it is a
-      procedure the project's recorded decisions, project instructions or project skills
-      already own. Name that document and propose the change there; `curate` does not edit
-      it.
-   5. **A standing answer.** Only what remains: a question on the requester's side,
-      answered the same way on two separate occasions. Separate occasions are separate runs
-      or separate questions; several entries recording one event count once. Checker
-      emphasis that survives the first test is reported, not written: the readiness checker
-      reads the ledger and every live gap record itself.
+   was really the developer's call; and a review finding whose text repeats across cards.
+   Then classify each into classes 1 to 5 as `decision-line.md` says under "Classifying a
+   proposal", and treat it as that class says; `curate` edits no project document. Checker
+   emphasis that survives the first test is reported, not written: the readiness checker
+   reads the ledger and every live gap record itself.
 
    Then drop every proposal already settled or under way: one whose substance the plugin,
    the recorded decisions, the project instructions, a project skill or the profile already

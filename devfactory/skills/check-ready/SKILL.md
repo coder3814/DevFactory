@@ -42,6 +42,8 @@ printed, need not be read again.
 - `../../references/spec-procedure.md` — the review rule, dispatching the checker, asking the
   requester, folding an answer, a card-changing answer, the ready receipt and landing a
   commit, used here as written.
+- `../../references/card-standard.md`, "The spec line" — the line you write for a spec this
+  check re-derived.
 - `../../references/events.md` — the event you fire.
 - `../../references/profile-template.md`
 - `../../references/working-a-card.md` — loading the profile and reading a card.
@@ -67,9 +69,11 @@ entries about the work order live in the parent's records folder,
    every sub-issue not yet closed; a sub-issue that is itself a parent brings its own
    sub-issues in the same pass. Read each in full with its comments, as "Read a card" in
    `working-a-card.md` says, and each sub-issue's or standalone card's spec folder under the
-   profile's specs path. When a parent card still carries acceptance criteria, supporting
-   information or a spec line, stop: report that it goes through `re-evaluate-card` first,
-   which restructures it to the card standard, and check nothing.
+   profile's specs path. When a parent card carries any part beyond its four (title,
+   purpose, work order, and suggested model and effort), such as acceptance criteria or
+   supporting information, stop: report that it goes through `re-evaluate-card` first,
+   which restructures it to the card standard, and check nothing. A spec line alone does not
+   stop the check; `grill`'s parent path removes it.
 3. **Check each stamp first.** For each card with a spec, run
    `devfactory stamp-check --card <n> --spec <spec dir>` from a checkout of the branch the
    spec lives on. `changed` is reported as "the card changed since Ready", and
@@ -93,15 +97,16 @@ entries about the work order live in the parent's records folder,
 6. **Settle each item with the requester**, one question at a time, with the options and
    your recommendation first, as "Asking the requester" in `spec-procedure.md` says; a gap
    several cards share is asked once, as the rule. Each answer for a stamped spec is
-   recorded as a gap at the stage the work is at, against the condition the checker named,
-   written `Ready <id>`, and as a request change when the requester changed their mind
-   rather than answered a miss. It takes one of two routes:
+   recorded as a gap at the stage the work is at (Approval at creation, Development at
+   development start), against the condition the checker named, written `Ready <id>`, and as
+   a request change when the requester changed their mind rather than answered a miss. It
+   takes one of two routes:
    - An answer that leaves the card as it is goes into the spec through `grill` amend, given
      the question, the answer and that condition. For each owner step without a moment, the
      agreed moment goes under the spec's "Owner steps" this way, against `Ready 8.1`.
    - An answer that changes the card (its outcome, a criterion, its scope or the work order)
-     takes the route "A card-changing answer" in `spec-procedure.md` gives: `add-to-card` in
-     settled mode, then `grill` re-derive, told that this check runs the readiness check
+     takes the route "A card-changing answer" in `spec-procedure.md` gives, this check being
+     the caller that runs `grill` re-derive and the one that runs the readiness check
      itself. Each work-order fault's agreed fix goes onto the parent card this way, against
      `Ready 8.2`, its gap entry in the parent's records folder; so does a change to what one
      sub-issue waits on or which may run alongside it, whenever an answer brings one.
@@ -110,13 +115,25 @@ entries about the work order live in the parent's records folder,
    Settle whatever it still finds with the requester as step 6 says, without another check.
 8. **Report** "nothing open", or what is open and on which card: a question unanswered, an
    owner step with no moment, a work-order fault not fixed, a card whose spec is not Ready.
-   An owner step scheduled for later in the run is settled, not open. At development start,
-   when this check reports a card whose spec status is `Ready` or `approved` as not Ready and
-   stops for the requester, fire `readiness-lost` for it with `devfactory event
-   readiness-lost --card <n>`, as `events.md` says, once for this stop, unless a `grill`
-   re-derive this check started already fired it for this stop. The check is done only when
-   nothing is open. When a checker ran and nothing is open, write the ready receipt as "The
-   ready receipt" in `spec-procedure.md` says, the folder and `--parent` of step 4 and
-   `--commit` the head the last check reported reading, once every amendment and re-derivation is committed,
-   and commit `receipts.md` on its own on the branch the specs live on, as "Landing a commit"
-   there says.
+   An owner step scheduled for later in the run is settled, not open. At creation and at
+   development start alike, when this check reports a card whose spec status is `Ready` or
+   `approved` as not Ready and stops for the requester, fire `readiness-lost` for it with
+   `devfactory event readiness-lost --card <n>`, as `events.md` says, once for this stop,
+   unless a `grill` re-derive this check started already fired it for this stop. The check
+   is done only when nothing is open.
+9. **Close each re-derived spec.** Once nothing is open, for each spec a `grill` re-derive
+   revised in this check, re-stamp it as "The stamp" in `spec-template.md` says, with the
+   Card revision from `devfactory stamp` and the Repo commit the last check that measured it
+   reported reading; set its status as "The status" in `grill` says; run `devfactory
+   spec-lint <spec dir> --criteria <file>` and fix every finding; commit the spec folder on
+   its own as "Landing a commit" in `spec-procedure.md` says; and write its spec line with
+   that commit, directly through the tracker binding under the `check-ready` marker, as "The
+   spec line" in `card-standard.md` says, reading the card back to confirm it landed. Then
+   hand the spec back to `grill`, which this check loaded for the re-derive, at Re-derive
+   steps 8 and 9: `grill` asks for approval when the status returned to `Ready`, and `grill`
+   fires the event for where the card now stands.
+10. **Write the ready receipt.** When a checker ran and nothing is open, write the ready
+    receipt as "The ready receipt" in `spec-procedure.md` says, the folder and `--parent` of
+    step 4 and `--commit` the head the last check reported reading, once every amendment and
+    re-derivation is committed, and commit `receipts.md` on its own on the branch the specs
+    live on, as "Landing a commit" there says.

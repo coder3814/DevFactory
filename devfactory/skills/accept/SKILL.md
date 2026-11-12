@@ -73,8 +73,9 @@ printed, need not be read again.
    names, or anything left unverified. A row marked post-release in the evidence plan has
    no artifact yet: show it as pending, with its checkpoint and what `release` will capture
    there once the deploy is live, never as a caveat against accepting. When the build's
-   report carries the line "no review passed this revision", show that line in the
-   acceptance question, word for word, with the last review's findings and their
+   report, or in a parent run what the coordinator carries past the Done judge's limit,
+   carries the line "no review passed this revision", show that line in the acceptance
+   question, word for word, with the last review's or judgment's findings and their
    amendments. Then ask one question: accept every criterion, or name the refused ones by
    ID. Recommend accepting all when every artifact shows what its row promised; when one
    does not, name it and recommend refusing it. When the release is not yet authorised
@@ -96,20 +97,20 @@ printed, need not be read again.
      session, or in a parent run to the coordinator, which has it fixed as its Done
      findings are: by the kept session of the sub-issue it belongs to, or, when no
      sub-issue owns it, by the kept session of the sub-issue whose files it touches most.
-     Add a gap entry to that criterion's spec at stage Acceptance, let through by the Done
-     condition that should have caught it, resolved by an amendment that records the fix
-     and its commit and changes nothing else; write it with `devfactory gaps add <spec dir>
-     --stage Acceptance --question <the refusal> --condition "Done <id>" --resolved
-     <version>`, each value quoted as one argument. The fix is reviewed and, in a parent
-     run, judged again, and the refused criterion, with any other the fix touched, is
+     Send the refusal with the Done condition that should have caught it, written
+     `Done <id>`, and write no gap entry here: the session that fixes it writes the entry
+     once the fix is committed, through `grill` Amend, at stage Acceptance. The fix is
+     reviewed and, in a parent run, judged again, and the refused criterion, with any other the fix touched, is
      shown and asked again as step 2 says, in one question.
-   - **Meets every criterion but is not what was wanted.** A request change. Record the
-     requester's words on the card through `add-to-card` in settled mode (its "Settled
-     mode" heading), the words being the acceptance, then have `grill` Re-derive bring the
-     spec along for the conditions those criteria feed, naming stage Acceptance and the
-     Ready condition that let it through, written `Ready <id>`, with `--kind
-     request-change` when the requester changed their mind rather than the spec missing
-     what they asked for; Re-derive writes the gap entry and resolves it by its amendment.
+   - **Meets every criterion but is not what was wanted.** A request change. Hand it over
+     as [`spec-procedure.md`](../../references/spec-procedure.md) says under "A
+     card-changing answer": record the requester's words on the card through `add-to-card`
+     in settled mode passing `no-rederive`, the words being the acceptance, then have
+     `grill` Re-derive bring the spec along for the conditions those criteria feed, naming
+     stage Acceptance and the Ready condition that let it through, written `Ready <id>`,
+     with `--kind request-change` when the requester changed their mind rather than the
+     spec missing what they asked for; Re-derive writes the gap entry and resolves it by
+     its amendment.
      The build continues, through review and, in a parent run, the Done judge, to a second
      acceptance: in a parent run, by the kept session of the sub-issue it belongs to, or by
      the kept session of the sub-issue whose files it touches most when no sub-issue owns
@@ -131,8 +132,10 @@ printed, need not be read again.
    own judgment. The requester's word may come ahead of time: their starting instruction
    for the run or the card (such as "you have pre-approval to drive all the way to the
    end"), or their acceptance answer, such as the accept-and-release option of step 2.
-   What that word covers is stated once, in `release` under "What an authorisation
-   covers". When it has come, tell the requester the work is accepted, quoting their
+   What that word covers is stated in `release` under "What an authorisation covers": An
+   authorisation to release starts the `release` skill and nothing more. A question the
+   project's release procedure asks is answered only by a profile standing answer;
+   otherwise it is asked, whatever authorised the release. When it has come, tell the requester the work is accepted, quoting their
    words, and start `release` in this session without asking again, quoting the words that
    authorised it. When it has not, tell them the work is accepted and ready to release,
    quoting their words, and ask once whether to release; when they say yes, start

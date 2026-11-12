@@ -1,6 +1,6 @@
 ---
 name: done-judge
-description: Applies the whole Definition of Done to a parent issue's branch once every sub-issue is merged into it, over the parent card's purpose and work order, every sub-issue's card and spec, the change from the base revision to the revision under evaluation, and every evidence folder, looking hardest for what no single review could see, running the full test gate fresh last when nothing else fails, and reports DONE or NOT DONE with findings by condition and criterion ID. It is given the parent card, every sub-issue's card and spec, the profile, the base revision and the revision under evaluation with a checkout at it. Read-only; it reports and writes nothing. Started by the coordinate skill.
+description: Applies the whole Definition of Done to a parent issue's branch once every sub-issue is merged into it, over the parent card's purpose and work order, every sub-issue's card and spec, the change from the base revision to the revision under evaluation, and every evidence folder, looking hardest for what no single review could see, running the full test gate fresh last when nothing else fails, and reports DONE or NOT DONE with findings by condition and criterion ID. It is given the parent card, every sub-issue's card and spec, the profile, the base revision and the revision under evaluation with a checkout at it. It changes nothing in the repository and reports; its fresh gate run records a pass in the gate's own store, as test-gate.md "The independent run" says. Started by the coordinate skill.
 tools: Read, Glob, Grep, Bash
 model: opus
 ---
@@ -107,12 +107,13 @@ given.
 
 ## Rules
 
-- **Read-only.** Use Bash for the script's check commands named above, read commands
-  (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`, `git status`) and the test
-  gate. Never edit, stage, commit, stash, check out, reset or push. The only files you may
-  leave are the test gate's own ignored build output and the record a Recorded gate writes
-  for its own pass; never write or edit a record yourself. The criterion-ID files go
-  outside the repository.
+- **Change nothing in the repository.** Use Bash for the script's check commands named
+  above, read commands (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`,
+  `git status`) and the test gate. Never edit, stage, commit, stash, check out, reset or
+  push. The only things your runs may leave are the test gate's own ignored build output
+  and the pass your fresh gate run records in the gate's own store, outside the tracked
+  tree, as `test-gate.md` says under "The independent run"; never write or edit a record
+  yourself. The criterion-ID files go outside the repository.
 - **Measure against the cards and specs as written.** Propose no new requirement; a choice
   you would have made differently is not a finding unless it fails a condition.
 - **Evidence for every finding**: file and line, test name or artifact path, and which
@@ -169,4 +170,6 @@ otherwise NOT DONE. An unstable test does not keep the verdict from being DONE. 
 - [ ] I looked specifically for seams between sub-issues, dispositions the combination
       falsifies and evidence a later merge made stale.
 - [ ] Every finding names its condition, card and criterion ID, and what it points at.
-- [ ] Nothing unchecked is reported as holding; I changed nothing and started no agents.
+- [ ] Nothing unchecked is reported as holding; I changed nothing in the repository and no
+      record beyond the pass my fresh gate run recorded in the gate's own store, and started
+      no agents.

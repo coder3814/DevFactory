@@ -29,8 +29,9 @@ here, not repeated.
 `devfactory/scripts/README.md` states every command, its flags, its output and its exit
 codes, and `python devfactory/scripts/devfactory.py --help` prints the commands and their
 flags. The commands are `stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps add`,
-`gaps check`, `gaps ledger`, `evidence-check`, `spec-only`, `reviews add`, `reviews ledger`,
-`receipt write`, `receipt check`, `begin`, `end`, `markers`, `profile` and `event`. A
+`gaps check`, `gaps ledger`, `evidence-check`, `spec-only`, `reviews add`, `reviews show`,
+`reviews ledger`, `receipt write`, `receipt check`, `begin`, `end`, `markers`, `profile` and
+`event`. A
 document that calls one uses the form the README gives, and a change to a command changes
 the README, the `--help` text and the tests together.
 

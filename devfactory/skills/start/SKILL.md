@@ -1,6 +1,6 @@
 ---
 name: start
-description: Start work on a card — read it once, tell a parent issue from a standalone card, and hand over in the same session, to `coordinate` for a parent issue and to `build` for a standalone card; a parent that still carries criteria, supporting information or a spec line is not started and goes through `re-evaluate-card` first. Use when the requester says to start work on card N, or runs `/devfactory:start N`.
+description: Start work on a card — read it once, tell a parent issue from a standalone card, and hand over in the same session, to `coordinate` for a parent issue and to `build` for a standalone card; a parent that still carries a part beyond its title, purpose, work order and suggested model and effort, such as criteria or supporting information, is not started and goes through `re-evaluate-card` first. Use when the requester says to start work on card N, or runs `/devfactory:start N`.
 allowed-tools:
   - Read
   - Glob
@@ -8,6 +8,7 @@ allowed-tools:
   - Bash(python *devfactory.py*)
   - Bash(gh issue view *)
   - Bash(gh project item-list *)
+  - Bash(gh api -X GET *)
   - Bash(az boards work-item show *)
 ---
 
@@ -45,9 +46,10 @@ printed, need not be read again.
 3. **Read the card once**, with the tracker read the binding gives, and decide what it is.
    A card with sub-issues is a parent issue; any other card is a standalone card. A parent
    issue holds a title, a purpose, the work order and the suggested model and effort, and
-   nothing else. One that still carries acceptance criteria, supporting information or a
-   spec line is not started: tell the requester it goes through `re-evaluate-card` first,
-   which restructures it with them, run `devfactory end start`, and stop.
+   nothing else. One that still carries a part beyond those four, such as acceptance
+   criteria or supporting information, is not started: tell the requester it goes through
+   `re-evaluate-card` first, which restructures it with them, run `devfactory end start`,
+   and stop. A spec line alone on a parent is no reason to stop: `grill` removes it.
 
 4. **End and hand over.** Run `devfactory end start`, then, in this session and this turn:
    - for a parent issue, load the `coordinate` skill for it and follow it from its first

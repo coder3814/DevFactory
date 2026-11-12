@@ -92,8 +92,8 @@ An agent cannot tell when someone has changed a card directly, so re-evaluation
 is a procedure in its own right rather than a reaction to an edit. It runs when
 someone asks for it, and checks the card against the standard whatever has
 changed on it and however. It is also how a parent issue that still carries
-criteria, supporting information or a spec line is brought to "Parent issues" in
-the standard, as the `re-evaluate-card` skill says. It takes no answer handed
+criteria, supporting information or any other part beyond its four is brought to
+"Parent issues" in the standard, as the `re-evaluate-card` skill says. It takes no answer handed
 over by another skill: that goes through `add-to-card`.
 
 1. **Measure** the title, description and acceptance criteria against the
@@ -152,8 +152,8 @@ its spec change together. A parent issue never has one, as "Parent issues" in
   spec for the conditions the changed part feeds, re-stamping it with the card's
   new revision, and reporting what changed in it. The `grill` skill does the
   re-derivation, which first checks the changed card against the Definition of
-  Request. A caller that hands `add-to-card` an answer with `no-rederive` owns
-  that re-derivation itself.
+  Request. Who runs it for a settled answer is in "Settled mode" in the
+  `add-to-card` skill.
 - The spec line is not an addition: `grill` writes it directly, as
   [`card-standard.md`](card-standard.md) says, and records no comment for it.
 - A change to the interface determination or to a scope boundary re-grounds the
@@ -191,7 +191,7 @@ The owner made each of these choices when the process was settled.
   again would duplicate the record.
 - **Re-evaluation runs on request,** not automatically before work starts or on a
   schedule; it is also the route that restructures a parent issue still
-  carrying criteria, supporting information or a spec line.
+  carrying criteria, supporting information or any other part beyond its four.
 - **An interactive update ends with the user accepting the rewrite,** because
   folding is the agent's interpretation of the user's words and is where meaning
   drifts.

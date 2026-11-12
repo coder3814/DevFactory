@@ -182,6 +182,15 @@ class GuardGitTest(unittest.TestCase):
                 self.deny(self.run_guard(cwd, c))
         self.deny(self.run_guard(self.on('parent-12', ['curate']), 'git merge --ff-only curate-1'))
 
+    def test_check_ready_may_commit_or_fast_forward_onto_the_integration_branch_and_nothing_else(self):
+        cwd = self.on('main', ['check-ready'])
+        self.assertEqual(self.run_guard(cwd, 'git commit -m "specs: re-stamped"'), '')
+        self.assertEqual(self.run_guard(cwd, 'git merge --ff-only ready-12'), '')
+        for c in ['git merge ready-12', 'git reset --hard HEAD', 'git push']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(cwd, c))
+        self.deny(self.run_guard(self.on('parent-12', ['check-ready']), 'git merge --ff-only ready-12'))
+
     def test_git_push_without_a_marker_is_denied(self):
         self.deny(self.run_guard(self.on('card-7'), 'git push origin card-7'), r'release skill')
 

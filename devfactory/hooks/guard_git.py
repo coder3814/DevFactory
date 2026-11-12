@@ -23,9 +23,9 @@ command line, also inside `bash -c`, `sh -c` and `powershell -Command`. Merging,
 rebasing a protected branch into an unprotected one is never refused.
 
 Allowed: everything while a `release` or `coordinate` marker is fresh; under `build`, a `git
-merge --ff-only` onto a parent branch; under `grill`, `create-card`, `re-evaluate-card` or
-`curate`, a `git merge --ff-only` onto the integration branch, which lands a spec, a receipt
-or a profile change (a plain `git commit` is never refused). A marker counts in the target's
+merge --ff-only` onto a parent branch; under `grill`, `create-card`, `re-evaluate-card`,
+`check-ready` or `curate`, a `git merge --ff-only` onto the integration branch, which lands a
+spec, a receipt or a profile change (a plain `git commit` is never refused). A marker counts in the target's
 root or the session's own, except that a session whose own root holds a fresh `build` marker
 gains nothing from a `release` or `coordinate` marker in another root. A `devfactory begin
 <skill>` earlier in the same command line (joined by &&, ; or a newline) counts as that
@@ -68,7 +68,7 @@ CREATE_FLAGS = {
 }
 CD_COMMANDS = {'cd', 'pushd', 'chdir', 'sl', 'set-location', 'push-location'}
 OWNERS = {'release', 'coordinate'}
-FAST_FORWARD_ONTO_INTEGRATION = {'grill', 'create-card', 're-evaluate-card', 'curate'}
+FAST_FORWARD_ONTO_INTEGRATION = {'grill', 'create-card', 're-evaluate-card', 'check-ready', 'curate'}
 
 
 def resolve(base, p):
@@ -502,8 +502,8 @@ class Session:
                 'coordinate may change; a build session may only fast-forward a parent branch '
                 '(git merge --ff-only), and grill may only commit its spec (git commit, without '
                 '--amend) or fast-forward it (git merge --ff-only) onto the integration branch, as '
-                'create-card and re-evaluate-card may their receipt and curate its profile '
-                'change.' % (o['kind'], branch, which))
+                'create-card and re-evaluate-card may their receipt, check-ready its re-stamped '
+                'specs and curate its profile change.' % (o['kind'], branch, which))
 
     def walk(self, items, d):
         """Judges each part of a command line in order; returns the first refusal, or None."""

@@ -27,6 +27,8 @@ One folder per project, `.devfactory/` at the repository root:
 - `profile.md`: the profile, laid out below.
 - `modules/`: the team modules the profile names.
 - `gaps.md`: the gap ledger, the gap records of released cards, which `release` appends to.
+- `reviews.md`: the review ledger, the review records of released cards, which `release`
+  appends to.
 - `post-release/`: one folder per released card with evidence rows only the live release
   can show, holding those rows and their capture until the next release deletes it, as
   [`spec-template.md`](spec-template.md) says under `evidence/`.
@@ -104,6 +106,7 @@ where, so the readiness checker can read them.
 - Parent branch: <how a parent issue's branch is named>
 - Sub-issue branch: <how a sub-issue's branch is named, which the coordinator briefs each
   session with>
+- Card branch: <how a standalone card's branch and worktree are named>
 - Merging: <who merges what into which branch, and when>
 - Release: <the project's release steps, or the skill that holds them>
 
@@ -151,7 +154,7 @@ where, so the readiness checker can read them.
   never counts as a change to the code when it tests evidence for staleness, such as the
   folder change notes go in. The specs path and `.devfactory/` never count without it. A
   parent issue run's records folder is under the specs path too, as `<path><parent id>/`,
-  holding only the run's `receipts.md`, `gaps.md` and `reviews.md`.
+  holding only the run's `receipts.md` and `gaps.md`.
 - **Recorded decisions** is where the readiness checker reads the decisions that already
   answer a question.
 - **Test gate** is the command, or the named procedure or script, that proves existing
@@ -202,7 +205,10 @@ where, so the readiness checker can read them.
 - **Branches and merging** is how work moves into the integration branch and out to
   release: where worktrees go, how a parent branch and a sub-issue branch are named, who
   merges and when, and the release procedure, in the project's steps or the skill that
-  holds them. `coordinate`, `build` and `release` follow it. A sub-issue's session works on
+  holds them. `coordinate`, `build` and `release` follow it. **Card branch** names the
+  branch and worktree a standalone card is built on: a standalone card is built on its own
+  branch in its own worktree, and a build session that finds itself on the integration
+  branch creates them and works there; `release` later merges that branch. A sub-issue's session works on
   the branch its brief names; a session the app started on another branch keeps that
   branch and tells the coordinator its name in its first report. The change reviewer's base
   revision is the merge-base of the card's branch with the parent branch, or with the
@@ -222,8 +228,17 @@ where, so the readiness checker can read them.
   subcommand that is not a known read, every `gh api` call that is not a GET, and every
   `az rest` call that is not a GET against a work-item API, unless a skill that writes the
   tracker is running, so every card change goes through the skills that own it. The **git
-  guard** refuses a push, or a merge or rebase into the integration branch or a parent
-  branch, while neither `release` nor `coordinate` is running. The **stamp notice** says,
+  guard** keeps the integration branch and parent branches from being changed outside the
+  skills that own them. While neither `release` nor `coordinate` is running, it refuses
+  every push, and every merge, pull, rebase, cherry-pick, hard reset, reset to another
+  revision, amended commit, forced branch move, rename or delete, `update-ref`,
+  `checkout -B` or `switch -C` that changes a protected branch, wherever in the command
+  line it appears, `bash -c`, `sh -c` and `powershell -Command` included. Under `build` it
+  allows a `git merge --ff-only` onto a parent branch, and under `grill`, `check-ready`,
+  `create-card`, `re-evaluate-card` or `curate` a `git merge --ff-only` onto the
+  integration branch, which lands a spec, a receipt or a profile change; a plain `git
+  commit` is never refused. A target it cannot resolve to a repository and a `git -c
+  alias.<name>=...` invocation are refused in a guarded session. The **stamp notice** says,
   when a prompt names a card that has a spec, whether the spec is still current or the card
   has changed since it earned Ready; it never blocks. The **session context** prints, when a
   session starts, where the profile is, the event hooks the project has, which skill does

@@ -5,7 +5,7 @@ question, and to ask for nothing beyond the card.** The card is the request; the
 how that request will be delivered, and never widens it. Ready is the claim that this
 purpose is met: the card, the spec, the profile and the repository already hold everything
 the work will consume, and the spec holds nothing the card does not ask for. Every condition below is a
-cheaply checkable way a spec commonly falls short of that purpose, and condition 9.3 tests
+checkable way a spec commonly falls short of that purpose, and condition 9.3 tests
 the purpose itself, end to end. A spec that meets every condition and still forces a question
 mid-build has failed Ready by definition: the question is a readiness miss, recorded as a gap
 and routed back into the spec, never answered as chat
@@ -33,7 +33,7 @@ Every check carries a mode:
 - `[judgment]` an agent exercises adversarial judgment, looking for the way the spec fails.
 
 A mode written `[machine: presence, the checker reads; judgment: adequacy]` splits one
-condition: the presence part is mechanical, the adequacy part is judged. Cheap presence
+condition: the presence part is mechanical, the adequacy part is judged. Presence
 checks come first; the end-to-end test, 9.3, is last.
 
 **Ready is not approved.** Ready says the spec is complete enough to build from unattended,
@@ -223,7 +223,7 @@ These conditions apply when the request's rules act on existing data.
     and the repository without a single new question, every decision either grounded in them
     or delegated under principle 5. `[judgment]`
     Principle 5 is the line in [`decision-line.md`](decision-line.md). This is the purpose of
-    the definition tested directly; conditions 1 to 8 catch its common failures cheaply.
+    the definition tested directly; conditions 1 to 8 catch its common failures first.
 
 ## Exclusions
 

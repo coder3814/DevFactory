@@ -913,7 +913,7 @@ def cmd_spec_only(opts):
         return ['outside %s' % p for p in outside], 1
     return ['spec-only'], 0
 
-# ---------- reviews.md ----------
+# ---------- review records ----------
 
 
 REVIEW_HEADING = rx(r'^##\s+(\d{4}-\d{2}-\d{2})\s+[—–-]\s+round\s+(\d+)\s+[—–-]\s+(PASS|FAIL|DONE|NOT DONE)\s*\Z')
@@ -931,7 +931,7 @@ def finding_line(line, where):
 
 
 def parse_reviews(text):
-    """reviews.md as blocks {heading, lines} of "## <date> — round <n> — <verdict>" and their
+    """A review record as blocks {heading, lines} of "## <date> — round <n> — <verdict>" and their
     "- " finding lines."""
     blocks = []
     errors = []
@@ -960,15 +960,36 @@ def format_review(heading, lines, level='##'):
     return '%s %s' % (level, heading) + ('\n\n' + '\n'.join(lines) if lines else '')
 
 
+def review_store(card):
+    """<git common dir>/devfactory/reviews/<card id>.md, shared by every worktree of the
+    repository, the card id without a leading "#"."""
+    key = card_key(card)
+    if not key or key in ('.', '..') or rx(r'[\\/:*?"<>|\x00-\x1f]').search(key):
+        raise UsageError('--card "%s" is not a card id' % card)
+    root = project_root()
+    try:
+        common = git_lines(['rev-parse', '--git-common-dir'], root)
+    except (OSError, subprocess.SubprocessError):
+        common = None
+    if not common:
+        raise UsageError('%s is not in a git repository, which holds the review records' % root)
+    return os.path.join(os.path.abspath(os.path.join(root, common[0].strip())), 'devfactory', 'reviews', key + '.md')
+
+
 def cmd_reviews(opts):
     pos = opts['_']
     sub = pos[0] if len(pos) > 0 else None
-    d = pos[1] if len(pos) > 1 else None
-    if sub not in ('add', 'ledger') or not d:
-        raise UsageError('give reviews add|ledger <dir>')
-    if not os.path.isdir(d):
-        raise UsageError('no folder %s' % d)
-    file = os.path.join(d, REVIEWS)
+    if sub not in ('add', 'show', 'ledger'):
+        raise UsageError('give reviews add|show|ledger --card <id>')
+    if len(pos) > 1:
+        raise UsageError('reviews %s takes no folder; give --card <id>' % sub)
+    if not opts.get('card'):
+        raise UsageError('reviews %s needs --card' % sub)
+    file = review_store(opts['card'])
+    if sub == 'show':
+        if not os.path.exists(file):
+            return ['no-reviews'], 0
+        return to_lf(read_text(file)).rstrip('\n').split('\n'), 0
     if sub == 'add':
         for k in ['round', 'verdict']:
             if not opts.get(k):
@@ -984,15 +1005,16 @@ def cmd_reviews(opts):
                     lines.append('- ' + finding_line(l, '%s line %d' % (opts['findings'], i + 1)))
         append_block(file, format_review('%s — round %s — %s' % (today(), opts['round'], opts['verdict']), lines))
         return [], 0
-    for k in ['card', 'ledger']:
-        if not opts.get(k):
-            raise UsageError('reviews ledger needs --%s' % k)
+    if not opts.get('ledger'):
+        raise UsageError('reviews ledger needs --ledger')
     if not os.path.exists(file):
         return ['appended 0 skipped 0'], 0
     reviews = parse_reviews(read_text(file))
     if reviews['errors']:
         return ['reviews-parse %s' % e for e in reviews['errors']], 1
-    return ledger_reviews(opts['ledger'], opts['card'], reviews['blocks']), 0
+    out = ledger_reviews(opts['ledger'], opts['card'], reviews['blocks'])
+    os.remove(file)
+    return out, 0
 
 
 def ledger_reviews(ledger, card, blocks):
@@ -1029,7 +1051,6 @@ def ledger_reviews(ledger, card, blocks):
 # ---------- receipts ----------
 
 RECEIPTS = 'receipts.md'
-REVIEWS = 'reviews.md'
 RECEIPT_CHECKS = {'request': 'Request', 'ready': 'Ready'}
 RECEIPT_FIELDS = {
     'request': ['Card revision', 'Card facts', 'Standard', 'Profile'],
@@ -1113,7 +1134,7 @@ def specs_content_hash(root, dirs):
         if not os.path.isdir(full):
             raise UsageError('no spec folder %s' % d)
         for f in sorted(list_files(full)):
-            if f in (RECEIPTS, REVIEWS):
+            if f == RECEIPTS:
                 continue
             content = read_text(os.path.join(full, f))
             if f == 'spec.md':
@@ -1625,7 +1646,8 @@ COMMANDS = {
                         'ledger': {'card', 'types', 'ledger'}}),
     'evidence-check': (cmd_evidence_check, {'criteria', 'base', 'post-release'}),
     'spec-only': (cmd_spec_only, {'base'}),
-    'reviews': (cmd_reviews, {'add': {'round', 'verdict', 'findings'},
+    'reviews': (cmd_reviews, {'add': {'card', 'round', 'verdict', 'findings'},
+                              'show': {'card'},
                               'ledger': {'card', 'ledger'}}),
     'receipt': (cmd_receipt, {'write': RECEIPT_FLAGS | {'commit'},
                               'check': RECEIPT_FLAGS}),
@@ -1649,8 +1671,9 @@ commands:
   gaps ledger <dir> --card <n> --types <t> --ledger <file>
   evidence-check <dir> --criteria <file> [--base <rev>] [--post-release]
   spec-only <dir> --base <rev>
-  reviews add <dir> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE> [--findings <file>]
-  reviews ledger <dir> --card <n> --ledger <file>
+  reviews add --card <id> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE> [--findings <file>]
+  reviews show --card <id>
+  reviews ledger --card <id> --ledger <file>
   receipt write <dir> --check request (--card <n> [--repo <owner/name>] | --text <file>) --facts <file>
   receipt write <dir> --check ready --specs <file> --commit <rev>
       [--parent <id> [--repo <owner/name>] | --parent-text <file>]

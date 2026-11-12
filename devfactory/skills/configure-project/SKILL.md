@@ -1,6 +1,6 @@
 ---
 name: configure-project
-description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the default model and effort, which of the plugin's hooks are off, the read commands pre-approved in the project's Claude Code settings, and the standing answers, recording only departures from the defaults and pointing to what the project already records. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
+description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue and card branch patterns and the release procedure, the default model and effort, which of the plugin's hooks are off, the read commands pre-approved in the project's Claude Code settings, and the standing answers, recording only departures from the defaults and pointing to what the project already records. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
 allowed-tools:
   - Read
   - Glob
@@ -192,13 +192,16 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
 14. **Set branches and merging.** Read the project's contributor rules, if any,
     such as a contributing guide or agent instructions, and propose the
     integration branch, the worktree layout, how a parent issue's branch is
-    named, how a sub-issue's branch is named, who merges what into which branch
+    named, how a sub-issue's branch is named, how a standalone card's branch and
+    worktree are named (the Card branch entry), who merges what into which branch
     and when, and the release procedure: the project's own steps, or the skill
     or document it names, for pushing, releasing and closing finished work.
     Where the rules are silent, read the repository's branches and its deploy
     workflows and ask. Say that the coordinator briefs each sub-issue's session
     with the branch the Sub-issue branch pattern names, and that a session the
-    app started on another branch keeps that branch and reports its name.
+    app started on another branch keeps that branch and reports its name, and
+    that a standalone card is built on the branch and worktree the Card branch
+    entry names, which `release` later merges.
 15. **Set the sessions default.** Ask for the default model and effort level
     (Low, Medium or High) a build session uses when a card suggests none. Say
     that `coordinate` runs a parent issue as one session per sub-issue through

@@ -65,12 +65,13 @@ needs no one's answer. These skills hand one over:
 
 No other skill hands this skill a settled answer, and `re-evaluate-card` takes none. The
 requester's answer is the acceptance: you write the fold without a further round on its
-wording, and the requester may object afterwards. Then `grill` Re-derive brings the spec
-along, as step 6 says.
+wording, and the requester may object afterwards.
 
-A caller may also pass **no-rederive**, which skips step 6. The caller then owns the
-re-derivation: it runs `grill` Re-derive for the changed card itself. Every other caller
-leaves step 6 to run.
+Every skill that hands this skill a settled answer passes **no-rederive**, which skips
+step 6, and then runs `grill` Re-derive for the changed card itself, as "A card-changing
+answer" in `../../references/spec-procedure.md` says; `grill`'s request-gate fix passes it
+too and measures the card again instead. Run directly by the user, without
+`no-rederive`, this skill hands to Re-derive itself in step 6.
 
 ## Steps
 
@@ -108,7 +109,8 @@ leaves step 6 to run.
    In either mode, when the criteria changed, the read-back includes
    `devfactory criteria-ids --card <id>` (on a tracker `gh` does not reach,
    `--text` with the card as read back).
-6. **Re-derive the spec.** Skip this step when the caller passed no-rederive.
+6. **Re-derive the spec.** Skip this step when the caller passed no-rederive, as
+   "Settled mode" says.
    Otherwise, if the card has a spec line and any part of the card changed,
    hand to `grill` Re-derive as "Re-derive the spec" describes, naming each part
    that changed, and say when the interface determination or a scope boundary

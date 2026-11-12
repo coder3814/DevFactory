@@ -32,8 +32,8 @@ section lists:
 - the repository path, the branch to read and its head commit: the integration branch
   before development, the card's own branch during it;
 - for each card checked, its ID, its current text as the tracker holds it, its revision
-  as "The card revision" says, and its stage, which is the point the work is at (Grilling
-  before approval, Development during a build), never its board column; for a parent issue,
+  as "The card revision" says, and its stage, which is the point the work is at (Approval
+  before development, Development during a build), never its board column; for a parent issue,
   the parent card and every sub-issue, saying which are released;
 - each spec folder path (a sub-issue's or a standalone card's; a parent has none), and the
   profile path;
@@ -64,6 +64,11 @@ one-line reason. When several cards share a gap, ask for the rule once, not the 
 card. Never invent an answer. A question the requester cannot answer yet stays open in your
 report and keeps the spec `drafting`; it is never written onto the card.
 
+In a sub-issue's session, every question for the requester, a Re-derive's and an approval
+included, goes to the coordinator, as
+[`reporting-to-the-coordinator.md`](reporting-to-the-coordinator.md) says, never to the
+requester directly.
+
 ## Folding an answer
 
 An answer that leaves the card as it is (edge behaviour the card leaves to the tests, an
@@ -75,15 +80,17 @@ route "A card-changing answer" gives.
 
 An answer the requester has given that would change the card (its outcome, what needs to be
 achieved, a criterion, its scope or the work order) is never written into the spec as an
-amendment. It goes onto the card through
-`add-to-card` in settled mode, as "Settled mode" in that skill says, with the requester's
-words and the question they answer; the requester's answer is the acceptance. Then `grill`
-Re-derive brings the spec along, given the changed parts. When the answer came after the spec
-had earned Ready, Re-derive is also given the question, the stage the work is at, the
-condition that let it through, written `Ready <id>` or `Done <id>`, and whether the requester
-changed their mind rather than answered a miss, and it writes the gap entry. For a parent
-card, the specs brought along are those of the sub-issues the change touches, and the gap
-entry goes in the parent's records folder.
+amendment. Whichever skill received it hands it to `add-to-card` in settled mode, as
+"Settled mode" in that skill says, with the requester's words and the question they answer,
+and passes `no-rederive`; the requester's answer is the acceptance. The caller then runs
+`grill` Re-derive itself, giving it the changed parts, the question, the answer, the stage
+the work is at, the condition that let it through, written `Ready <id>` or `Done <id>`,
+whether the requester changed their mind rather than answered a miss (`--kind
+request-change`), and, when the caller runs the readiness check itself, as `check-ready`
+does, that fact. When the answer came after the spec had earned Ready, Re-derive writes the
+gap entry. For a parent card, the specs brought along are those of the sub-issues the change
+touches, and the gap entry goes in the parent's records folder. `add-to-card` run without
+`no-rederive`, by the user directly, hands to Re-derive itself.
 
 ## The ready receipt
 
@@ -104,4 +111,5 @@ A spec folder, or a file of a parent's records folder, is committed on its own, 
 else with it. Before development the commit lands directly on the integration branch when
 the profile's Branches and merging allows a direct commit there; otherwise it is made on a
 branch that is then fast-forwarded onto the integration branch, which the git guard allows
-under `grill`'s marker. During development it is made on the card's own branch.
+under the marker of the skill making it, `grill`'s or `check-ready`'s. During development it
+is made on the card's own branch.

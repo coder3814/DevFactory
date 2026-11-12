@@ -1,6 +1,6 @@
 ---
 name: re-evaluate-card
-description: Re-evaluate an existing card against the card standard — check its title, description and acceptance criteria, fold in whatever in its comments changes the outcome, grill the user about any gap, say when the card has moved on since its spec was stamped, and re-derive the spec for whatever changed — or restructure a parent issue that still carries criteria, supporting information or a spec line. Use when the user asks to re-evaluate, check, review or audit a card against the standard, for instance after editing it by hand or after others have commented on it, or when another skill says a parent issue goes through re-evaluate-card first.
+description: Re-evaluate an existing card against the card standard — check its title, description and acceptance criteria, fold in whatever in its comments changes the outcome, grill the user about any gap, say when the card has moved on since its spec was stamped, and re-derive the spec for whatever changed — or restructure a parent issue that still carries criteria, supporting information or any other part beyond its four. Use when the user asks to re-evaluate, check, review or audit a card against the standard, for instance after editing it by hand or after others have commented on it, or when another skill says a parent issue goes through re-evaluate-card first.
 allowed-tools:
   - Read
   - Glob
@@ -47,8 +47,8 @@ the plugin version `begin` printed, need not be read again.
 - `../../references/events.md` — the `request-met` event you fire.
 
 This skill is for two things only: an audit of a card that the user asks for, and
-restructuring a parent issue that still carries criteria, supporting information or a
-spec line, as "A parent issue to restructure" below says. It takes no answer handed over
+restructuring a parent issue that still carries criteria, supporting information or any
+other part beyond its four, as "A parent issue to restructure" below says. It takes no answer handed over
 by another skill; an answer the requester has already given goes through `add-to-card`.
 
 Re-evaluation checks the card as it stands, whatever has changed on it and however. It
@@ -62,8 +62,10 @@ the card's details: the edit is itself the change.
    `--text` with the card as read); a duplicate ID it reports counts as a breach
    in step 3 whatever the review finds. When the card is a parent issue that
    carries anything beyond the parts "Parent issues" in the card standard lists,
-   or a spec line, follow "A parent issue to restructure" instead of the steps
-   below. If it has a spec line, run
+   follow "A parent issue to restructure" instead of the steps below. A parent
+   has no spec: leave a spec line still on it where it is, since `grill`, run for
+   the parent, removes it with the old spec files. If the card is not a parent and
+   has a spec line, run
    `devfactory stamp-check --card <id> --spec <spec folder>`, which decides Ready
    condition 9.2 in `../../references/definition-of-ready.md`. If it prints
    `changed`, tell the user, before measuring, that the card has changed since its
@@ -109,13 +111,15 @@ the card's details: the edit is itself the change.
    each part that changed, and say when the interface determination or a scope
    boundary is among them; `grill` fires whatever event its outcome calls for.
    Report what changed in the spec. If nothing changed, leave the spec alone.
+   A parent issue that still has a spec line is not re-derived: tell the user
+   that `grill`, run for the parent, removes the line with the old spec files.
 10. **End.** Run `devfactory end re-evaluate-card`.
 
 ## A parent issue to restructure
 
 A parent issue that carries anything beyond its title, purpose, work order and
-suggested model and effort, or a spec line, is brought to "Parent issues" in the card
-standard with the requester. Read every sub-issue too, as "Read a card" describes.
+suggested model and effort is brought to "Parent issues" in the card standard with the
+requester. Read every sub-issue too, as "Read a card" describes.
 
 1. **Sort what the parent carries.** For each criterion, decide whether it states
    something only the combined result shows. Each that does moves to the sub-issue that
@@ -126,8 +130,9 @@ standard with the requester. Read every sub-issue too, as "Read a card" describe
 2. **Shape the parent** from the parent skeleton in the template: its title, a purpose
    drawn from what it held, a work order naming each sub-issue once by its number with
    its waits, a sub-issue that receives a moved criterion waiting on the ones it needs,
-   and the suggested model and effort for the session that coordinates the run. Keep
-   its spec line where it is; this skill never writes it.
+   and the suggested model and effort for the session that coordinates the run. Leave
+   any spec line on it where it is: this skill never writes it, and `grill`, run for the
+   parent in step 7, removes it with the old spec files.
 3. **Shape each receiving sub-issue.** A moved criterion is a new addition to that
    sub-issue: record it there as a comment naming the parent it came from, then fold it
    in, with the next criterion ID above the highest that sub-issue has ever carried.
@@ -139,5 +144,6 @@ standard with the requester. Read every sub-issue too, as "Read a card" describe
    accepts like any rewrite.
 6. **Write and verify** every card as step 8 above says, then write the request receipt
    and fire `request-met` for each card as step 9 says.
-7. **Hand to `grill`** for the parent. It removes the old spec files and brings each
+7. **Hand to `grill`** for the parent. It removes the old spec files and any spec line still on the
+   parent, and brings each
    changed sub-issue's spec along. Then run `devfactory end re-evaluate-card`.

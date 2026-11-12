@@ -13,6 +13,11 @@ sends with `SendMessage` to the coordinator's `local_…` id, never its display 
 tool with `ToolSearch` first when it is deferred. Nothing else is a report: the final message
 of a turn is not one, and neither is anything the desktop app relays when the turn ends.
 
+Every question for the requester raised in the session goes to the coordinator this way,
+whichever skill raises it: a question the build stops on, and a question a `grill`
+Re-derive or Amend run in the session asks, its approval question included. The session
+never asks the requester directly.
+
 ## What each report carries
 
 **The first report** names the branch the session works on when it is not the branch the
@@ -28,9 +33,11 @@ Ready condition failed: <the condition that should have caught it, such as Ready
 ```
 
 **A stop** says why the work stopped and quotes what stopped it: the spec status and the
-stamp check's output (`changed <old> <new>`, `not-ancestor`); the findings past the review
-limit that change what an observer sees or can do, what persisted data ends up as, or scope,
-each as the review gave it; or a fast-forward that refused, with its output.
+stamp check's output (`changed <old> <new>`, `not-ancestor`); a re-derive that stopped to
+wait for the requester or left the spec below `approved`, with the status it left; the
+findings past the review limit that change what an observer sees or can do, what persisted
+data ends up as, or scope, each as the review gave it; or a fast-forward that refused, with
+its output.
 
 **The build report**, once the card is built and reviewed, carries:
 

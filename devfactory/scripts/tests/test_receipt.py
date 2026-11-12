@@ -133,12 +133,6 @@ class ReadyReceiptTest(unittest.TestCase):
         self.assertEqual(r.code, 1)
         self.assertEqual([l.split(' ')[1] + ' ' + l.split(' ')[2] for l in r.lines], ['Parent card'])
 
-    def test_a_reviews_record_leaves_the_specs_content_unchanged(self):
-        d = self.written()
-        write(os.path.join(d, 'specs', '12', 'reviews.md'), '## 2026-11-12 — round 1 — FAIL\n\n- Done 4.3 | C1 | slow\n')
-        r = run(['receipt', 'check', 'specs/12'] + READY, d)
-        self.assertEqual((r.code, r.lines), (0, ['match ready']), r.stdout + r.stderr)
-
     def test_matches_after_the_spec_commit_and_an_approval(self):
         d = self.written()
         spec = os.path.join(d, 'specs', '12', 'spec.md')

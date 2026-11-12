@@ -9,9 +9,8 @@ IDs, never by position. What makes a spec Ready is in
 
 A parent issue has no spec. Its folder at the specs path, `<specs path>/<parent id>/`, is
 the run's records folder: it holds only `receipts.md` (the set's ready receipt), `gaps.md`
-(the gap entries about the work order, Ready 8.2, and others the set raises) and
-`reviews.md`, each created when first written, laid out as below. `release` ledgers and
-deletes it like a spec folder.
+(the gap entries about the work order, Ready 8.2, and others the set raises), each created
+when first written, laid out as below. `release` ledgers and deletes it like a spec folder.
 
 Each prompt in italics says what the section holds; replace it. Delete any line or section
 marked *(when there is any)* that has nothing to say, and drop the marker where it stays.
@@ -250,22 +249,12 @@ it; nobody edits it by hand.
   parent's records folder, with `--parent <id>`, which also records the parent card's
   revision as the Parent card, and `receipt check` is given the same `--parent`.
   Its fields are the Specs measured; the Specs content, a hash of every file in them except
-  `receipts.md` and `reviews.md`, with the Status row's value left out, so approval keeps it
+  `receipts.md`, with the Status row's value left out, so approval keeps it
   matching; the Gap sources, a hash of the ledger and every live `gaps.md`; the Standard; the
   Profile; the Parent card, for a parent's set; and the Repo commit, the commit the checker
   reported reading. The Repo commit matches while that commit is an
   ancestor of HEAD and nothing outside the specs path and `.devfactory/` differs between
   them, since everything under those is fingerprinted on its own.
-
-### `reviews.md`
-
-The review record: one block per change review or Done judgment, written only by
-`devfactory reviews add <dir> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE> --findings
-<file>`, never by hand. Each block is headed `## <date> — round <n> — <verdict>` and holds
-one line per finding, written `- <Done id> | <criterion ID or -> | <text>`. At release
-`reviews ledger <dir> --card <n> --ledger .devfactory/reviews.md` appends the blocks under
-the card's heading in the project's review ledger. The file is left out of the spec-content
-hash, and `spec-lint`, `evidence-check` and `gaps check` ignore it.
 
 ### `evidence/`
 
@@ -299,9 +288,29 @@ a failing run recorded at the base, is a capture of the base on purpose and is n
 A criterion every row of which is post-release has no `evidence/` folder before release:
 `evidence-check` prints `evidence-pending` for it and does not fail. Its capture is
 `release`'s, after the deploy, and lands outside the spec folder, which the release commit
-deletes: in `.devfactory/post-release/<card>/`, which holds `plan.md`, the evidence plan's
+deletes: in `.devfactory/post-release/<card>/`, which holds `plan.md`, opening with a
+`Request type(s):` line that carries the spec's request types, then the evidence plan's
 post-release rows under an `## Evidence plan` heading, and `evidence/<ID>/` with its
 artifacts and sidecars in the form above, the sidecar naming the environment without the
 marker. `evidence-check <that folder> --criteria <file> --post-release` checks the capture,
 treating the post-release rows as due. The folder is committed on the integration branch,
 goes out with the next release, and that release deletes it; history keeps it.
+
+## The review record
+
+Change reviews and Done judgments are recorded outside the tracked tree, so a record never
+changes the tree a reviewer's gate run recorded. The store is
+`<git common dir>/devfactory/reviews/<card id>.md` (`git rev-parse --git-common-dir`),
+shared by every worktree, never tracked and never committed; a parent's Done judgments are
+recorded under the parent's id. Only the script writes it, never a person:
+
+- `devfactory reviews add --card <id> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE>
+  [--findings <file>]` appends a block headed `## <date> — round <n> — <verdict>`, with one
+  line per finding, written `- <Done id> | <criterion ID or -> | <text>`.
+- `devfactory reviews show --card <id>` prints the card's stored record, or `no-reviews`.
+- `devfactory reviews ledger --card <id> --ledger <file>` appends the card's stored blocks
+  under the card's heading in the ledger, skipping blocks already there, prints `appended
+  <a> skipped <b>`, and then removes the card's store file.
+
+At release, `release`'s records commit carries the ledger, `.devfactory/reviews.md`, which
+`curate` reads.

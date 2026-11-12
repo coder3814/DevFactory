@@ -1,6 +1,6 @@
 ---
 name: change-reviewer
-description: Fresh-context reviewer of one card's finished work against its card and spec, applying Definition of Done conditions 1 to 5 to the change from the base revision to the revision under evaluation, reading the spec's evidence, running the full test gate fresh last when nothing else fails, and reporting PASS or FAIL with each finding naming its condition and criterion ID. It is given the card, the spec folder path, the base revision, the revision under evaluation and a checkout at it, never how the work was built. Read-only on the code; it reports and writes nothing. Started by the build skill.
+description: Fresh-context reviewer of one card's finished work against its card and spec, applying Definition of Done conditions 1 to 5 to the change from the base revision to the revision under evaluation, reading the spec's evidence, running the full test gate fresh last when nothing else fails, and reporting PASS or FAIL with each finding naming its condition and criterion ID. It is given the card, the spec folder path, the base revision, the revision under evaluation and a checkout at it, never how the work was built. It changes nothing in the repository and reports; its fresh gate run records a pass in the gate's own store, as test-gate.md "The independent run" says. Started by the build skill.
 tools: Read, Glob, Grep, Bash
 model: opus
 ---
@@ -101,12 +101,14 @@ repository, and note in the report that it was given.
 
 ## Rules
 
-- **Read-only on the code.** Use Bash for the script's check commands named above, read
-  commands (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`, `git status`),
-  the test gate and the base-revision run described above. Never edit, stage, commit,
-  stash, check out, reset or push. The only files you may leave are the test gate's own
-  ignored build output and the record a Recorded gate writes for its own pass; never write
-  or edit a record yourself. The criterion-ID file goes outside the repository.
+- **Change nothing in the repository.** Use Bash for the script's check commands named
+  above, read commands (`git diff`, `git show`, `git log`, `git grep`, `git rev-parse`,
+  `git status`), the test gate and the base-revision run described above. Never edit,
+  stage, commit, stash, check out, reset or push. The only things your runs may leave are
+  the test gate's own ignored build output and the pass your fresh gate run records in the
+  gate's own store, outside the tracked tree, as `test-gate.md` says under "The independent
+  run"; never write or edit a record yourself. The criterion-ID file goes outside the
+  repository.
 - **Measure against the card and spec as written.** Something you would have built
   differently is not a finding unless it fails a condition. Propose no new requirement.
 - **Evidence for every finding**: the file and line, the test name or the artifact path.
@@ -160,4 +162,5 @@ how the work was built.
 - [ ] Every evidence row's artifact was opened and compared with the row.
 - [ ] Every finding names its condition and criterion ID and points at what it found.
 - [ ] I did not apply condition 6, and nothing unchecked is reported as holding.
-- [ ] I changed no file, branch or record, and started no agents.
+- [ ] I changed nothing in the repository, no branch and no record beyond the pass my fresh
+      gate run recorded in the gate's own store, and started no agents.

@@ -85,4 +85,33 @@ the work ([`definition-of-done.md`](definition-of-done.md), condition 4.1).
 
 A question that survives the line and the spec's delegations is a readiness miss. It goes to
 the coordinator as the question, the options, a recommendation and the Ready condition that
-failed, and its answer becomes a spec amendment and a gap entry.
+failed, and its answer becomes a gap entry: through `grill` Amend when the answer leaves the
+card as it is, or as [`spec-procedure.md`](spec-procedure.md) says under "A card-changing
+answer" when it changes the card.
+
+## Classifying a proposal
+
+A proposal to record something for the project, such as one `curate` draws from the gap
+records or one `release` draws from an answer about how work is released, is classified by
+the first of these tests that holds:
+
+1. **Plugin-general.** It would hold on a project with a different tracker, no mock-ups and
+   no production; or it changes how a plugin skill, agent or condition behaves; or the
+   reader it targets does not read Standing answers, as
+   [`profile-template.md`](profile-template.md) says under "Standing answers". Nothing is
+   written to the profile. It is reported as a plugin defect naming the plugin file and
+   section and stating the rule in general terms, with no project case in it.
+2. **The developer's side of the decision line.** Answering it changes nothing an observer
+   sees or can do, nothing persisted data ends up as, and not the scope. It is reported as a
+   decision-line miss, with what already answered it (a recorded decision, the profile, a
+   pattern in the code, a delegation), and nothing is written.
+3. **A profile section.** It is a project fact the profile template has a section for (an
+   environment, the test gate, an owner-step type, data access, a convention), and the
+   profile does not hold it. It is proposed for that section.
+4. **A project document.** It governs the deployed system or the product, or it is a
+   procedure the project's recorded decisions, project instructions or project skills
+   already own. That document is named and the change proposed there; the skill that
+   proposes it does not edit it.
+5. **A standing answer.** Only what remains: a question on the requester's side, answered
+   the same way on two separate occasions. Separate occasions are separate runs or separate
+   questions; several entries recording one event count once.

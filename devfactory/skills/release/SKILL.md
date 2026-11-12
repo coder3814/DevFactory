@@ -66,8 +66,9 @@ ask nothing.
 ## Running release again
 
 `release` can be run again at any time for the same cards. Each step first looks whether its
-result is already there and skips it when it is: the gate's record for the tree in hand, the
-spec folders already gone from the branch, the work already on the integration branch, a
+result is already there and skips it when it is: the rebase and gate, when the integration
+branch's head is an ancestor of the branch being merged (`git merge-base --is-ancestor`) and
+the gate passed on its tree, the spec folders already gone from the branch, the work already on the integration branch, a
 card already closed, a capture already committed, a curation already committed after this
 release, a session already archived. Work held rather than released keeps its cards
 accepted and open, and is released by running `release` again.
@@ -84,23 +85,23 @@ printed, need not be read again.
 - [`../../references/spec-template.md`](../../references/spec-template.md): the gap entry's
   form.
 - [`../../references/decision-line.md`](../../references/decision-line.md): what is asked,
-  and what a standing answer or the developer's side settles.
+  what a standing answer or the developer's side settles, and how a proposal is classified.
 - [`../../references/test-gate.md`](../../references/test-gate.md): "When the gate runs"
   and "Recorded gates".
 
 ## Steps
 
 1. **Load and confirm.** Load the profile as `working-a-card.md` says, with its release
-   procedure and every project skill it names for merging or releasing. Confirm that each
-   card to release is in Acceptance with the requester's acceptance recorded on it.
+   procedure and every project skill it names for merging or releasing. Confirm that the
+   requester's acceptance is recorded on each card to release. No board column is read.
 
 2. **Settle what the profile leaves open.** When none of the profile's release procedure,
    its Standing answers, the project instructions (`CLAUDE.md`) and the project's skills
    say how this work is released (where it merges, what ships
    it), ask the requester, once, for each thing they leave open. What is checked once the
    release is live is the evidence plan's post-release rows, which step 7 captures, and is
-   never asked. Before proposing anything, classify the answer as `curate` step 5 does and
-   drop it when the plugin, the recorded decisions, the project instructions or a project
+   never asked. Before proposing anything, classify the answer as `decision-line.md` says
+   under "Classifying a proposal" and drop it when the plugin, the recorded decisions, the project instructions or a project
    skill already hold it. An answer the project instructions or a project skill own is
    proposed there, by name, and not written. Otherwise propose it for the release
    procedure, as a pointer where the project already records it, or as a standing answer,
@@ -111,18 +112,23 @@ printed, need not be read again.
    standalone card's own branch) onto the integration branch, and run the test gate as
    `test-gate.md` says under "When the gate runs": the Recorded gate, which prints the
    record when the rebase left the tree unchanged and runs fresh otherwise, or with no
-   Recorded gate the Command. Go on only on a pass.
+   Recorded gate the Command. Go on only on a pass. A rebase that conflicts is aborted
+   (`git rebase --abort`) and reported with the conflicting files, and the release stops
+   with the work held. The conflict is fixed as a Done finding is, by the kept session of a
+   parent run or a standalone card's build session, reviewed and, in a parent run, judged
+   again; then `release` is run again.
 
 4. **Make the records commit**, on the branch being merged, once the gate has passed. It
    changes no code path, so no further gate run follows it. For every card this release
    carries, each sub-issue's in a run, and for a parent run the parent's records folder
-   (`<specs path>/<parent id>/`, holding `receipts.md`, `gaps.md` and `reviews.md`):
+   (`<specs path>/<parent id>/`, holding `receipts.md` and `gaps.md`):
    - append every gap entry to the project ledger with `devfactory gaps ledger <dir>
      --card <n> --types <the spec's request types> --ledger .devfactory/gaps.md`, which
      writes the headings `spec-template.md` lays the ledger out with, and for the parent's
      records folder `--card <parent id> --types "parent issue"`;
-   - append every review record with `devfactory reviews ledger <dir> --card <n> --ledger
-     .devfactory/reviews.md`;
+   - append every card's review record, and the parent's in a run, to the review ledger
+     with `devfactory reviews ledger --card <id> --ledger .devfactory/reviews.md`, which
+     also removes the card's stored record;
    - when a spec's evidence plan has rows marked post-release, write
      `.devfactory/post-release/<card>/plan.md` holding those rows under an `## Evidence
      plan` heading, as `spec-template.md` says under `evidence/`, and a `Request type(s):`
@@ -160,8 +166,8 @@ printed, need not be read again.
    criterion does not hold, add a gap entry with `devfactory gaps add
    .devfactory/post-release/<card> --stage Release --question <what it showed> --condition
    "Ready 7.4"`, since no checkpoint before release could show it, then run `devfactory gaps
-   ledger .devfactory/post-release/<card> --card <n> --types <the plan's Request type(s)>
-   --ledger .devfactory/gaps.md`, which appends only the new entry and skips the ones step
+   ledger .devfactory/post-release/<card> --card <n> --types <the types the plan's
+   Request type(s): line names> --ledger .devfactory/gaps.md`, which appends only the new entry and skips the ones step
    4 already ledgered, commit both, and report it: the card is already closed, and whether
    the failure becomes a new card is the requester's to decide.
 

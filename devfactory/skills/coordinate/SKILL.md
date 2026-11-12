@@ -89,10 +89,11 @@ prompt names). Then it says, in this order:
    both are done. When messaged to begin, load the `build` skill for this card and follow
    it from its first step, which marks the session as building and then rebases onto the
    parent branch named here, which brings in anything the readiness check amended.
-2. The `build` skill fires `development-started` as work starts; leave every other event
-   to the coordinator.
+2. The `build` skill fires `development-started` and `readiness-lost` for this card, and
+   `grill` fires what its outcome calls for; leave every other event to the coordinator.
 3. A question the spec, the profile's Standing answers and the decision line do not
-   answer: stop, message it to the coordinator in the shape the `build` skill gives, and
+   answer: stop, message it to the coordinator in the shape
+   `references/reporting-to-the-coordinator.md` gives under "What each report carries", and
    wait. So too for findings past the review limit that `build` says to stop on.
 4. Do not merge until the coordinator says it is this card's turn; never merge into the
    integration branch; never push.
@@ -150,8 +151,8 @@ printed, need not be read again.
      carries the specs. Once the first agent reports the sub-issues of a nested parent,
      have an agent fire `work-started` for each of them too.
 
-   No session works in the parent worktree; only the run's own records are committed
-   there, by an agent, as step 9 says. Sub-issues merge into the parent branch, never into
+   No session works in the parent worktree; only the run's records folder is committed
+   there, by an agent, when a step below writes to it. Sub-issues merge into the parent branch, never into
    the integration branch. Note whether the requester's starting instruction
    authorises the release ahead of time, such as "drive all the way to the end": step 10
    acts on it.
@@ -203,13 +204,16 @@ printed, need not be read again.
    sub-issue begins, have an agent fire `development-started` for the parent, and for any
    nested parent whose sub-issue it is.
 
-   A sub-issue added to the parent during the run is checked as a card added to a parent
-   issue, and needs a session of its own: when it is approved, end a turn with the one
+   A sub-issue added to the parent during the run is checked by `grill`'s parent path, as
+   any card added to a parent issue is, which follows `check-ready` at creation over the
+   set. It needs a session of its own: when it is approved, end a turn with the one
    question that names its session, as "Sessions" says, and start it, briefed to wait, in
    the turn the requester's reply begins.
 
 6. **Relay questions.** A question pauses only the sub-issue that raised it. Read it in the
-   shape `build` gives it.
+   shape `reporting-to-the-coordinator.md` gives under "What each report carries". A
+   question a `grill` Re-derive raises in the session, the request to approve a spec whose
+   status returned to `Ready` included, is relayed the same way as any other.
    - Test it as "Asking the requester" says, against the spec as well. A question a
      standing answer, the developer's side or the spec already answers goes back to the
      session with what answers it, and nothing is asked.
@@ -218,16 +222,22 @@ printed, need not be read again.
      sessions raise the same gap, ask for the rule once.
    - Send the answer to the session word for word, with the Ready condition that failed,
      telling it to apply the answer on its own branch and continue: when the answer changes
-     the card, through `add-to-card` in settled mode (its "Settled mode" heading), then
-     `grill` Re-derive; when it leaves the card as it is, through `grill` Amend.
+     the card, as [`spec-procedure.md`](../../references/spec-procedure.md) says under "A
+     card-changing answer", through `add-to-card` in settled mode passing `no-rederive`
+     and then `grill` Re-derive, with the stage, Development, and `--kind request-change`
+     when the requester changed their mind rather than answered a miss; when it leaves the
+     card as it is, through `grill` Amend. An approval answer goes back the same way, for
+     `grill` to set `approved`.
    - When the session reports that the answer changes what another sub-issue waits on, have
-     an agent revise the work order on the parent through `add-to-card` in settled mode,
-     citing the answer that drove it, and re-check what may run.
+     an agent revise the work order on the parent as "A card-changing answer" says, citing
+     the answer that drove it, and re-check what may run.
 
 7. **Handle a request change.** When the requester changes what a card asks for during the
-   run, outside an answer to a question, have the card changed through `add-to-card` in
-   settled mode (its "Settled mode" heading), with the requester's words as the comment,
-   then `grill` Re-derive brings the spec along for the conditions the change feeds.
+   run, outside an answer to a question, have the card changed as `spec-procedure.md` says
+   under "A card-changing answer": through `add-to-card` in settled mode passing
+   `no-rederive`, with the requester's words as the comment, then `grill` Re-derive, given
+   the stage the work is at and `--kind request-change`, brings the spec along for the
+   conditions the change feeds.
    Once the sub-issue's session has begun, its session does this on its own branch, where
    the spec now lives; before then, an agent does it on the parent branch. Tell every
    session the change affects (its spec changed, or its waits or files did) to rebase onto
@@ -239,9 +249,10 @@ printed, need not be read again.
    never merge over each other, and a sub-issue that waits on another merges after the one
    it waits on.
    - When a session reports its review passed, have an agent check the report against the
-     branch, the spec's log, gap record and review record, and the review verdict. A
-     session whose review limit was reached with every finding on the developer's side has
-     fixed them and carried on, as "Findings after the review limit" in `decision-line.md`
+     branch, the spec's log and gap record, the session's review record, which `devfactory
+     reviews show --card <id>` prints, and the review verdict. A session whose review
+     limit was reached with every finding on the developer's side has fixed them and
+     carried on, as "Findings after the review limit" in `decision-line.md`
      says; its report says so, with "no review passed this revision" when no review ran
      after the last fix, and it is checked the same way.
    - When a session reports findings past its review limit that change what an observer
@@ -268,10 +279,10 @@ printed, need not be read again.
    head, made by an agent as a worktree of the repository (`git worktree add --detach`) so
    it reads the same gate records; never how the work was built.
    - After each judgment, have an agent write the findings to a file outside the
-     repository, run `devfactory reviews add <specs path>/<parent id>/ --round <n>
-     --verdict <DONE|NOT DONE> --findings <that file>` in the parent worktree and commit it
-     there while no session is merging, and remove the judge's checkout (`git worktree remove --force <path>`). Say in one
-     line what the judgment was.
+     repository, run `devfactory reviews add --card <parent id> --round <n> --verdict
+     <DONE|NOT DONE> --findings <that file>`, which records the judgment under the parent's
+     id outside the tracked tree, commit nothing for it, and remove the judge's checkout
+     (`git worktree remove --force <path>`). Say in one line what the judgment was.
    - A finding that belongs to one sub-issue goes by message to that sub-issue's kept
      session, which fixes it on its branch, rebased onto the parent branch. A finding no
      single sub-issue owns goes by message to the kept session of the sub-issue whose files
@@ -285,26 +296,33 @@ printed, need not be read again.
      limit". When every finding is on the developer's side, have them fixed as above and
      carry on without asking: after a code fix, review and judge once more; when every fix
      is a spec-only amendment, say so in the message to each session, so it amends the spec
-     and reports without a review, then merge it as step 8 says and go straight to step 10,
-     with no further judgment. Escalate to the requester, and wait, only with findings that
-     change what an observer sees or can do, what persisted data ends up as, or scope, or
-     when the extra judgment is still NOT DONE.
-   - On DONE, or when a spec-only round past the limit is merged, have an agent fire
-     `done` for the parent and for each nested parent in it.
+     through `grill` Amend and reports without a review, then merge it as step 8 says. Once
+     every amendment is merged, have an agent run `devfactory spec-only <specs path> --base
+     <the judged revision>` on the parent branch. Only when it prints `spec-only` does the
+     run go straight to step 10, with no further judgment, carrying to `accept` the line "no
+     review passed this revision", the last judgment's findings and their amendments; when
+     it prints any `outside` path, judge once more. Escalate to the requester, and wait,
+     only with findings that change what an observer sees or can do, what persisted data
+     ends up as, or scope, or when the extra judgment is still NOT DONE.
+   - On DONE, or when a spec-only round past the limit is merged and `spec-only` confirmed
+     it, have an agent fire `done` for the parent and for each nested parent in it.
 
 10. **Accept.** Go straight into `accept` for the parent run once the Done judge says DONE,
-    or once step 9 sends a spec-only round on; ask nothing first. `accept` runs in this
-    session, under this coordinator's marker and its own, and does every command through
-    a session or an agent. It ends in the release: what an authorisation to release does
-    is stated once, in `release` under "What an authorisation covers". When step 1 noted a
-    release authorised ahead of time, or the requester's acceptance authorises it, start
-    `release`; otherwise `accept` asks once, and on a yes start `release` yourself, never on
-    your own judgment. A refusal `accept` sorts as a defect or a request change is built
-    as step 9's findings are: by the kept session of the sub-issue it belongs to, or by the
-    kept session of the sub-issue whose files it touches most when no sub-issue owns it. Its
-    fix is reviewed and merged as step 8 says, which fires `done` for that sub-issue, and
-    judged again by the Done judge as step 9 says, which fires `done` for the parent on
-    DONE; then `accept` runs again.
+    or once step 9 sends a spec-only round on, with the line, findings and amendments step
+    9 carries; ask nothing first. `accept` runs in this session, under this coordinator's
+    marker and its own, and does every command through a session or an agent. It ends in
+    the release: what an authorisation to release does is stated once, in `release` under
+    "What an authorisation covers". When step 1 noted a release authorised ahead of time,
+    or the requester's acceptance authorises it, start `release`; otherwise `accept` asks
+    once, and on a yes start `release` yourself, never on your own judgment. A refusal
+    `accept` sorts as a defect or a request change is built as step 9's findings are: by
+    the kept session of the sub-issue it belongs to, or by the kept session of the
+    sub-issue whose files it touches most when no sub-issue owns it. A defect goes to that
+    session with the `Done <id>` `accept` named, and the session writes its gap entry once
+    the fix is committed, as `build` says under "Fixing a finding or a refusal". Its fix is
+    reviewed and merged as step 8 says, which fires `done` for that sub-issue, and judged
+    again by the Done judge as step 9 says, which fires `done` for the parent on DONE; then
+    `accept` runs again.
 
 11. **Stop.** Once `release` has reaped, confirm from its closing list of steps that
     `curate` ran and that every post-release plan was captured or reported, that every

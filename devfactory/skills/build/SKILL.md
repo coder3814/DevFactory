@@ -88,10 +88,13 @@ printed, need not be read again.
 
 ## Steps
 
-1. **Begin, and start from current code.** Run `devfactory begin build`. In a parent issue
-   run, rebase this branch onto the parent branch the coordinator named; for a standalone
-   card, rebase onto the integration branch. Then load the profile as `working-a-card.md`
-   says, with the binding it names. With no profile, start nothing and report it. Then,
+1. **Begin, and start from current code.** Run `devfactory begin build`, then load the
+   profile as `working-a-card.md` says, with the binding it names. With no profile, start
+   nothing and report it. In a parent issue run, rebase this branch onto the parent branch
+   the coordinator named. A standalone card is built on its own branch in its own worktree,
+   named as the profile's Branches and merging `Card branch` entry says; a standalone
+   session that finds itself on the integration branch creates that branch and worktree and
+   works there from then on. Rebase the card's branch onto the integration branch. Then,
    for a standalone card, fire `work-started`, before any check.
 
 2. **Read the card and its spec.** Read the card in full as `working-a-card.md` says. Read
@@ -104,9 +107,11 @@ printed, need not be read again.
    `approved`, wherever the card sits on the board. Run
    `devfactory stamp-check --card <n> --spec <spec dir>` in this worktree (Ready condition
    9.2). When the status is not `approved` or the check fails, start nothing: report the
-   status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. When
-   the card's spec status is `Ready` or `approved`, fire `readiness-lost` for the card
-   once, as the session stops to wait. A stale spec is re-derived through `grill`, never
+   stop, with the status and the check's output (`changed <old> <new>`, `not-ancestor`),
+   as `reporting-to-the-coordinator.md` says under "What each report carries", and wait.
+   When the card's spec status is `Ready` or `approved`, fire `readiness-lost` for the card
+   once, as the session stops to wait; for a stop `grill` already fired it on (step 7's
+   re-derive), fire nothing again. A stale spec is re-derived through `grill`, never
    worked around. When the session resumes, run this step again; once it passes, step 4
    fires `development-started`, the event for where the card now stands.
 
@@ -121,8 +126,7 @@ printed, need not be read again.
 6. **Build to the criteria.** Work in this session's worktree and commit as each piece is
    done. In a parent issue run, work on the branch the brief names; when the app started
    the session on another branch, keep that branch and name it to the coordinator in the
-   first report. For a standalone card, work on the branch the profile's Branches and
-   merging names.
+   first report. For a standalone card, work on the card's branch from step 1.
    - Build what the criteria and the spec ask for and nothing beyond them (Done 5.1).
    - Write the tests the request types require (Done 1.2). Each test cites the criterion ID
      it exercises and asserts an observable outcome (Done 2.2).
@@ -148,14 +152,21 @@ printed, need not be read again.
       coordinator by message in a parent issue run and to the requester for a standalone
       card, and wait.
    3. When the answer arrives and it changes the card (its outcome, a criterion, its scope
-      or the work order), put it on the card through `add-to-card` in settled mode, the
-      answer being the requester's acceptance, and then bring the spec along through
-      `grill` Re-derive, giving it the question, the answer word for word and the Ready
-      condition that failed, so that it writes the gap entry on this card's branch. When
-      the answer leaves the card as it is, run `grill` Amend with the same three, which
-      writes the spec amendment and the gap entry on this card's branch. When a re-derive
-      leaves the spec below `approved`, `grill` has fired `readiness-lost`: wait, and on
-      resuming run step 3 again. Report whether the change to the spec changes what
+      or the work order), it takes the route that "A card-changing answer" in
+      `../../references/spec-procedure.md` gives: put it on the card through `add-to-card`
+      in settled mode, passing `no-rederive`, the answer being the requester's acceptance,
+      and then run `grill` Re-derive yourself, giving it the question, the answer word for
+      word, the stage (Development), the Ready condition that failed (`Ready <id>`) and
+      whether the requester changed their mind rather than answered a miss, so that it
+      writes the gap entry on this card's branch. When the answer leaves the card as it
+      is, run `grill` Amend with the question, the answer, the stage (Development) and the
+      condition, which writes the spec amendment and the gap entry on this card's branch.
+      In a parent issue run, every question for the requester the Re-derive or the Amend
+      raises goes to the coordinator, as `reporting-to-the-coordinator.md` says. When a
+      re-derive stops to wait for the requester or leaves the spec below `approved`,
+      `grill` has fired `readiness-lost`: report the stop as
+      `reporting-to-the-coordinator.md` says under "What each report carries", wait, and
+      on resuming run step 3 again. Report whether the change to the spec changes what
       another card depends on, then continue from the spec as it now stands.
 
 8. **Review.** When the card is built, write the criteria file with
@@ -185,9 +196,11 @@ printed, need not be read again.
      "Waiting inside the turn". Do the same for any command you run in the background.
    - After each verdict, write the report's lines under Findings and under Unstable, each
      already in the form `<Done id> | <criterion ID or -> | <text>`, into a file outside
-     the repository, run `devfactory reviews add <spec dir> --round <n> --verdict <v>
+     the repository, run `devfactory reviews add --card <id> --round <n> --verdict <v>
      --findings <file>` (with no `--findings` when both headings say "none"), and then
-     remove the reviewer's checkout with `git worktree remove --force <path>`.
+     remove the reviewer's checkout with `git worktree remove --force <path>`. Commit
+     nothing for the record: it is kept outside the tracked tree, so the tree the
+     reviewer's gate run recorded stays the tree that is merged.
    - On a FAIL, fix each finding, commit, and start the next round from the checks above.
      A finding that needs a decision the spec does not record is a question, handled as
      step 7 says.
@@ -198,9 +211,10 @@ printed, need not be read again.
    - **Every finding on the developer's side** (a missing or weak test, an incomplete
      evidence record or sidecar, a gap entry not written, a spec that no longer matches the
      built code while the behaviour it describes is unchanged): fix them and carry on,
-     recording each gap entry as usual. A spec that no longer matches is amended through
-     `grill` Amend. Carry on to step 9 without a further review only when every fix was a
-     spec amendment made through `grill` and `devfactory spec-only <spec dir> --base <the
+     handing each to `grill` Amend with the finding's text as the question, the correction
+     as the answer, the stage Done and the finding's `Done <id>` as the condition, which
+     writes its gap entry and amends a spec that no longer matches. Carry on to step 9
+     without a further review only when every fix was a spec amendment made through `grill` and `devfactory spec-only <spec dir> --base <the
      failed revision>` prints `spec-only`; the report then says, in these words, "no
      review passed this revision", lists the last review's findings and the amendment that
      answers each, and never says the card passed. Otherwise run the checks and one more
@@ -237,12 +251,20 @@ or an acceptance refusal to fix, among them one that no single sub-issue owns. R
 `devfactory begin build`, rebase onto the parent branch, and fix only what the message
 names, against the card and spec the message names. The session has already run steps 1
 to 4 for its own card and runs them again only as far as reading anything changed; for a
-card and spec the message names that are not its own, it reads them as step 2 says. Write
-any gap entry the message asks for. Then review the fix as step 8 says, with the card and
-spec the message names and the base revision computed against the parent branch, report as
-step 9 says, and merge only when the coordinator says it is your turn, as step 10 says.
-When the coordinator says the fix is a spec-only amendment past the Done judge's limit,
-amend the spec through `grill` Amend and report without a review. Every report here goes
-to the coordinator by message, as `reporting-to-the-coordinator.md` says.
+card and spec the message names that are not its own, it reads them as step 2 says. Then
+review the fix as step 8 says, with the card and spec the message names and the base
+revision computed against the parent branch, report as step 9 says, and merge only when
+the coordinator says it is your turn, as step 10 says. When the coordinator says the fix is
+a spec-only amendment past the Done judge's limit, make it through `grill` Amend and report
+it without a review; the coordinator runs the `spec-only` check. Every report here goes to
+the coordinator by message, as `reporting-to-the-coordinator.md` says.
+
+For a standalone card, a refusal `accept` sorts as a defect comes back to this session. Run
+`devfactory begin build`, fix only what the refusal names, review the fix as step 8 says,
+fire `done`, and return to `accept`.
+
+A refused defect's gap entry is written by the session that fixes it, once the fix is
+committed, through `grill` Amend: the refusal as the question, the fix and its commit as the
+answer, the stage Acceptance, and the `Done <id>` that `accept` named as the condition.
 
 Stop every agent you started before you finish, and tell each to stop its own.

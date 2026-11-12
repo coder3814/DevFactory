@@ -221,7 +221,7 @@ report to the user what changed in the spec. `grill` fires whatever event the
 re-derivation's outcome calls for; the card skill fires none for it. When only a
 comment was added and no part changed, do nothing to the spec. A card with no
 spec line has nothing to re-derive. When the caller of `add-to-card` passes
-`no-rederive`, the caller owns the re-derivation, so skip this step.
+`no-rederive`, skip this step, as "Settled mode" in the `add-to-card` skill says.
 
 Never write the spec line: `grill` writes it directly, as "The spec line" in
 `card-standard.md` says.

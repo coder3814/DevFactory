@@ -104,86 +104,114 @@ class SpecOnlyTest(unittest.TestCase):
 
 
 class ReviewsTest(unittest.TestCase):
+    def repo(self):
+        d = temp_dir(self)
+        git(d, 'init', '-q', '-b', 'main')
+        write(os.path.join(d, 'src', 'app.py'), 'x = 1\n')
+        git(d, 'add', '-A')
+        git(d, 'commit', '-q', '-m', 'start')
+        return d
+
+    def store(self, d, card):
+        return os.path.join(d, '.git', 'devfactory', 'reviews', card + '.md')
+
     def findings(self, d, text):
-        f = os.path.join(d, 'findings.txt')
+        f = os.path.join(temp_dir(self), 'findings.txt')
         write(f, text)
         return f
 
-    def test_add_appends_a_block_per_round_with_a_line_per_finding(self):
-        d = temp_dir(self)
-        spec = os.path.join(d, 'specs', '12')
-        os.makedirs(spec)
+    def test_add_appends_a_block_per_round_to_the_store_and_show_prints_it(self):
+        d = self.repo()
+        self.assertEqual(run(['reviews', 'show', '--card', '12'], d).lines, ['no-reviews'])
         f = self.findings(d, 'Done 4.3 | C2 | the export reads every row\r\n\r\n- Done 5.1|-|  an unrelated rename\r\n')
-        r = run(['reviews', 'add', spec, '--round', '1', '--verdict', 'FAIL', '--findings', f], d)
+        r = run(['reviews', 'add', '--card', '#12', '--round', '1', '--verdict', 'FAIL', '--findings', f], os.path.join(d, 'src'))
         self.assertEqual((r.code, r.lines), (0, []), r.stderr)
-        r = run(['reviews', 'add', spec, '--round', '2', '--verdict', 'PASS'], d)
+        r = run(['reviews', 'add', '--card', '12', '--round', '2', '--verdict', 'PASS'], d)
         self.assertEqual(r.code, 0, r.stderr)
-        text = read(os.path.join(spec, 'reviews.md'))
+        text = read(self.store(d, '12'))
         self.assertRegex(text, r'^## \d{4}-\d{2}-\d{2} — round 1 — FAIL\n\n- Done 4\.3 \| C2 \| the export reads every row\n'
                                r'- Done 5\.1 \| - \| an unrelated rename\n\n## \d{4}-\d{2}-\d{2} — round 2 — PASS\n\Z')
+        r = run(['reviews', 'show', '--card', '#12'], d)
+        self.assertEqual((r.code, r.lines), (0, [l for l in text.split('\n') if l]), r.stderr)
+        self.assertEqual(git(d, 'status', '--porcelain'), '', 'the store is outside the tracked tree')
 
-    def test_add_validates_the_round_the_verdict_and_each_finding(self):
-        d = temp_dir(self)
-        spec = os.path.join(d, 'spec')
-        os.makedirs(spec)
-        add = ['reviews', 'add', spec, '--round', '1', '--verdict', 'NOT DONE']
+    def test_two_worktrees_of_one_repository_read_the_same_store(self):
+        d = self.repo()
+        other = os.path.join(temp_dir(self), 'wt')
+        git(d, 'worktree', 'add', '-q', '-b', 'card-12', other)
+        r = run(['reviews', 'add', '--card', '12', '--round', '1', '--verdict', 'FAIL', '--findings',
+                 self.findings(d, 'Done 3.1 | C1 | no screenshot\n')], other)
+        self.assertEqual(r.code, 0, r.stderr)
+        r = run(['reviews', 'add', '--card', '12', '--round', '2', '--verdict', 'PASS'], d)
+        self.assertEqual(r.code, 0, r.stderr)
+        shown = run(['reviews', 'show', '--card', '12'], d).lines
+        self.assertEqual(run(['reviews', 'show', '--card', '12'], other).lines, shown)
+        self.assertEqual([l.split(' — ')[1:] for l in shown if l.startswith('## ')], [['round 1', 'FAIL'], ['round 2', 'PASS']])
+        self.assertTrue(os.path.exists(self.store(d, '12')))
+
+    def test_add_validates_the_card_the_round_the_verdict_and_each_finding(self):
+        d = self.repo()
+        add = ['reviews', 'add', '--card', '12', '--round', '1', '--verdict', 'NOT DONE']
         self.assertEqual(run(add, d).code, 0)
-        self.assertEqual(run(['reviews', 'add', spec, '--round', 'one', '--verdict', 'FAIL'], d).code, 2)
-        self.assertEqual(run(['reviews', 'add', spec, '--round', '1', '--verdict', 'fail'], d).code, 2)
+        self.assertEqual(run(['reviews', 'add', '--card', '12', '--round', 'one', '--verdict', 'FAIL'], d).code, 2)
+        self.assertEqual(run(['reviews', 'add', '--card', '12', '--round', '1', '--verdict', 'fail'], d).code, 2)
+        self.assertEqual(run(['reviews', 'add', '--round', '1', '--verdict', 'FAIL'], d).code, 2)
+        self.assertEqual(run(['reviews', 'add', '--card', '../12', '--round', '1', '--verdict', 'FAIL'], d).code, 2)
+        r = run(['reviews', 'add', 'specs/12', '--card', '12', '--round', '1', '--verdict', 'FAIL'], d)
+        self.assertEqual(r.code, 2)
+        self.assertIn('takes no folder', r.stderr)
         for bad in ['Ready 3.2 | C1 | text', 'Done 9.9 | C1 | text', '4.3 | C1 | text', 'Done 4.3 | criterion 1 | text',
                     'Done 4.3 | C1 |', 'Done 4.3 the export is slow']:
             r = run(add + ['--findings', self.findings(d, bad + '\n')], d)
             self.assertEqual(r.code, 2, bad)
             self.assertIn('findings.txt line 1', r.stderr)
-        self.assertEqual(len(re.findall(r'^## ', read(os.path.join(spec, 'reviews.md')), re.M)), 1)
+        self.assertEqual(len(re.findall(r'^## ', read(self.store(d, '12')), re.M)), 1)
 
-    def test_ledger_files_the_blocks_under_the_card_heading_and_skips_those_already_there(self):
+    def test_outside_a_repository_is_a_usage_error(self):
         d = temp_dir(self)
-        spec = os.path.join(d, 'specs', '12')
-        os.makedirs(spec)
+        r = run(['reviews', 'show', '--card', '12'], d)
+        self.assertEqual(r.code, 2)
+        self.assertIn('not in a git repository', r.stderr)
+
+    def test_ledger_files_the_blocks_under_the_card_heading_skips_those_already_there_and_removes_the_store(self):
+        d = self.repo()
         ledger = os.path.join(d, '.devfactory', 'reviews.md')
         write(ledger, '# Reviews\r\n\r\n## #12\r\n\r\n### 2026-10-01 — round 1 — PASS\r\n\r\n## #13\r\n\r\n### 2026-10-02 — round 1 — PASS\r\n')
-        run(['reviews', 'add', spec, '--round', '1', '--verdict', 'FAIL', '--findings',
-             self.findings(d, 'Done 3.1 | C1 | no screenshot\n')], d)
-        run(['reviews', 'add', spec, '--round', '2', '--verdict', 'PASS'], d)
-        r = run(['reviews', 'ledger', spec, '--card', '12', '--ledger', ledger], d)
+        add = lambda card, rnd, verdict, *more: run(['reviews', 'add', '--card', card, '--round', rnd, '--verdict', verdict] + list(more), d)
+        add('12', '1', 'FAIL', '--findings', self.findings(d, 'Done 3.1 | C1 | no screenshot\n'))
+        add('12', '2', 'PASS')
+        r = run(['reviews', 'ledger', '--card', '12', '--ledger', ledger], d)
         self.assertEqual((r.code, r.lines), (0, ['appended 2 skipped 0']), r.stderr)
         text = read(ledger)
         self.assertRegex(text, r'^# Reviews\r\n\r\n## #12\r\n\r\n### 2026-10-01 — round 1 — PASS\r\n\r\n'
                                r'### \d{4}-\d{2}-\d{2} — round 1 — FAIL\r\n\r\n- Done 3\.1 \| C1 \| no screenshot\r\n\r\n'
                                r'### \d{4}-\d{2}-\d{2} — round 2 — PASS\r\n\r\n## #13\r\n')
-        r = run(['reviews', 'ledger', spec, '--card', '#12', '--ledger', ledger], d)
+        self.assertFalse(os.path.exists(self.store(d, '12')))
+        self.assertEqual(run(['reviews', 'show', '--card', '12'], d).lines, ['no-reviews'])
+        r = run(['reviews', 'ledger', '--card', '#12', '--ledger', ledger], d)
+        self.assertEqual((r.code, r.lines), (0, ['appended 0 skipped 0']), r.stderr)
+        self.assertEqual(read(ledger), text)
+        add('12', '1', 'FAIL', '--findings', self.findings(d, 'Done 3.1 | C1 | no screenshot\n'))
+        add('12', '2', 'PASS')
+        r = run(['reviews', 'ledger', '--card', '#12', '--ledger', ledger], d)
         self.assertEqual(r.lines, ['appended 0 skipped 2'])
         self.assertEqual(read(ledger), text)
+        add('14', '1', 'FAIL', '--findings', self.findings(d, 'Done 3.1 | C1 | no screenshot\n'))
         new = os.path.join(d, 'new.md')
-        r = run(['reviews', 'ledger', spec, '--card', '#14', '--ledger', new], d)
-        self.assertEqual(r.lines, ['appended 2 skipped 0'])
+        r = run(['reviews', 'ledger', '--card', '#14', '--ledger', new], d)
+        self.assertEqual(r.lines, ['appended 1 skipped 0'])
         self.assertRegex(read(new), r'^## #14\n\n### \d{4}-\d{2}-\d{2} — round 1 — FAIL\n\n- Done 3\.1')
 
-    def test_ledger_with_no_reviews_appends_nothing_and_a_malformed_record_fails(self):
-        d = temp_dir(self)
-        spec = os.path.join(d, 'spec')
-        os.makedirs(spec)
+    def test_ledger_with_no_reviews_appends_nothing_and_a_malformed_record_fails_and_stays(self):
+        d = self.repo()
         ledger = os.path.join(d, 'ledger.md')
-        self.assertEqual(run(['reviews', 'ledger', spec, '--card', '1', '--ledger', ledger], d).lines, ['appended 0 skipped 0'])
-        write(os.path.join(spec, 'reviews.md'), '## round 1 FAIL\n\n- Done 3.1 | C1 | x\n')
-        r = run(['reviews', 'ledger', spec, '--card', '1', '--ledger', ledger], d)
+        self.assertEqual(run(['reviews', 'ledger', '--card', '1', '--ledger', ledger], d).lines, ['appended 0 skipped 0'])
+        write(self.store(d, '1'), '## round 1 FAIL\n\n- Done 3.1 | C1 | x\n')
+        r = run(['reviews', 'ledger', '--card', '1', '--ledger', ledger], d)
         self.assertEqual(r.code, 1)
         self.assertEqual([l.split(' ')[0] for l in r.lines], ['reviews-parse'])
         self.assertFalse(os.path.exists(ledger))
-
-    def test_spec_lint_evidence_check_and_gaps_check_ignore_a_reviews_record(self):
-        d = temp_dir(self)
-        spec = os.path.join(d, 'spec')
-        write(os.path.join(spec, 'spec.md'), spec_text())
-        write(os.path.join(spec, 'reviews.md'), '## 2026-11-12 — round 1 — FAIL\n\n- Done 4.3 | C1 | slow\n')
-        write(os.path.join(spec, 'evidence', 'C1', 'out.txt'), 'ok\n')
-        write(os.path.join(spec, 'evidence', 'C1', 'out.txt.txt'), 'revision: abc1234 | checkpoint: Local | produced by: npm test\n')
-        criteria = os.path.join(d, 'criteria.txt')
-        write(criteria, 'C1\n')
-        self.assertEqual(run(['spec-lint', spec], d).lines, [])
-        self.assertEqual(run(['evidence-check', spec, '--criteria', criteria], d).lines, [])
-        self.assertEqual(run(['gaps', 'check', spec], d).lines, [])
+        self.assertTrue(os.path.exists(self.store(d, '1')))
 
 
 if __name__ == '__main__':

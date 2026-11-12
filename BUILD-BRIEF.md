@@ -41,11 +41,15 @@ record; where your task and it disagree, follow it and report the disagreement.
   **Stamp**: the spec header's card revision hash, repo commit and date.
 - **Parent issue**: a card with sub-issues, holding a title, a purpose, the work order and a
   suggested model and effort, and no spec. **Records folder**: a parent's
-  `<specs path>/<parent id>/`, holding only `receipts.md`, `gaps.md` and `reviews.md`.
+  `<specs path>/<parent id>/`, holding only `receipts.md` and `gaps.md`. **Review record**:
+  a card's change reviews or Done judgments, kept outside the tracked tree at
+  `<git common dir>/devfactory/reviews/<card id>.md` and ledgered at release.
 - **Requester**: whoever owns the request (the owner on a one-person project).
   **Coordinator**: the session running a parent issue. **Build session**: one session
   developing one card.
-- Stages: Request, Grilling, Approval, Development, Done, Acceptance, Release.
+- Lifecycle stages: Request, Grilling, Approval, Development, Done, Acceptance, Release. A
+  gap entry's stage is one of the script's: Approval, Development, Done, Acceptance,
+  Release.
 
 ## Done for your task
 
