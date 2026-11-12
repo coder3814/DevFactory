@@ -293,7 +293,9 @@ first written. `grill` run for a parent works its set:
 3. **Each sub-issue not yet Ready** gets its own spec, by New steps 1 to 12, or by Re-derive
    when it has a spec whose stamp no longer matches. Ask a gap several sub-issues share once,
    as the rule, and dispatch the checker over several sub-issues together where that finds
-   what they share. `ready` fires for each sub-issue as its spec is made Ready.
+   what they share. `ready` fires for each sub-issue as its spec is made Ready. A sub-issue
+   re-derived in this path, here or in step 4's check, asks no approval of its own: step 5's
+   approval of the set takes the place of Re-derive step 8.
 4. **Check the set.** As the last step, run `check-ready` over the parent and its sub-issues,
    at creation. It judges Ready 8.2 from the parent card, and what the set shares from the
    sub-issues' specs, settles what it finds with the requester, and writes the set's ready
@@ -361,7 +363,8 @@ first written. `grill` run for a parent works its set:
    records folder, and the resolution names each sub-issue spec and the version that
    resolved it, or `parent card` when no spec changed. When the caller runs the readiness
    check itself, stop here and go to step 7: the stamp, the status, the receipt, the commit
-   and the spec line are the caller's, and steps 8 and 9 with them. Otherwise set the status
+   and the spec line are the caller's, and steps 8 and 9 run only when the caller hands the
+   spec back for them. Otherwise set the status
    as "The status" says, and re-stamp as "The stamp" says, the Card revision from
    `devfactory stamp`. When step 5's own check found the spec
    Ready, or the requester settled everything it found, write the ready receipt as "The

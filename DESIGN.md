@@ -557,7 +557,7 @@ and the repository. Presence checks come first; the end-to-end test is last.
 9.2 The spec is stamped with the card revision and the repo commit it was checked against,
     the commit being the branch head the checker read. The condition holds when the card's
     revision equals the stamp's and the stamped commit is an ancestor of the current head.
-    It is not applicable at creation, before the stamp exists, or in a re-derive check.
+    It is not applicable when the spec has no stamp yet, or in a re-derive check.
     `[machine]`
 9.3 A fresh agent could decompose and build the work from the card, the spec, the profile
     and the repository without a single new question, every decision either grounded in them

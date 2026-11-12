@@ -32,7 +32,8 @@ The prompt that started you gives you all of these. If any is missing, say which
 - **The gap sources to read first**: the project ledger `.devfactory/gaps.md`, which holds
   the gap entries of released cards, each prefixed with its card's ID, and every live
   `gaps.md` under the profile's specs path.
-- **The moment**: at creation (grilling, before Ready is stamped) or at development start
+- **The moment**: at creation (while a card or a parent's set is being grilled, its specs
+  stamped or not) or at development start
   (re-checking a stamped spec before a build begins).
 - **The kind of check**: **fresh**, which measures every condition; **follow-up**, which
   also brings the earlier report and the spec version it measured, and re-checks each
@@ -82,7 +83,7 @@ The prompt that started you gives you all of these. If any is missing, say which
    Mark a condition **not applicable** only for the reason the definition gives (condition 5
    when no rule acts on existing data; 1.3 and 1.4 when the type is not declared; 6.2 when
    the determination is not non-trivial; 8.2 for a card that is not a parent issue; 3.3 at
-   creation when the spec has never been Ready; 9.2 at creation, before the stamp exists,
+   creation when the spec has never been Ready; 9.2 when the spec has no stamp yet,
    because the stamp follows the check, and in a re-derive check, where the card has
    changed against the old stamp by definition).
 7. **Condition 5, when it applies**: 5.1 is presence in the spec. For 5.2, read the

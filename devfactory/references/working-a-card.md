@@ -223,5 +223,6 @@ comment was added and no part changed, do nothing to the spec. A card with no
 spec line has nothing to re-derive. When the caller of `add-to-card` passes
 `no-rederive`, skip this step, as "Settled mode" in the `add-to-card` skill says.
 
-Never write the spec line: `grill` writes it directly, as "The spec line" in
-`card-standard.md` says.
+Never write the spec line: `grill` writes it directly, and `check-ready` for a
+spec it re-stamps after a re-derive, as "The spec line" in `card-standard.md`
+says.

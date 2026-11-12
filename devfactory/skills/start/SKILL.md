@@ -49,10 +49,12 @@ printed, need not be read again.
    nothing else. One that still carries a part beyond those four, such as acceptance
    criteria or supporting information, is not started: tell the requester it goes through
    `re-evaluate-card` first, which restructures it with them, run `devfactory end start`,
-   and stop. A spec line alone on a parent is no reason to stop: `grill` removes it.
+   and stop. A parent with no part beyond its four that still carries a spec line, or whose
+   folder under the specs path still holds `spec.md`, is first handed to `grill` for the
+   parent, whose "A parent issue" step 2 removes them, and then to `coordinate`.
 
 4. **End and hand over.** Run `devfactory end start`, then, in this session and this turn:
    - for a parent issue, load the `coordinate` skill for it and follow it from its first
-     step;
+     step, after `grill` when step 3 hands the parent to it first;
    - for a standalone card, load the `build` skill for it and follow it from its first
      step.

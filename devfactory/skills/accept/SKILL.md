@@ -122,7 +122,8 @@ printed, need not be read again.
 
 5. **Record the acceptance.** When every criterion and the whole are accepted, record the
    requester's words verbatim on the card, and in a parent run on the parent and each
-   sub-issue it covers, through `add-to-card` in settled mode. Then fire `accepted` for
+   sub-issue it covers, through `add-to-card` in settled mode passing `no-rederive`. Then
+   fire `accepted` for
    each card accepted, with `devfactory event accepted --card <n>`, as
    `../../references/events.md` says; a hook that fails is reported with its output.
    Acceptance ends here; a

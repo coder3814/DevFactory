@@ -73,7 +73,8 @@ entries about the work order live in the parent's records folder,
    purpose, work order, and suggested model and effort), such as acceptance criteria or
    supporting information, stop: report that it goes through `re-evaluate-card` first,
    which restructures it to the card standard, and check nothing. A spec line alone does not
-   stop the check; `grill`'s parent path removes it.
+   stop the check: at creation `grill`'s parent path has already removed it, and at
+   development start `start` handed the parent to `grill` first.
 3. **Check each stamp first.** For each card with a spec, run
    `devfactory stamp-check --card <n> --spec <spec dir>` from a checkout of the branch the
    spec lives on. `changed` is reported as "the card changed since Ready", and
@@ -124,14 +125,17 @@ entries about the work order live in the parent's records folder,
 9. **Close each re-derived spec.** Once nothing is open, for each spec a `grill` re-derive
    revised in this check, re-stamp it as "The stamp" in `spec-template.md` says, with the
    Card revision from `devfactory stamp` and the Repo commit the last check that measured it
-   reported reading; set its status as "The status" in `grill` says; run `devfactory
-   spec-lint <spec dir> --criteria <file>` and fix every finding; commit the spec folder on
-   its own as "Landing a commit" in `spec-procedure.md` says; and write its spec line with
-   that commit, directly through the tracker binding under the `check-ready` marker, as "The
-   spec line" in `card-standard.md` says, reading the card back to confirm it landed. Then
-   hand the spec back to `grill`, which this check loaded for the re-derive, at Re-derive
-   steps 8 and 9: `grill` asks for approval when the status returned to `Ready`, and `grill`
-   fires the event for where the card now stands.
+   reported reading; set its status as "The status" in `grill` says; when the status it sets
+   is below what the spec had, fire `readiness-lost` for the card with `devfactory event
+   readiness-lost --card <n>`, once for this stop, unless step 8 already fired it, and say so
+   when handing the spec back to `grill`; run `devfactory spec-lint <spec dir> --criteria
+   <file>` and fix every finding; commit the spec folder on its own as "Landing a commit" in
+   `spec-procedure.md` says; and write its spec line with that commit, directly through the
+   tracker binding under the `check-ready` marker, as "The spec line" in `card-standard.md`
+   says, reading the card back to confirm it landed. Then hand the spec back to `grill`,
+   which this check loaded for the re-derive, at Re-derive steps 8 and 9: `grill` asks for
+   approval when the status returned to `Ready`, and `grill` fires the event for where the
+   card now stands.
 10. **Write the ready receipt.** When a checker ran and nothing is open, write the ready
     receipt as "The ready receipt" in `spec-procedure.md` says, the folder and `--parent` of
     step 4 and `--commit` the head the last check reported reading, once every amendment and

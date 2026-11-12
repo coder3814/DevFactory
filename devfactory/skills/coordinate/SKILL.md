@@ -236,7 +236,8 @@ printed, need not be read again.
    run, outside an answer to a question, have the card changed as `spec-procedure.md` says
    under "A card-changing answer": through `add-to-card` in settled mode passing
    `no-rederive`, with the requester's words as the comment, then `grill` Re-derive, given
-   the stage the work is at and `--kind request-change`, brings the spec along for the
+   the stage the work is at, the condition that let it through, written `Ready <id>`, and
+   `--kind request-change`, brings the spec along for the
    conditions the change feeds.
    Once the sub-issue's session has begun, its session does this on its own branch, where
    the spec now lives; before then, an agent does it on the parent branch. Tell every

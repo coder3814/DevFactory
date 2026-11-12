@@ -100,8 +100,8 @@ Then decide which way in applies. If the user names an existing card (an id, a l
 ## From an existing card
 
 1. Read the existing card in full, as "Read a card" describes. When it is a
-   parent issue that still carries criteria, supporting information or a spec
-   line, change nothing: tell the user it is restructured through
+   parent issue that still carries criteria, supporting information or any other
+   part beyond its four, change nothing: tell the user it is restructured through
    `re-evaluate-card`, run `devfactory end create-card` and stop.
 2. Reshape everything already on it — description, criteria and comments — into
    the template, as "Shape a draft" describes. That existing content is treated

@@ -94,7 +94,8 @@ printed, need not be read again.
    the coordinator named. A standalone card is built on its own branch in its own worktree,
    named as the profile's Branches and merging `Card branch` entry says; a standalone
    session that finds itself on the integration branch creates that branch and worktree and
-   works there from then on. Rebase the card's branch onto the integration branch. Then,
+   works there from then on. For a standalone card, rebase its branch onto the integration
+   branch. Then,
    for a standalone card, fire `work-started`, before any check.
 
 2. **Read the card and its spec.** Read the card in full as `working-a-card.md` says. Read
@@ -162,11 +163,13 @@ printed, need not be read again.
       is, run `grill` Amend with the question, the answer, the stage (Development) and the
       condition, which writes the spec amendment and the gap entry on this card's branch.
       In a parent issue run, every question for the requester the Re-derive or the Amend
-      raises goes to the coordinator, as `reporting-to-the-coordinator.md` says. When a
-      re-derive stops to wait for the requester or leaves the spec below `approved`,
-      `grill` has fired `readiness-lost`: report the stop as
-      `reporting-to-the-coordinator.md` says under "What each report carries", wait, and
-      on resuming run step 3 again. Report whether the change to the spec changes what
+      raises goes to the coordinator, as `reporting-to-the-coordinator.md` says. When the
+      re-derive stopped to wait for the requester, `grill` has fired `readiness-lost`:
+      report the stop as `reporting-to-the-coordinator.md` says under "What each report
+      carries", wait, and on resuming run step 3 again. When it returned the status to
+      `Ready` and Re-derive step 8 had the spec approved again, `grill` has fired
+      `readiness-lost` too: report nothing further, run step 3 again, and step 4 fires
+      `development-started`. Report whether the change to the spec changes what
       another card depends on, then continue from the spec as it now stands.
 
 8. **Review.** When the card is built, write the criteria file with

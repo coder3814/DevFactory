@@ -152,10 +152,12 @@ its spec change together. A parent issue never has one, as "Parent issues" in
   spec for the conditions the changed part feeds, re-stamping it with the card's
   new revision, and reporting what changed in it. The `grill` skill does the
   re-derivation, which first checks the changed card against the Definition of
-  Request. Who runs it for a settled answer is in "Settled mode" in the
-  `add-to-card` skill.
-- The spec line is not an addition: `grill` writes it directly, as
-  [`card-standard.md`](card-standard.md) says, and records no comment for it.
+  Request. Who runs it for a settled answer is in "A card-changing answer" in
+  [`spec-procedure.md`](spec-procedure.md).
+- The spec line is not an addition: `grill` writes it directly, and `check-ready`
+  for a spec it re-stamps after a re-derive, as
+  [`card-standard.md`](card-standard.md) says, and neither records a comment for
+  it.
 - A change to the interface determination or to a scope boundary re-grounds the
   whole spec, not only the conditions the changed part feeds.
 - A comment that changes no part of the card changes nothing: the spec is

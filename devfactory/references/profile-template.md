@@ -233,12 +233,18 @@ where, so the readiness checker can read them.
   every push, and every merge, pull, rebase, cherry-pick, hard reset, reset to another
   revision, amended commit, forced branch move, rename or delete, `update-ref`,
   `checkout -B` or `switch -C` that changes a protected branch, wherever in the command
-  line it appears, `bash -c`, `sh -c` and `powershell -Command` included. Under `build` it
+  line it appears, `bash -c`, `sh -c` and `powershell -Command` included. A `git checkout
+  <branch>` or `git switch <branch>` earlier in the same command line sets the branch later
+  parts are judged against. Under `build` it
   allows a `git merge --ff-only` onto a parent branch, and under `grill`, `check-ready`,
   `create-card`, `re-evaluate-card` or `curate` a `git merge --ff-only` onto the
   integration branch, which lands a spec, a receipt or a profile change; a plain `git
   commit` is never refused. A target it cannot resolve to a repository and a `git -c
-  alias.<name>=...` invocation are refused in a guarded session. The **stamp notice** says,
+  alias.<name>=...` invocation are refused in a guarded session. A `devfactory begin
+  <skill>` earlier in the same command line, joined by `&&`, `;` or a newline, counts as
+  that skill's fresh marker for the rest of it. A session whose own root holds a fresh
+  `build` marker gains nothing from a `release` or `coordinate` marker in another root. The
+  **stamp notice** says,
   when a prompt names a card that has a spec, whether the spec is still current or the card
   has changed since it earned Ready; it never blocks. The **session context** prints, when a
   session starts, where the profile is, the event hooks the project has, which skill does

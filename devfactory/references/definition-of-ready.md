@@ -215,8 +215,8 @@ These conditions apply when the request's rules act on existing data.
     The stamp's Repo commit is the branch head the checker read. The condition holds when
     the card's revision, computed as "The stamp" in [`spec-template.md`](spec-template.md)
     says, equals the stamp's, and the stamped commit is an ancestor of the current branch
-    head. At creation, before the stamp exists, and in a re-derive check, where the card
-    has changed against the old stamp by definition, it is not applicable: the checker
+    head. When the spec has no stamp yet, and in a re-derive check, where the card has
+    changed against the old stamp by definition, it is not applicable: the checker
     reports the revision and branch head it checked, for `grill` to stamp.
 
 9.3 A fresh agent could decompose and build the work from the card, the spec, the profile
