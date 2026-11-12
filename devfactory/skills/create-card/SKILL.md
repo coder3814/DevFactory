@@ -29,8 +29,10 @@ first, and `devfactory begin create-card` again when you resume. The tracker gua
 your card writes only while the marker is there. A marker expires after the profile's
 Marker lifetime (12 hours by default), and `begin` refreshes it. Markers and the profile
 are found at the repository (worktree) root, wherever the shell's working directory is.
+When `begin` prints `plugin-changed`, load this skill again before you continue.
 
-Read these first, in full:
+Read these first, in full. A file you have already read in full in this session, under
+the plugin version `begin` printed, need not be read again.
 
 - `../../references/card-standard.md` and every module it lists — what the
   finished card must be.
@@ -41,8 +43,8 @@ Read these first, in full:
   draft, measure, grill, fold, get acceptance, write and verify, and re-derive
   the spec.
 - `../../references/card-template.md` — the skeleton to fill.
-- `../../agents/card-reviewer.md` — the `card-reviewer` agent you start, its inputs
-  and its report.
+- the "Inputs" section of `../../agents/card-reviewer.md`, and only that section — what
+  you give the `card-reviewer` agent you start.
 - `../../references/definition-of-request.md` — what the finished card must meet
   before a spec is written from it.
 - `../../references/events.md` — the `request-met` event you fire.
@@ -61,11 +63,14 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    a parent issue and its sub-issues, say so. Work through the remaining steps
    for each card.
 3. Shape it into a draft from the template, as "Shape a draft" describes: the
-   criteria numbered from `C1`, the parent line on a sub-issue, the work order
-   on a parent issue with criteria only for what the combined result shows
-   beyond its sub-issues' (never that every sub-issue is done, which is its
-   outcome already), the suggested model and effort, and the values the
-   profile's team modules recommend. Leave out what you do not know rather than
+   criteria numbered from `C1`, the parent line on a sub-issue, the suggested
+   model and effort, and the values the profile's team modules recommend. A
+   parent issue gets only its title, purpose, work order and suggested model and
+   effort, from the parent skeleton in the template; a requirement only the
+   combined result shows is a criterion on the sub-issue that completes it, and
+   the work order has that sub-issue wait on the ones it needs. While the set is
+   not yet created, name each new card by a placeholder (`#S1`, `#S2`, and so
+   on, and `#P` for a new parent) in the work order and in each parent line. Leave out what you do not know rather than
    inventing it. Write the draft to a scratch file, the title on the first line
    and the description below it, and run `devfactory criteria-ids --text <file>`;
    fix any duplicate ID it reports before measuring.
@@ -81,13 +86,11 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    and shown to them again; they do not reopen the review.
 6. Once accepted, create the card on the profile's board exactly as accepted,
    wherever the board puts a new card, each part in the field
-   the profile maps it to, marked as a parent issue or a sub-issue as the
-   binding says, with a parent's sub-issue order set to match its work order.
-   Attach any files the user provided, and verify it by reading it back, with
-   `devfactory criteria-ids --card <id>` confirming its criterion IDs (on a
-   tracker `gh` does not reach, `--text` with the card as read back). A new
-   sub-issue of an existing parent changes that parent's work order: make that
-   change through `add-to-card` on the parent.
+   the profile maps it to. A parent issue and its sub-issues are created as
+   "Parents and sub-issues" below says. Attach any files the user provided, and
+   verify it by reading it back, with `devfactory criteria-ids --card <id>`
+   confirming its criterion IDs (on a tracker `gh` does not reach, `--text`
+   with the card as read back).
 7. If the card meets the Definition of Request, write the request receipt as
    "Write the request receipt" in `working-a-card.md` says, fire `request-met` as
    "Request grilling" there says, and tell the user the next step is `grill`; do
@@ -96,7 +99,10 @@ Then decide which way in applies. If the user names an existing card (an id, a l
 
 ## From an existing card
 
-1. Read the existing card in full, as "Read a card" describes.
+1. Read the existing card in full, as "Read a card" describes. When it is a
+   parent issue that still carries criteria, supporting information or a spec
+   line, change nothing: tell the user it is restructured through
+   `re-evaluate-card`, run `devfactory end create-card` and stop.
 2. Reshape everything already on it — description, criteria and comments — into
    the template, as "Shape a draft" describes. That existing content is treated
    as creation: it is not recorded as new comments. Write the criteria afresh
@@ -127,9 +133,28 @@ Then decide which way in applies. If the user names an existing card (an id, a l
    "Write the request receipt" in `working-a-card.md` says. If it also has no
    spec line, fire `request-met` as "Request grilling" there says. When it does
    not meet the definition, tell the user what keeps it short.
-7. If the card has a spec line whose spec status is `Ready` or `approved` and
-   any part changed, fire `readiness-lost` for it, as `../../references/events.md`
-   says. If the card has a spec line, re-derive the spec as "Re-derive the spec"
-   describes, naming each part that changed. Otherwise, when it meets the
+7. If the card has a spec line and any part changed, hand to `grill` Re-derive
+   as "Re-derive the spec" describes, naming each part that changed; `grill`
+   fires whatever event its outcome calls for. Otherwise, when it meets the
    Definition of Request, tell the user the next step is `grill`; do not run it.
 8. Run `devfactory end create-card`.
+
+## Parents and sub-issues
+
+Link a sub-issue to its parent, and list a parent's sub-issues, as the "Sub-issues"
+section of the profile's binding says. The tracker's own order of sub-issues is not kept
+in step with the work order, as the work order module says.
+
+- **Creating a parent issue with its sub-issues.** Create the parent first, its work
+  order still naming the sub-issues by their placeholders. Then create each sub-issue,
+  its parent line naming the parent by its number, and link each one to the parent.
+  Then write the sub-issues' numbers into the parent's work order in place of their
+  placeholders; filling in the numbers is the accepted text, not a change to it. Read
+  every card back, and list the parent's sub-issues to confirm each is linked once.
+- **Creating a sub-issue of an existing parent.** Create the sub-issue with its parent
+  line naming the parent, and link it. That changes the parent's work order: make that
+  change through `add-to-card` on the parent, interactive, with the user placing the new
+  sub-issue and its waits.
+- **Adding an existing card to a parent.** Link it, then add its parent line through
+  `add-to-card` on the card, and place it in the parent's work order through
+  `add-to-card` on the parent, both interactive.

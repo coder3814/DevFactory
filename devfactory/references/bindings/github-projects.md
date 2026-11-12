@@ -120,6 +120,22 @@ project fields, such as a Work Type, are on the parent's item in the profile's
 project. A parent that is not in the project has no project field values; tell
 the user so rather than reading another project's item.
 
+## Sub-issues
+
+A parent issue's sub-issues are linked to it through GitHub's sub-issues API,
+which names the sub-issue by its numeric id, not its number:
+
+- **An issue's numeric id:** `gh api repos/{owner}/{repo}/issues/{n} --jq .id`.
+- **Link:** `gh api -X POST repos/{owner}/{repo}/issues/{parent}/sub_issues -F
+  sub_issue_id=<the sub-issue's numeric id>`.
+- **List:** `gh api repos/{owner}/{repo}/issues/{parent}/sub_issues`, which
+  returns 30 at a time; add `--paginate` for more.
+- **Unlink:** `gh api -X DELETE repos/{owner}/{repo}/issues/{parent}/sub_issue
+  -F sub_issue_id=<the sub-issue's numeric id>`.
+
+GitHub keeps its own order of a parent's sub-issues, and the plugin relies on
+none: the order is the parent's work order.
+
 ## Attachments
 
 An issue has no attachment objects. A card's attachments are the files linked

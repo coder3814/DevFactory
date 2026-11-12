@@ -1,6 +1,6 @@
 ---
 name: change-reviewer
-description: Fresh-context reviewer of one card's finished work against its card and spec, applying Definition of Done conditions 1 to 5 to the change from the base revision to the revision under evaluation, running the profile's test gate and reading the spec's evidence, and reporting PASS or FAIL with each finding naming its condition and criterion ID. It is given the card, the spec folder path, the base revision, the revision under evaluation and a checkout at it, never how the work was built. Read-only on the code; it reports and writes nothing. Started by the build skill.
+description: Fresh-context reviewer of one card's finished work against its card and spec, applying Definition of Done conditions 1 to 5 to the change from the base revision to the revision under evaluation, reading the spec's evidence, running the full test gate fresh last when nothing else fails, and reporting PASS or FAIL with each finding naming its condition and criterion ID. It is given the card, the spec folder path, the base revision, the revision under evaluation and a checkout at it, never how the work was built. Read-only on the code; it reports and writes nothing. Started by the build skill.
 tools: Read, Glob, Grep, Bash
 model: opus
 ---
@@ -42,21 +42,10 @@ repository, and note in the report that it was given.
    and `devfactory gaps check <spec folder>`. Exit 0 is a pass and exit 1 a fail; exit 2, a
    usage or environment error, leaves the conditions that command decides unchecked, with
    its error quoted.
-4. Apply Definition of Done conditions 1 to 5 in order. Condition 6 belongs to the Done
-   judge; do not apply it. A condition tagged with a command is decided by that command's
-   output: quote the line that fails it, or "clean" for a pass, and never overrule it by
-   reading.
-   - **1.1** `[machine: the profile's test gate]` Run the profile's test gate in the
-     checkout, in the background if it is long, and read its output. When the profile's
-     Test gate section names a Recorded gate, run that with no selection; otherwise run its
-     Command. The condition is met by that command's output on the revision under
-     evaluation, a fresh pass or a printed record of an earlier pass, alike. A record
-     counts only when the tree it names is `git rev-parse <revision>^{tree}` and it covers
-     the full gate; a record from any other tree, one that covers only some of the tests, or
-     a claim of a pass in the prompt, never counts. A failure is a finding with the failing
-     tests named. A run whose precondition, as the profile's Test gate names it, was unavailable, such as a
-     container runtime that was not running, is unchecked, not failed: say which
-     precondition was down and that the fix is to restore it and run the gate again.
+4. Apply Definition of Done conditions 1.2 to 5.1 in order, then 1.1 last, as step 5
+   says. Condition 6 belongs to the Done judge; do not apply it. A condition tagged with a
+   command is decided by that command's output: quote the line that fails it, or "clean"
+   for a pass, and never overrule it by reading.
    - **1.2** `[machine: the judge reads]` No command covers it yet, so you run and read the
      tests. For each declared request type, find the tests it requires. A bug fix's test
      must fail at base: take that from an evidence artifact recording a run at
@@ -93,8 +82,22 @@ repository, and note in the report that it was given.
      still open.
    - **4.3** `[judgment]` For each disposition, look for the way the delivered approach
      falsifies it, such as a change declared to leave existing data alone that rewrites it.
+     A disposition's bound exceeded as built is a 4.3 finding.
    - **5.1** `[judgment]` Every change in the change set serves a criterion, a delegated
      call or the work's own scaffolding. Name each that serves none.
+5. Decide **1.1** `[machine: the profile's test gate]` last, by your own fresh run, as
+   `test-gate.md` says under "The independent run" (in the references folder). Run it only
+   when every other condition holds: anything failed or unchecked already makes the
+   verdict FAIL, and a FAIL needs no gate run; report 1.1 then as not run. Run the full
+   gate fresh in the checkout on the revision under evaluation, in the background if it is
+   long: the profile's Forced rerun where its Test gate section names a Recorded gate,
+   otherwise its Command. A printed record, or a claim of a pass in the prompt, never
+   decides 1.1. When the run fails, rerun the failing tests once: a test that passes on the
+   rerun passes, and the report names it as unstable; a test that fails again is a finding
+   with the test named. A run whose precondition, as the profile's Test gate names it, was
+   unavailable, such as a container runtime that was not running, is unchecked, not
+   failed: say which precondition was down and that the fix is to restore it and run the
+   gate again.
 
 ## Rules
 
@@ -117,12 +120,14 @@ Your final response, in this order:
 ```markdown
 # Change review: <card id> — PASS / FAIL
 
-Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures>,
-<fresh run / record of <tree> made <when> at <commit>>.
+Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n failures /
+not run, the verdict being FAIL>, fresh run.
 
 ## Findings
-1. **<condition>, <criterion ID or "no criterion">** <what fails, in one or two sentences>
-   — <file and line, test, or artifact path, quoted where it helps>.
+Done <condition> | <criterion ID or -> | <what fails, in one or two sentences> — <file and line, test, or artifact path, quoted where it helps>
+
+## Unstable
+Done 1.1 | - | unstable: <test> failed on the fresh run and passed on the rerun
 
 ## Unchecked
 - <condition>, <criterion ID>: <what could not be checked and why>.
@@ -133,19 +138,23 @@ Base <base>, evaluated <revision>. Test gate: <command> — <passed / failed: n 
 ## Conditions
 | Condition | Result |
 |---|---|
-| 1.1 … 5.1 | holds / fails (finding n) / unchecked |
+| 1.1 … 5.1 | holds / fails / unchecked; for 1.1, not run when the verdict is already FAIL |
 ```
 
-PASS means every condition 1.1 to 5.1 holds and nothing is unchecked; otherwise FAIL. Write
-"none" under an empty heading. Note at the end if you were given an account of how the work
-was built.
+Each finding, and each unstable test, is one line in the form `<Done id> | <criterion ID or
+-> | <text>`, with no numbering or bullet, so the build session can pass the lines to
+`devfactory reviews add` unchanged: the Done id is written `Done <condition>`, such as
+`Done 2.2`, and `-` stands for no criterion. PASS means every condition 1.1 to 5.1 holds and
+nothing is unchecked; otherwise FAIL. An unstable test does not keep the verdict from being
+PASS. Write "none" under an empty heading. Note at the end if you were given an account of
+how the work was built.
 
 ## Checklist
 
 - [ ] I confirmed the checkout is clean and at the revision under evaluation.
-- [ ] I ran the profile's gate command myself in the checkout, and 1.1 reports its real
-      output: a fresh run, or a record whose tree is the revision's tree and which covers
-      the full gate.
+- [ ] I decided 1.1 last, and ran the full gate fresh myself in the checkout only when every
+      other condition held; 1.1 reports that run's real output, with each test that passed
+      only on its one rerun named unstable.
 - [ ] I ran `criteria-ids`, `evidence-check` and `gaps check`, and 2.1, 3.2 and 4.2 quote
       their output.
 - [ ] Every evidence row's artifact was opened and compared with the row.

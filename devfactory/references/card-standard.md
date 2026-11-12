@@ -35,7 +35,7 @@ goal. It prescribes the outcome, never the method of reaching it.
 
 A card is made of these parts, in this order. Each is a core module with its own
 rules, in the file beside this one; read every module in full alongside this
-file.
+file. A parent issue is made of other parts, as "Parent issues" below says.
 
 1. [Title](modules/title.md)
 2. [Summary](modules/summary.md)
@@ -45,8 +45,10 @@ file.
 6. [Supporting information](modules/supporting-information.md)
 7. [Open questions](modules/open-questions.md)
 8. [Acceptance criteria](modules/acceptance-criteria.md)
-9. [Work order](modules/work-order.md), on a parent issue only
-10. [Suggested model and effort](modules/model-and-effort.md)
+9. [Suggested model and effort](modules/model-and-effort.md)
+
+The [work order](modules/work-order.md) is a core module too, and a part of a
+parent issue only.
 
 Every module has the same shape: **Holds** says what the part carries, **Rules**
 what it must and must not be, and **Examples**, where there are any, show the
@@ -60,9 +62,8 @@ written to. By default:
 
 - The title is written to the card's title field, always.
 - Every other part is written to the card's description, in the order above,
-  each under its own heading. The suggested model and effort is the
-  description's last section, after the acceptance criteria and, on a parent
-  issue, the work order.
+  or on a parent issue in the order "Parent issues" gives, each under its own
+  heading. The suggested model and effort is the description's last section.
 
 A profile may move any part other than the title into another field, where
 the board has one. Parts that share a field keep the standard's order, each
@@ -72,15 +73,28 @@ Where a part is written never changes its rules.
 
 ## Parent issues
 
-A parent issue is a card whose outcome is that every one of its sub-issues is
-done. It meets this standard like any other card, and carries a work order as
-well. Because this standard already makes that its outcome, its criteria never
-restate it: none says that every sub-issue is done, merged, reviewed or passing
-the tests together. Its criteria state only what the combined result shows that
-no single sub-issue's criteria do, and a parent with nothing of that kind has
-none. Each sub-issue opens its description with one line naming its parent,
-before its summary. How a card is marked as a parent or a sub-issue on the
-tracker is the profile's, in its board section and the binding it names.
+A parent issue is a card with sub-issues. Its outcome is that every one of its
+sub-issues is done, and it holds these parts, in this order, and nothing else:
+
+1. The title, by its [module](modules/title.md), naming what the set of cards
+   achieves.
+2. The purpose: one short paragraph saying why these cards belong together. It
+   states no requirement and restates no sub-issue.
+3. The [work order](modules/work-order.md).
+4. The [suggested model and effort](modules/model-and-effort.md), for the
+   session that coordinates the run.
+
+A parent carries no summary, issue or request, what needs to be achieved, scope,
+supporting information, open questions or acceptance criteria. It has no spec,
+no spec line, no stamp, no status and no evidence. A requirement only the
+combined result of several sub-issues can show is a criterion on the sub-issue
+that completes it, and the work order has that sub-issue wait on the ones it
+needs.
+
+Each sub-issue opens its description with one line naming its parent, before
+its summary. How a sub-issue is linked to its parent on the tracker is the
+binding's, in its "Sub-issues" section; the profile's board section names the
+binding.
 
 ## Team modules
 
@@ -191,12 +205,14 @@ rules that could otherwise be misread.
   done, so no other wait between parents is needed. The wait is met once that
   work's code is on the integration branch and the waiting parent's branch is
   rebased onto it.
-- **A parent issue is a card like any other.** Its outcome is that every
-  sub-issue is done; each sub-issue names its parent in its opening line, so a
-  reader of either knows the other exists. That outcome is never written as a
-  criterion: the Done judge establishes it from the branch itself, so a
-  criterion for it would only demand evidence of a process fact. How the tracker marks the link
-  differs by tracker, so it is the profile's.
+- **A parent issue holds only what its run needs.** Its outcome is that every
+  sub-issue is done, which the Done judge establishes from the branch itself, so
+  a criterion for it would only demand evidence of a process fact. A requirement
+  only the combined result shows sits on the sub-issue that completes it, where
+  a build and its review can check it, so the parent needs no criteria and no
+  spec. Each sub-issue names its parent in its opening line, so a reader of
+  either knows the other exists. How the tracker links them differs by tracker,
+  so it is the binding's.
 - **The card points at its spec in one line and holds none of it.** The card
   stays small and outcome-shaped; everything a builder needs beyond that is in
   the spec, which development reads.

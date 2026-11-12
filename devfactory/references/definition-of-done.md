@@ -28,11 +28,12 @@ requester at acceptance, against every criterion's evidence, never here.
 
 1.1 The profile's test gate passes at the revision under evaluation.
     `[machine: the profile's test gate]`
-    With a Recorded gate in the profile, the gate command's output on that revision decides
-    it, whether a fresh run or the record of an earlier pass on the same tree covering the
-    full gate; a record from any other tree never counts. A run whose precondition, as the
-    profile's Test gate names it, was unavailable leaves 1.1 unchecked, not failed, until
-    the precondition is restored and the gate run again.
+    The gate's pass is the change reviewer's or the Done judge's own fresh run of the full
+    gate on that revision, made as [`test-gate.md`](test-gate.md) says under "The
+    independent run"; a printed record never decides it. A test that fails on that run and
+    passes on its one rerun passes, and the report names it as unstable. A run whose
+    precondition, as the profile's Test gate names it, was unavailable leaves 1.1
+    unchecked, not failed, until the precondition is restored and the gate run again.
 
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the
@@ -86,7 +87,9 @@ requester at acceptance, against every criterion's evidence, never here.
 
 4.3 Every disposition is still true of the delivered result. `[judgment]`
     The approach can falsify a disposition that was true of the request, such as a change
-    declared to leave existing data alone that rewrites it.
+    declared to leave existing data alone that rewrites it. A disposition's bound exceeded
+    as built, such as a read count or a load time over the bound the disposition states,
+    fails 4.3.
 
 ### 5. Nothing beyond the request
 
@@ -96,13 +99,12 @@ requester at acceptance, against every criterion's evidence, never here.
 
 ### 6. For a parent issue
 
-6.1 Every sub-issue is done in the combined result, and every parent criterion is met by
-    it, including what no single sub-issue could show. `[judgment]`
-    Every sub-issue done is the parent's outcome under the card standard, never a parent
-    criterion, and the Done judge establishes it itself from the revision under
-    evaluation: each sub-issue's change is merged into it, and conditions 1 to 5 hold
-    there for each sub-issue's card and spec. No artifact is captured for these process
-    facts; the judge's verdict is their record.
+6.1 Every sub-issue is done in the combined result. `[judgment]`
+    Every sub-issue done is the parent's outcome, and a parent has no criteria of its own.
+    The Done judge establishes it itself from the revision under evaluation: every
+    sub-issue's change is merged into it, and conditions 1 to 5 hold there for each
+    sub-issue's card and spec, looked at hardest for what no single review could see. No
+    artifact is captured for these process facts; the judge's verdict is their record.
 
 ## Exclusions
 
@@ -116,8 +118,8 @@ requester at acceptance, against every criterion's evidence, never here.
 - **1.2** The test types the request type requires: the Done judge runs and reads them
   until a command of `scripts/devfactory.py` covers them.
 
-Condition 1.1 needs no script of the plugin's: the profile's test gate command decides it,
-and a Recorded gate is the project's own command, under the contract in
-[`profile-template.md`](profile-template.md). Condition 2.1 is
+Condition 1.1 needs no script of the plugin's: the profile's test gate decides it, by its
+Forced rerun where it names a Recorded gate and by its Command otherwise, both the
+project's own commands under the contract in [`profile-template.md`](profile-template.md). Condition 2.1 is
 decided by `evidence-check`, given the criterion IDs `criteria-ids` prints, because every
 criterion has an evidence row (Ready 7.1) and so an evidence folder of its own.

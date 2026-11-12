@@ -7,10 +7,17 @@ criteria; the spec holds everything else a builder needs, and cites criteria by 
 IDs, never by position. What makes a spec Ready is in
 [`definition-of-ready.md`](definition-of-ready.md); the conditions named below are its.
 
+A parent issue has no spec. Its folder at the specs path, `<specs path>/<parent id>/`, is
+the run's records folder: it holds only `receipts.md` (the set's ready receipt), `gaps.md`
+(the gap entries about the work order, Ready 8.2, and others the set raises) and
+`reviews.md`, each created when first written, laid out as below. `release` ledgers and
+deletes it like a spec folder.
+
 Each prompt in italics says what the section holds; replace it. Delete any line or section
 marked *(when there is any)* that has nothing to say, and drop the marker where it stays.
 Every other section stays, because silence there is not a valid answer. The header and the
-sections run general to specific, in this order.
+sections run general to specific, in this order. What the Status row holds, and when it
+changes, is under "The status" in the `grill` skill.
 
 ---
 
@@ -100,10 +107,7 @@ exclusion or a delegation.*
 
 ## Evidence plan
 
-*One row per criterion. Each row could be failed by a delivered artifact. On a parent's
-spec, rows for the parent's own criteria only; none for the run's process facts (sub-issues
-merged and reviewed, the gate passing on the parent branch), which the Done judge
-establishes itself. A row whose checkpoint can show it only once the release is live is
+*One row per criterion. Each row could be failed by a delivered artifact. A row whose checkpoint can show it only once the release is live is
 marked by writing "(post-release)" after its checkpoint, as in "Production (post-release)",
 and only when no checkpoint before release could fail it (Ready 7.4). Repository is the
 built-in checkpoint for command output from a clean checkout, git history and the card's
@@ -183,16 +187,23 @@ The gap record. Gaps start at Ready: a question answered before the spec first e
 is folded into the card or the spec, not recorded as a gap. From Ready onward, every
 question asked, every refused acceptance and every Done-check miss is an entry. Entries are
 appended, newest last, by `gaps add <dir> --stage <stage> --question <text> --condition
-<condition>`, adding `--resolved <version>` when the resolving amendment already exists;
+<condition>`, adding `--resolved <version>` when the resolving amendment already exists and
+`--kind request-change` when the requester changed their mind rather than answered a miss;
 the command writes this form with the date:
 
 ```markdown
 ## <date> — <stage>
 
 - **Question or refusal:** <the question as asked, or the refusal in the requester's words>
-- **Let through by:** <Ready or Done condition, for example Ready 3.2>
+- **Let through by:** <one Ready or Done condition, written Ready <id> or Done <id>, for example Ready 3.2>
+- **Kind:** <miss, or request-change>
 - **Resolved by:** <amendment version, or "open">
 ```
+
+The condition is exactly one condition in that form, with an id that exists in
+[`definition-of-ready.md`](definition-of-ready.md) or
+[`definition-of-done.md`](definition-of-done.md); the command refuses anything else. The
+kind is `miss` unless `--kind` says otherwise.
 
 The stage is the card's lifecycle stage when the entry is made: Approval, Development, Done,
 Acceptance, or Release for a post-release row that showed its criterion does not hold, which
@@ -219,28 +230,42 @@ it; nobody edits it by hand.
 - **Request**, written by whichever card skill or `grill` gate finds that the card meets the
   Definition of Request: `receipt write <dir> --check request --card <n>` (or `--text
   <file>`) `--facts <file>`. Its fields are the Card revision, as "The stamp" defines it;
-  the Card facts, a hash of the facts file; the Standard, the plugin's version with a hash of
-  its references and agents, so an edit to them changes it even without a version bump; and the
+  the Card facts, a hash of the facts file; the Standard, a hash of the plugin's references
+  and agents alone, so an edit to them changes it and a version bump alone does not; and the
   Profile, a hash of the profile and its team modules. The facts file holds, one per line,
   everything else the card reviewer read about the card, as raw values from the tracker:
   `field <name>: <value>` for each team field, `comment <date> <author>: <text>` for each
   comment with its whole text on the one line, `attachment <name> <size> <date>` for each
-  attachment, `parent <id>` for its parent and `sub-issue <id>` for each sub-issue in the
-  tracker's order, and `related <what>: <value>` for each piece of related data a team
-  module names. Order and spacing do not matter, except among the sub-issue lines, whose
-  order is the one the work order is judged against. A card's first passing review creates this folder
+  attachment, `parent <id>` for its parent and `sub-issue <id>` for each sub-issue, and
+  `related <what>: <value>` for each piece of related data a team module names. Order and
+  spacing do not matter; the sub-issue lines are compared as a set. A card's first passing review creates this folder
   to hold the receipt, so the folder exists before `spec.md` does; a folder without
   `spec.md` is not a spec.
-- **Ready**, written by `grill` when its last check finds the spec Ready, and by
-  `check-ready` when its check finds nothing open: `receipt write <dir> --check ready --specs
-  <file>`, the file naming, one per line, every spec folder the check measured together,
-  written in the folder of the card the check was run for (the parent, for a parent issue).
+- **Ready**, written by `grill` and `check-ready` after a check found the spec Ready, or the
+  requester settled everything it found, as "The ready receipt" in
+  [`spec-procedure.md`](spec-procedure.md) says: `receipt write <dir> --check ready --specs
+  <file> --commit <rev>`, the file naming, one per line, every spec folder the check
+  measured together, and the commit being the one the checker reported reading. It is
+  written in the folder of the card the check was run for; for a parent's set, in the
+  parent's records folder, with `--parent <id>`, which also records the parent card's
+  revision as the Parent card, and `receipt check` is given the same `--parent`.
   Its fields are the Specs measured; the Specs content, a hash of every file in them except
-  `receipts.md`, with the Status row's value left out, so approval keeps it matching; the Gap
-  sources, a hash of the ledger and every live `gaps.md`; the Standard; the Profile; and the
-  Repo commit, the head the check read. The Repo commit matches while that commit is an
+  `receipts.md` and `reviews.md`, with the Status row's value left out, so approval keeps it
+  matching; the Gap sources, a hash of the ledger and every live `gaps.md`; the Standard; the
+  Profile; the Parent card, for a parent's set; and the Repo commit, the commit the checker
+  reported reading. The Repo commit matches while that commit is an
   ancestor of HEAD and nothing outside the specs path and `.devfactory/` differs between
   them, since everything under those is fingerprinted on its own.
+
+### `reviews.md`
+
+The review record: one block per change review or Done judgment, written only by
+`devfactory reviews add <dir> --round <n> --verdict <PASS|FAIL|DONE|NOT DONE> --findings
+<file>`, never by hand. Each block is headed `## <date> — round <n> — <verdict>` and holds
+one line per finding, written `- <Done id> | <criterion ID or -> | <text>`. At release
+`reviews ledger <dir> --card <n> --ledger .devfactory/reviews.md` appends the blocks under
+the card's heading in the project's review ledger. The file is left out of the spec-content
+hash, and `spec-lint`, `evidence-check` and `gaps check` ignore it.
 
 ### `evidence/`
 

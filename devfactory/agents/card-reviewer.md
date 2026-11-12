@@ -24,8 +24,10 @@ The prompt that started you gives you:
 - the card: each part with the field it is in or will be written to, each team
   field's value, the related data any team module names, its comments with
   their dates, the names of its attachments, whether it is a parent issue or a
-  sub-issue and of which parent, for a parent issue its sub-issues in the
-  tracker's order (for a card not yet created, the draft and the names of
+  sub-issue and of which parent, for a parent issue the numbers of its
+  sub-issues as the tracker lists them, in any order, or for a set not yet
+  created the placeholder each draft sub-issue stands under (for a card not yet
+  created, the draft and the names of
   the files to be attached; for a rewrite of an existing card, also any
   comments to be posted with it, the criteria with their IDs as they stand on
   the card now, and the highest criterion ID the card has ever carried);
@@ -75,7 +77,15 @@ particular:
   card's scope holds several independently deliverable outcomes, as information,
   never as a failure.
 
-Check, in the standard's order, then placement and team fields:
+Check, in the standard's order, then placement and team fields. On a parent
+issue, check only items 2, 9, 10 and 11 to 14, and the purpose, as "Parent
+issues" in the card standard describes it: one short paragraph saying why the
+cards belong together, stating no requirement and restating no sub-issue. Any
+other part on a parent issue — a summary, the issue or request, what needs to be
+achieved, scope, supporting information, open questions, acceptance criteria —
+is a breach, to be removed; name each criterion among them that states
+something the combined result shows, as belonging on the sub-issue that
+completes it.
 
 1. **Parent line** (sub-issue only) — the description opens with one line
     naming the parent issue, before the summary. A sub-issue without it is a
@@ -110,10 +120,7 @@ Check, in the standard's order, then placement and team fields:
     person can check is fine if it says exactly what they should see. A criterion
     longer than one sentence, one carrying a sub-list, and one that states an
     edge case are breaches; an edge case the criteria do not cover is at most a
-    suggestion. On a parent issue, a criterion that restates its outcome or a
-    step of the run (every sub-issue done, merged or reviewed, the tests passing
-    on the combined result) is a breach, to be removed; a parent whose criteria
-    section says it has none beyond its sub-issues' meets the module.
+    suggestion.
     **Stable IDs:** every criterion opens with an ID of the form `C1`, `C2`, and
     no two share one. For a rewrite of an existing card, compare with the
     criteria as they stand on the card now: each criterion that is kept,
@@ -123,16 +130,17 @@ Check, in the standard's order, then placement and team fields:
     renumbering — an ID that now names a different criterion than it did — are
     breaches. A gap in the numbering is never a breach.
 9. **Work order** (parent issue only) — judged by its module, as a team field
-    is: present on a parent issue and on no other card; lists every sub-issue
-    once, in the order to work them; each wait names the sub-issue it waits on
-    and one of the module's three reasons, and any other reason is a breach;
-    each entry names what may run alongside it; a wait on another parent is only
-    for that parent's work; a criterion it cites is cited by its ID. A
-    sub-issue missing from it, or an order that differs from the tracker's
-    sub-issue order, is a breach.
+    is: present on a parent issue and on no other card; names every sub-issue
+    exactly once, by its number only (in a draft, by its placeholder), in the
+    order to work them; each wait names the sub-issue it waits on and one of the
+    module's three reasons, and any other reason is a breach; each entry names
+    what may run alongside it; a wait on another parent is only for that
+    parent's work; a criterion it cites is cited by its ID. A sub-issue missing
+    from it or named twice, an entry for an issue that is not one of its
+    sub-issues, and a sub-issue named by its title or scope are breaches. The
+    order the tracker lists the sub-issues in is never judged.
 10. **Suggested model and effort** — judged by its module, as a team field is,
-    and by "Throughout the card" only: present on every card, after the
-    acceptance criteria and any work order; one line naming a model and an
+    and by "Throughout the card" only: present on every card, as its last part; one line naming a model and an
     effort level of Low, Medium or High, then a short reason drawn from the work. Its absence,
     or an effort level outside the three, is a breach. Never report it as text a
     reader does not need.

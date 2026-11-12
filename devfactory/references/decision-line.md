@@ -34,7 +34,9 @@ answers is not asked either: the answer is followed and cited.
 ## Before anything is asked
 
 Every question any skill would put to the requester, a go-ahead included, first goes
-through two tests, in this order:
+through two tests, in this order. This holds for request grilling
+([`working-a-card.md`](working-a-card.md), "Request grilling") as much as for every other
+question:
 
 1. **The profile's Standing answers.** When an entry answers it, act on that answer and
    cite the entry; nothing is asked.
@@ -51,7 +53,8 @@ not asked. The stops that remain are these:
 - an owner step whose moment has arrived, such as a production write, which only the
   requester takes;
 - the acceptance itself;
-- the release, unless the requester has already authorised it (`accept`, step 6);
+- the release, unless the requester has already authorised it, as `accept` and `release`
+  say;
 - a change review or Done judgment that still fails after the one extra round that
   "Findings after the review limit" allows;
 - the profile writes `curate` proposes, asked once per curation.
@@ -64,10 +67,14 @@ nothing an observer sees or can do, nothing persisted data ends up as, and not t
 a missing or weak test, an incomplete evidence record or sidecar, a gap entry not
 written, or a spec that no longer matches the built code while the behaviour it describes
 is unchanged. When every finding is on the developer's side, it is fixed and the work
-carries on: a code fix gets one more review, and a spec-only amendment goes on without
-one. Each fix records its gap entry as usual. A finding that changes what an observer sees
-or can do, what persisted data ends up as, or scope goes to the requester, with the rest
-of that round's findings.
+carries on. A code fix gets one more review. Carrying on without a further review is
+allowed only when each fix is a spec amendment made through `grill` and
+`devfactory spec-only <spec dir> --base <the failed revision>` prints `spec-only`. The
+report then says, in these words, "no review passed this revision", lists the last
+review's findings and their amendments, and never says the card passed. Each fix records
+its gap entry as usual. A finding that changes what an observer sees or can do, what
+persisted data ends up as, or scope goes to the requester, with the rest of that round's
+findings.
 
 ## Recording a delegated call
 

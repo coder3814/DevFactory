@@ -28,21 +28,26 @@ the owner's answer or acceptance, or stop for any reason, run
 `devfactory end configure-project` first, and `devfactory begin configure-project` again
 when you resume. A marker expires after the profile's Marker lifetime (12 hours by
 default), and `begin` refreshes it. Markers and the profile are found at the repository
-(worktree) root, wherever the shell's working directory is.
+(worktree) root, wherever the shell's working directory is. When `begin` prints
+`plugin-changed`, load this skill again before you continue.
 
-Read these first, in full:
+**Read these first, in full.** A file you have already read in full in this session, under
+the plugin version `begin` printed, need not be read again.
 
 - `../../references/profile-template.md` — what you are writing, section by
   section.
+- `../../references/test-gate.md` — when the test gate runs and what a Recorded
+  gate must guarantee, so the Test gate entries you propose fit it.
 - `../../references/card-standard.md` — the parts of a card and the defaults
   for where each is written.
 - The binding for the board's tracker: `../../references/bindings/azure-devops.md`
   for Azure DevOps, `../../references/bindings/github-projects.md` for GitHub
   Projects. Ask which tracker the board is in if the project does not say.
-- `../../references/definition-of-ready.md`, condition 4.1 — the core list of
-  fixed concerns the project may extend.
 - `../../references/spec-template.md` — what a spec folder holds, so the paths
   and entries you propose fit it.
+
+From `../../references/definition-of-ready.md` read only the section "4. The fixed
+concerns are disposed": the core list of fixed concerns the project may extend.
 
 This skill reads the tracker and the repository. It writes only the profile and
 its team modules, under `.devfactory/` at the project's root, the allow entries
@@ -71,10 +76,10 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
    Marker lifetime) is not offered: its absence is the answer. Offer to fill
    only a section that has no default, such as the test gate or the
    environments, through its step. Offer to remove a line that only restates a
-   default, a Permissions section, which `.claude/settings.json` now records,
+   default, a Permissions section, which `.claude/settings.json` records,
    and an entry that copies what the project's instructions, decisions or
    skills already say, which becomes a pointer. A Folding or Stages
-   section the template no longer has is read by nothing: offer to remove it,
+   section, which the template does not have, is read by nothing: offer to remove it,
    and, where the owner wants their old stage moves kept, to write them as event
    hooks in step 6. If the project has
    instead an old `.card-standard/<board>.md`, read it and its
@@ -93,8 +98,8 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
    On GitHub Projects, list the owner's projects and ask which one, then its
    board views and which one; read the view's column field and options and the
    project's fields, and ask which repository and issue type new cards go to
-   and how the team marks an epic. Ask how the board marks a parent issue and
-   its sub-issues when the binding leaves a choice.
+   and how the team marks an epic. Record nothing about how a parent issue and
+   its sub-issues are linked: that is the binding's, in its Sub-issues section.
 4. **Place the parts.** Start from the defaults: the title in the title field,
    every other part in the description. For each field on the work item type
    that could hold a part, such as an acceptance criteria field or a custom
@@ -137,16 +142,20 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
    manifest's test script, a make target, a solution or project file, or the
    test step of a continuous-integration workflow, and propose the command that
    runs the whole existing test suite. Ask the owner to confirm or correct it.
-   Then ask whether the project has, or wants, a recorded gate: a command of its own
-   that records each pass against the git tree it ran on and prints that record instead
-   of rerunning when the same tree is tested again, so the gate is not rerun on code a
-   recorded run already passed. Explain the contract the "Recorded gate" entry in
-   `../../references/profile-template.md` gives (written only by the command after its
-   own pass, never for a dirty tree, keyed to `HEAD^{tree}` and the tests passed, stored
-   where every worktree and a reviewer's checkout read it, with a forced rerun), and that
-   the project writes and owns the command; the plugin ships none. When the owner names
-   one, record it with its Forced rerun and how it takes a selection of tests. None is a
-   valid answer: the gate points then run the Command, as before.
+   Then ask whether the project has a command that runs only the tests a change
+   touches, which a build runs while building, and record it as Affected tests;
+   none is a valid answer. Then ask whether the project has, or wants, a recorded
+   gate: a command of its own that records each pass against the git tree it ran on
+   and prints that record instead of rerunning when the same tree is tested again,
+   so the gate after a rebase is not rerun on code the review's run already passed.
+   Explain the contract
+   `../../references/test-gate.md` gives under "Recorded gates" (written only by the
+   command after its own pass, never for a dirty tree, keyed to `HEAD^{tree}` and the
+   tests passed, stored where every worktree and a reviewer's checkout read it, with a
+   forced rerun, which is the reviewer's fresh run), and that the project writes and owns
+   the command; the plugin ships none. When the owner names one, record it with its
+   Forced rerun and how it takes a selection of tests. None is a valid answer: every
+   point that runs the gate then runs the Command.
 9. **List the environments.** Propose environments from what the repository
     reveals, such as a local run configuration, a container compose file or a
     deploy workflow and the targets it deploys to. Ask which environments exist,
@@ -187,20 +196,26 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
     and when, and the release procedure: the project's own steps, or the skill
     or document it names, for pushing, releasing and closing finished work.
     Where the rules are silent, read the repository's branches and its deploy
-    workflows and ask.
+    workflows and ask. Say that the coordinator briefs each sub-issue's session
+    with the branch the Sub-issue branch pattern names, and that a session the
+    app started on another branch keeps that branch and reports its name.
 15. **Set the sessions default.** Ask for the default model and effort level
     (Low, Medium or High) a build session uses when a card suggests none. Say
     that `coordinate` runs a parent issue as one session per sub-issue through
     the Claude desktop app's session tools, so a project that runs parent
-    issues needs the Claude desktop app; a standalone card built with `build`
-    does not.
+    issues needs the Claude desktop app; a standalone card, which `start` hands
+    to `build`, does not.
 16. **Choose the hooks.** Show the four hooks as the template's "Hooks and
     permissions" describes them — the tracker guard, the git guard, the stamp
     notice and the session context — say that all four are on by default, and
-    ask whether the owner wants any off. Say that the tracker guard covers
-    `gh api graphql` mutations and `gh api` calls with `-f`, `-F`, `--input`,
-    `--method` or a non-GET `-X`, besides the issue, project and board
-    commands. Record an `off` line only for each hook the owner turns off, and
+    ask whether the owner wants any off. Say that both guards judge every
+    command a session gives its Bash or PowerShell tool, and that the tracker
+    guard refuses every `gh issue`, `gh project`, `gh label` and
+    `az boards work-item` subcommand that is not a known read, every `gh api`
+    call that is not a GET, and every `az rest` call that is not a GET against a
+    work-item API, unless a skill that writes the tracker is running. Say that
+    the session context lists every skill by its full name, such as
+    `devfactory:start`. Record an `off` line only for each hook the owner turns off, and
     nothing for one left on. Then ask for the `Marker lifetime`, proposing the
     default of 12 hours: a marker older than that no longer counts as a running
     skill, and `begin` refreshes it. Record a `Marker lifetime` line only when
@@ -213,13 +228,21 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
     that skill's `begin` refreshes.
 17. **Choose the permissions.** Propose the allowlist entries for the
     project's `.claude/settings.json`, which is their only record (the profile
-    keeps no copy), read commands only, in the `Bash(<command> *)` spelling: the plugin's script, `Bash(python *devfactory.py*)`; the binding's
-    reads, `Bash(gh issue view *)`, `Bash(gh project item-list *)` and
-    `Bash(gh api -X GET *)` for GitHub Projects, or
-    `Bash(az boards work-item show *)` for Azure DevOps; and the repository
-    reads the skills and agents make, `Bash(git log *)`, `Bash(git show *)`,
-    `Bash(git diff *)`, `Bash(git status *)`, `Bash(git rev-parse *)` and
-    `Bash(git merge-base *)`. Read the project's `.claude/settings.json`, if
+    keeps no copy), read commands only, in the `Bash(<command> *)` spelling, as
+    one list that covers every read command the skills name, with the tracker
+    reads of the project's tracker only:
+    - `Bash(python *devfactory.py*)`, the plugin's script;
+    - for GitHub Projects, `Bash(gh issue view *)`, `Bash(gh project list *)`,
+      `Bash(gh project field-list *)`, `Bash(gh project item-list *)` and
+      `Bash(gh api -X GET *)`;
+    - for Azure DevOps, `Bash(az boards work-item show *)`;
+    - `Bash(git log *)`, `Bash(git show *)`, `Bash(git diff *)`,
+      `Bash(git status *)`, `Bash(git rev-parse *)`, `Bash(git merge-base *)`,
+      `Bash(git cherry *)`, `Bash(git worktree list *)`,
+      `Bash(git branch --list *)`, `Bash(git ls-tree *)` and
+      `Bash(git hash-object *)`.
+
+    Read the project's `.claude/settings.json`, if
     there is one, and say which entries it already allows. Ask the owner to
     accept, drop or add entries. Refuse any entry that writes, such as a
     tracker edit, a push or a merge: writes are never pre-approved.

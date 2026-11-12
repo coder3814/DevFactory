@@ -8,7 +8,7 @@ the work will consume, and the spec holds nothing the card does not ask for. Eve
 cheaply checkable way a spec commonly falls short of that purpose, and condition 9.3 tests
 the purpose itself, end to end. A spec that meets every condition and still forces a question
 mid-build has failed Ready by definition: the question is a readiness miss, recorded as a gap
-and routed back as a spec amendment, never answered as chat
+and routed back into the spec, never answered as chat
 ([`spec-template.md`](spec-template.md) gives the gap entry's form).
 
 A spec is **Ready** when every condition holds, evaluated over four objects:
@@ -38,8 +38,9 @@ checks come first; the end-to-end test, 9.3, is last.
 
 **Ready is not approved.** Ready says the spec is complete enough to build from unattended,
 not that it is what the requester wants. The requester approves the Ready spec once, and
-judges intent once at acceptance; a rejection at approval is a spec amendment that re-earns
-Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.md).
+judges intent once at acceptance; a change asked for at approval is an amendment of the
+spec, or, when it changes the card, a re-derivation of the spec from the changed card, and
+approval is asked again. Who draws which decisions is fixed by [`decision-line.md`](decision-line.md).
 
 ## Conditions
 
@@ -109,21 +110,23 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     extend it. Silence is not a disposition.
 
 4.2 Each disposition is true of the request as specified. `[judgment]`
-    When several sub-issues of one parent move the same figure, such as a page's load time,
-    a bundle's size or a query count, each sub-issue's disposition states the figure its
-    own change measured and names the siblings that also move it, and the parent's
-    disposition states the finished figure, measured on the parent branch once every one
-    of them is merged, with its evidence row under the parent criterion it bears on where
-    one does; it adds no criterion (4.3). It is
-    never keyed to the sub-issue that merges last, since sub-issues merge in the order they
-    finish. How the figure is measured and shared out is the developer's side of the
-    decision line, never a question for the requester.
+    A disposition about a figure only the build can measure, such as a read count, a load
+    time or a bundle size, states the bound the change must stay within and the evidence
+    row that measures it; it predicts no value, and is judged by whether it states the
+    bound and names the row, never by whether a predicted value is plausible. A bound
+    exceeded as built is a Done 4.3 finding, recorded against `Done 4.3`. Where several
+    sub-issues of one parent move the same figure, each states the bound for its own
+    change, and the finished figure is an evidence row on the sub-issue the work order puts
+    last among them. How the figure is measured and shared out is the developer's side of
+    the decision line, never a question for the requester.
 
 4.3 A non-trivial disposition's demands appear in the spec's requirements or evidence rows
     under the criteria they bear on. `[machine: the checker reads]`
     A disposition is non-trivial when it requires something to be done or shown, such as a
-    permission check, a measured limit, or a step before the deploy. A disposition covers
-    only the change the card asks for; it adds no criterion.
+    permission check, a measured limit, or a step before the deploy; a measured limit's
+    demand is the evidence row 4.2 has it name, and a shared figure's finished measure is
+    the row on the sub-issue 4.2 names. A disposition covers only the change the card asks
+    for; it adds no criterion.
 
 ### 5. The data population is checked
 
@@ -163,9 +166,6 @@ These conditions apply when the request's rules act on existing data.
 
 7.1 Every criterion has an evidence row naming artifact, what it shows, condition, how it is
     generated and the checkpoint. `[machine: spec-lint --criteria]`
-    A parent's rows cover its own criteria only. Nothing is planned for the run's process
-    facts (each sub-issue merged and reviewed, the gate passing on the parent branch),
-    which Done 6.1 has the Done judge establish itself; a row for one fails 7.4.
 
 7.2 Every row could be failed by a delivered artifact. `[judgment]`
     A row fails this when what it promises to show would appear whether or not the criterion
@@ -201,7 +201,9 @@ These conditions apply when the request's rules act on existing data.
 8.2 For a parent issue, the work order's waits each cite an allowed reason, no pair marked
     parallel would collide, and no wait holds back work that could run. `[judgment]`
     The allowed reasons are: needs the other's result; changes the same files; both need
-    something only one session can hold.
+    something only one session can hold. A parent issue has no spec: this condition is
+    judged from the parent card, with its sub-issues' specs, and its gap entries go in the
+    parent's records folder ([`spec-template.md`](spec-template.md)).
 
 ### 9. The spec grounds the work
 

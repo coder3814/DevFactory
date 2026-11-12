@@ -29,9 +29,11 @@ user's acceptance or decision, or stop for any reason, such as finding no profil
 resume. The tracker guard allows your card writes only while the marker is there. A marker
 expires after the profile's Marker lifetime (12 hours by default), and `begin` refreshes
 it. Markers and the profile are found at the repository (worktree) root, wherever the
-shell's working directory is.
+shell's working directory is. When `begin` prints `plugin-changed`, load this skill again
+before you continue.
 
-Read these first, in full:
+Read these first, in full. A file you have already read in full in this session, under
+the plugin version `begin` printed, need not be read again.
 
 - `../../references/card-standard.md` and every module it lists
 - `../../references/card-process.md` — the "Updating a card", "Additions
@@ -44,18 +46,33 @@ The skill runs in one of two modes, and its caller names which:
 - **Interactive**, the default, and the mode whenever the user starts this skill
   directly: you record and fold, show the user the result, and write only once
   they accept it.
-- **Settled**, named by a skill that hands you an answer the requester has
-  already given: a request question `grill` handed back, or a change asked for
-  at approval, a question relayed during a development run, the requester's
-  words on an acceptance not given, or a change the requester asks for during a
-  run. The requester's
-  answer is the acceptance: you write the fold
-  without a further round on its wording, and the requester may object
-  afterwards.
+- **Settled**, as "Settled mode" below says.
 
-A caller may also pass **no-rederive**, which skips step 6, when it has `grill`
-amend the spec for the same answer next, because the amendment carries the spec
-forward. Every other caller leaves step 6 to run.
+## Settled mode
+
+Any answer the requester has already given that changes a card comes here in settled
+mode, whichever skill received it, and so does a fix to a card's own consistency that
+needs no one's answer. These skills hand one over:
+
+- `grill`: a request question it handed back, once the requester has answered it; a
+  change the requester asks for at approval that would change the card; and a breach of
+  the card's own consistency that its request gate found and that needs no one's answer,
+  such as a stale model-and-effort reason or a sub-issue missing from the work order;
+- `check-ready`;
+- `build`;
+- `coordinate`;
+- `accept`.
+
+No other skill hands this skill a settled answer, and `re-evaluate-card` takes none. The
+requester's answer is the acceptance: you write the fold without a further round on its
+wording, and the requester may object afterwards. Then `grill` Re-derive brings the spec
+along, as step 6 says.
+
+A caller may also pass **no-rederive**, which skips step 6. The caller then owns the
+re-derivation: it runs `grill` Re-derive for the changed card itself. Every other caller
+leaves step 6 to run.
+
+## Steps
 
 1. **Begin.** Run `devfactory begin add-to-card`.
 2. **Read the card** in full, as "Read a card" describes, after loading the
@@ -63,7 +80,8 @@ forward. Every other caller leaves step 6 to run.
 3. **Record first.** Add what you were given to the card as a comment, in the
    giver's words and with its source where they gave one: interactive, the
    user's words; settled, the requester's answer as the caller passed it, with
-   the question it answers where the caller gives one. Attach any file provided,
+   the question it answers where the caller gives one, or the consistency fix
+   as the caller states it. Attach any file provided,
    and say in the comment what it shows. Recording happens before anything is
    folded in.
 4. **Fold** the addition into the card's parts, wherever the card sits on the
@@ -90,18 +108,15 @@ forward. Every other caller leaves step 6 to run.
    In either mode, when the criteria changed, the read-back includes
    `devfactory criteria-ids --card <id>` (on a tracker `gh` does not reach,
    `--text` with the card as read back).
-6. **Fire `readiness-lost`** when any part of the card changed and its spec line
-   points at a spec whose status is `Ready` or `approved`: the card no longer
-   matches the stamp. Fire it with `devfactory event readiness-lost --card <id>`,
-   as `../../references/events.md` says, whatever the mode; a hook that fails is
-   reported with its output.
-   **Re-derive the spec.** Skip this re-derivation when the caller passed
-   no-rederive.
+6. **Re-derive the spec.** Skip this step when the caller passed no-rederive.
    Otherwise, if the card has a spec line and any part of the card changed,
-   hand off to `grill` in re-derive mode as "Re-derive the spec" describes,
-   naming each part that changed, and say when the interface determination or a
-   scope boundary is among them. Report what changed in the spec. A comment
-   that changed no part changes nothing in the spec.
+   hand to `grill` Re-derive as "Re-derive the spec" describes, naming each part
+   that changed, and say when the interface determination or a scope boundary
+   is among them; `grill` fires whatever event its outcome calls for. Report
+   what changed in the spec. A comment that changed no part changes nothing in
+   the spec. A parent issue has no spec line: when its work order changed and
+   any of its sub-issues has a spec line, hand to `grill` for the parent, which
+   brings the set along.
 7. **End.** Run `devfactory end add-to-card`.
 
 This skill never writes the card's spec line, in either mode. `grill` writes it

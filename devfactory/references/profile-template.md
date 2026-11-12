@@ -70,6 +70,8 @@ where, so the readiness checker can read them.
 ## Test gate
 - Command: <the command that proves existing behaviour, or the procedure or script that
   selects and runs it, in the project's words>
+- Affected tests: <optional: the command a build runs while building, for the tests its
+  change touches>
 - Recorded gate: <optional: the command that runs the gate and records each pass, or prints
   the record of an earlier pass on the same tree, and how it is given a selection of tests>
 - Forced rerun: <with a recorded gate: the command that runs the gate again on a tree that
@@ -100,7 +102,8 @@ where, so the readiness checker can read them.
 - Integration branch: <branch>
 - Worktree layout: <where a session's worktree goes and how it is named>
 - Parent branch: <how a parent issue's branch is named>
-- Sub-issue branch: <how a sub-issue's branch is named>
+- Sub-issue branch: <how a sub-issue's branch is named, which the coordinator briefs each
+  session with>
 - Merging: <who merges what into which branch, and when>
 - Release: <the project's release steps, or the skill that holds them>
 
@@ -146,41 +149,28 @@ where, so the readiness checker can read them.
   `specs/`, and a Path line is written only for another path. The folder's layout is in [`spec-template.md`](spec-template.md). **Not code**
   is optional: paths, on one line and separated by commas, whose changes `evidence-check`
   never counts as a change to the code when it tests evidence for staleness, such as the
-  folder change notes go in. The specs path and `.devfactory/` never count without it.
+  folder change notes go in. The specs path and `.devfactory/` never count without it. A
+  parent issue run's records folder is under the specs path too, as `<path><parent id>/`,
+  holding only the run's `receipts.md`, `gaps.md` and `reviews.md`.
 - **Recorded decisions** is where the readiness checker reads the decisions that already
   answer a question.
 - **Test gate** is the command, or the named procedure or script, that proves existing
-  behaviour; a gate with a precondition, such as a container runtime, names it here. Done
-  condition 1.1 runs it at the revision under evaluation. A run whose named precondition
-  was unavailable proves nothing either way: it is unchecked, not failed, and the fix is to
-  restore the precondition and run again.
-- **Recorded gate** is optional. It is a command the project supplies and owns that runs
-  the gate and keeps a record of each pass, so that a tree already proven is not tested
-  again; the plugin defines only what the command must guarantee:
-  - A record is keyed to the git tree the run tested, `git rev-parse HEAD^{tree}`, and the
-    tests it passed, such as the test projects. A record is written only for a pass.
-  - A record is written by the command itself, after its own run passed, and never by a
-    session, an agent or a hand edit.
-  - No record is written when the working tree is dirty (`git status --porcelain` prints
-    anything), because then the tree that ran is not the tree the key names. On a dirty
-    tree the command never prints a record either: it runs the selected tests and reports
-    their result.
-  - Run on a tree that has a passing record covering the selected tests, the command
-    prints that record instead of running them.
-  - The output says whether it is a fresh run or a record, and names the tree, the tests
-    covered and, for a record, when and at which commit it was made, so a reader can check
-    the record belongs to the revision in hand. It exits 0 on a pass, fresh or recorded,
-    and non-zero on a failure.
-  - The records are stored outside the tracked tree, where every worktree of the
-    repository and a reviewer's clean checkout read the same store, such as a folder under
-    `git rev-parse --git-common-dir`.
-
-  The full gate is the command with no selection. With no Recorded gate entry, every point
-  that runs the gate runs Command, as before.
+  behaviour; a gate with a precondition, such as a container runtime, names it here. When
+  the gate runs, who runs it and what a recorded pass is worth are in
+  [`test-gate.md`](test-gate.md).
+- **Affected tests** is optional: the command a build runs while building, for the tests
+  its change touches, in the project's words, such as how it is given the changed files or
+  the tests to run. With none, the build selects those tests itself.
+- **Recorded gate** is optional: a command the project supplies and owns that runs the gate
+  and keeps a record of each pass, so that a tree already proven is not tested again, and
+  how it is given a selection of tests. What the command must guarantee is in
+  [`test-gate.md`](test-gate.md), "Recorded gates". With no Recorded gate entry, every point
+  that runs the gate runs the Command.
 - **Forced rerun** runs the tests again on a tree that already has a record and records the
-  new pass, for when a result depends on something outside the tree, such as a service, a
-  database or a dependency fetched at run time, and that has changed. It is required with a
-  Recorded gate.
+  new pass. It is the change reviewer's and the Done judge's fresh run, and it is also for
+  when a result depends on something outside the tree, such as a service, a database or a
+  dependency fetched at run time, and that has changed. It is required with a Recorded
+  gate.
 - **Environments** lists every place a checkpoint can be captured. A spec's evidence row
   names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
   the row promises. "Reached by" is in the project's words: a command, a deploy, a sign-in.
@@ -212,7 +202,9 @@ where, so the readiness checker can read them.
 - **Branches and merging** is how work moves into the integration branch and out to
   release: where worktrees go, how a parent branch and a sub-issue branch are named, who
   merges and when, and the release procedure, in the project's steps or the skill that
-  holds them. `coordinate`, `build` and `release` follow it. The change reviewer's base
+  holds them. `coordinate`, `build` and `release` follow it. A sub-issue's session works on
+  the branch its brief names; a session the app started on another branch keeps that
+  branch and tells the coordinator its name in its first report. The change reviewer's base
   revision is the merge-base of the card's branch with the parent branch, or with the
   integration branch for a standalone card, at the time of the review.
 - **Sessions** is the model and effort used when a card suggests none. The coordinator
@@ -224,15 +216,19 @@ where, so the readiness checker can read them.
 
 - **Hooks** switches off any of the plugin's four hooks for this project; all four are on
   by default, so a line is written only for a hook that is off, and a hook whose line says
-  off does nothing. The Marker lifetime line is written only when it is not 12 hours. The **tracker guard**
-  refuses a write to the tracker while no card skill is running, so every card change goes
-  through the card skills. The **git guard** refuses a push, or a merge or rebase into the
-  integration branch or a parent branch, while neither `release` nor `coordinate` is
-  running. The **stamp notice** says, when a prompt names a card that has a spec, whether
-  the spec is still current or the card has changed since it earned Ready; it never blocks.
-  The **session context** prints, when a session starts, where the profile is, the event
-  hooks the project has, which skill does what, and whether a card skill is running. The guards
-  read the markers in `.devfactory/.active/`.
+  off does nothing. The Marker lifetime line is written only when it is not 12 hours. Both
+  guards judge every command a session gives its Bash or PowerShell tool. The **tracker
+  guard** refuses every `gh issue`, `gh project`, `gh label` and `az boards work-item`
+  subcommand that is not a known read, every `gh api` call that is not a GET, and every
+  `az rest` call that is not a GET against a work-item API, unless a skill that writes the
+  tracker is running, so every card change goes through the skills that own it. The **git
+  guard** refuses a push, or a merge or rebase into the integration branch or a parent
+  branch, while neither `release` nor `coordinate` is running. The **stamp notice** says,
+  when a prompt names a card that has a spec, whether the spec is still current or the card
+  has changed since it earned Ready; it never blocks. The **session context** prints, when a
+  session starts, where the profile is, the event hooks the project has, which skill does
+  what, each by its full name (`devfactory:start` and the rest), and whether a card skill is
+  running. The guards read the markers in `.devfactory/.active/`.
 - **Permissions** are not kept in the profile. The project's `.claude/settings.json` is
   their record: `configure-project` writes the read-only allowlist entries there, so the
   skills' reads run without a prompt each time, such as reading a card, listing the board,

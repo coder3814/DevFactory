@@ -1,6 +1,6 @@
 ---
 name: curate
-description: Read the project's gap records, the ledger of released specs' gaps and every live spec's record, group the misses by the Ready or Done condition that let them through, test every standing answer and curated profile line for retirement, classify each proposal as plugin-general, the developer's side of the decision line, a profile section, a project document or a standing answer, drop what the plugin, the project's documents or the profile already hold or the requester has declined, and put the writes and retirements in one numbered question, writing to the profile only what the requester accepts, recording what they skip and reporting plugin defects and decision-line misses without writing them. Use after a release, or when the requester asks what the gap records show.
+description: Read the project's gap and review records, the ledgers of released cards' gaps and reviews and every live record, count each event once, group the misses by the Ready or Done condition that let them through with request changes listed apart, group review findings by Done condition and by text that repeats across cards, test every standing answer and curated profile line for retirement, classify each proposal as plugin-general, the developer's side of the decision line, a profile section, a project document or a standing answer, drop what the plugin, the project's documents or the profile already hold or the requester has declined, and put the writes and retirements in one numbered question, writing to the profile only what the requester accepts, recording what they skip and reporting plugin defects and decision-line misses without writing them. Use after a release, or when the requester asks what the gap records show.
 allowed-tools:
   - Read
   - Glob
@@ -32,12 +32,14 @@ agent works belongs in the plugin, never in Standing answers.
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
 is `../../scripts/devfactory.py` relative to this skill's folder.
 
-**Markers.** Run `devfactory begin curate` as your first action and
-`devfactory end curate` as your last, including when you stop to ask the requester or to
-report, and `devfactory begin curate` again when you resume. A marker expires after the
-profile's Marker lifetime (12 hours by default), and `begin` refreshes it. Markers and the
-profile are found at the repository (worktree) root, wherever the shell's working
-directory is.
+**Markers.** Curate runs under its own marker, which the git guard accepts for the
+commits steps 6 and 7 make on the integration branch. Run `devfactory begin curate` as your
+first action and `devfactory end curate` as your last, including when you stop to ask the
+requester or to report, and `devfactory begin curate` again when you resume. A marker
+expires after the profile's Marker lifetime (12 hours by default), and `begin` refreshes
+it. Markers and the profile are found at the repository (worktree) root, wherever the
+shell's working directory is. When `begin` prints `plugin-changed`, load this skill again
+before you continue.
 
 The requester is asked one question per curation pass, as step 7 says, and nothing else;
 before it, every proposal passes "Before anything is asked" in
@@ -47,8 +49,11 @@ never reaches them.
 
 ## Read these first, in full
 
+A file you have already read in full in this session, under the plugin version `begin`
+printed, need not be read again.
+
 - [`../../references/spec-template.md`](../../references/spec-template.md): the gap entry's
-  form.
+  form and the review record's.
 - [`../../references/definition-of-ready.md`](../../references/definition-of-ready.md) and
   [`../../references/definition-of-done.md`](../../references/definition-of-done.md): the
   conditions entries name.
@@ -63,21 +68,30 @@ never reaches them.
 
 ## Steps
 
-1. **Load the profile** with `devfactory profile`, read from the integration branch's head
-   so that another run's committed curation counts, with the project's Standing answers,
+1. **Load the profile** with `devfactory profile --rev <integration branch>`, which reads
+   it at the integration branch's head, so that another run's committed curation counts,
+   whatever worktree this runs in, with the project's Standing answers,
    Declined proposals and Proposals awaiting an answer. An entry awaiting an answer is
    another run's curation under way, whatever worktree it runs in, unless it is older than
    the profile's Marker lifetime, when that run is taken as abandoned and the entry no
    longer counts.
 
-2. **Collect every gap entry** by reading the files themselves: the project ledger
-   `.devfactory/gaps.md`, which holds every released spec's entries prefixed with its card's
-   id, and each live `gaps.md` under the profile's specs path on the integration branch. Keep each entry's card, its stage and
-   its date, and its request types: from the ledger heading for a released entry, from
-   the spec header for a live one.
+2. **Collect every gap entry and review record** by reading the files themselves, on the
+   integration branch: the gap ledger `.devfactory/gaps.md`, which holds every released
+   card's entries under headings naming its card, and the review ledger
+   `.devfactory/reviews.md`, which holds every released card's review blocks under its
+   card's heading; and each live `gaps.md` and `reviews.md` under the profile's specs path,
+   a parent run's records folder included. Keep each gap entry's card, its stage, its date,
+   its Kind (an entry with no Kind is a miss) and its request types: from the ledger
+   heading for a released entry, from the spec header for a live one. Keep each review
+   finding's card, round, verdict, Done condition, criterion ID and text.
 
-3. **Group them** by the condition named in "Let through by", and within each condition by
-   stage, and by request type. Note any entry still open.
+3. **Group them.** Count an event once: gap entries with the same question on the same
+   date are one event, however many cards or records carry it. Group the misses (Kind
+   `miss`) by the condition named in "Let through by", and within each condition by stage,
+   and by request type. List the request changes (Kind `request-change`) apart, and never
+   count one against a condition. Group the review findings by their Done condition, and by
+   text that repeats across cards. Note any entry still open.
 
 4. **Test for retirement.** Before drawing anything new, test every standing answer, and
    every profile line a curate or release pass wrote (the profile's history says which),
@@ -91,9 +105,9 @@ never reaches them.
    substance now lives, or that it no longer applies.
 
 5. **Draw the proposals**, each resting on the entries that support it: checker emphasis,
-   a condition that let through more than one entry, with the request types it let them
-   through for; a question asked and answered; a missing project fact; and a question that
-   was really the developer's call. Then classify each by the first of these tests that
+   a condition that let through more than one event, with the request types it let them
+   through for; a question asked and answered; a missing project fact; a question that
+   was really the developer's call; and a review finding whose text repeats across cards. Then classify each by the first of these tests that
    holds:
    1. **Plugin-general.** It would hold on a project with a different tracker, no mock-ups
       and no production; or it changes how a plugin skill, agent or condition behaves; or
@@ -124,8 +138,10 @@ never reaches them.
    is matched in substance, not by its wording: "write a page-cost test for each page" and
    "every page gets a cost test" are one proposal.
 
-6. **Report**: the count per condition, then the retirements, then each remaining proposal
-   numbered with its class and its entries, the writable ones (classes 3 and 5) first.
+6. **Report**: the count of events per condition, the request changes apart, the review
+   findings per Done condition and those that repeat across cards, then the retirements,
+   then each remaining proposal numbered with its class and its entries, the writable ones
+   (classes 3 and 5) first.
    Plugin defects, decision-line misses and checker emphasis are reported and not asked
    about. Record each plugin defect under Declined proposals as "sent to the plugin", with
    the date and the run or card, so it is not proposed again; this is the pass's own

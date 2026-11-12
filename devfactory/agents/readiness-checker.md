@@ -26,7 +26,8 @@ The prompt that started you gives you all of these. If any is missing, say which
   current revision as the dispatching skill computes it, and its stage, the point the work
   is at as the dispatching skill names it, never a board column. For a parent issue:
   the parent and every sub-issue, saying which are released.
-- **The spec paths**: one spec folder per card checked.
+- **The spec paths**: one spec folder per card checked that has a spec. A parent issue has
+  none.
 - **The profile path**: `.devfactory/profile.md`.
 - **The gap sources to read first**: the project ledger `.devfactory/gaps.md`, which holds
   the gap entries of released cards, each prefixed with its card's ID, and every live
@@ -48,12 +49,14 @@ The prompt that started you gives you all of these. If any is missing, say which
    Concern extensions, Owner-step types, Wireframe fidelity, Branches and merging, and
    Standing answers. Read the recorded decisions it names wherever they bear on a card.
 3. **Read each card and its spec in full**, then the parts of the repository the spec
-   relies on. Skip a sub-issue that is released and list it as skipped.
+   relies on. Skip a sub-issue that is released and list it as skipped. A parent card has no
+   spec: judge 8.2, and whatever you judge across the set, from the parent card with its
+   sub-issues' specs.
 4. **At development start**, also read what changed in the repository between the spec's
    stamped commit and the branch head you were given (`git diff --stat <stamp>..<head>`, then
    the changes that touch what the spec relies on), and re-test every condition whose
    grounding those changes touch.
-5. **Run the script's checks for each card**, from the repository path, before judging
+5. **Run the script's checks for each card with a spec**, from the repository path, before judging
    anything, and keep each command's output for the report:
    - `devfactory criteria-ids --card <id>` prints the card's criterion IDs and decides 2.1.
      Save the IDs it prints to a temporary file outside the repository.
@@ -63,8 +66,8 @@ The prompt that started you gives you all of these. If any is missing, say which
      it prints `match` or `changed <old> <new>`, then `ancestor` or `not-ancestor`.
    Exit 0 is a pass and exit 1 a fail; exit 2, a usage or environment error, leaves the
    conditions that command decides unchecked, with its error quoted.
-6. **Apply every condition of `definition-of-ready.md`, in its order, to each card.** By
-   mode:
+6. **Apply every condition of `definition-of-ready.md`, in its order, to each card with a
+   spec, and 8.2 alone to a parent card.** By mode:
    - `[machine: <command>]`: the command's output from step 5 decides it. Quote the output
      line that fails it, or "clean" for a pass. Never overrule a command by reading.
    - `[machine: the checker reads]`, a condition no command covers yet: decide it from the
@@ -116,17 +119,15 @@ The prompt that started you gives you all of these. If any is missing, say which
    every work-order fault (8.2): a wait citing no allowed reason, a pair marked parallel
    that would collide, a wait holding back work that could run, such as a wait on another
    parent that holds out for its release, its board column or its closed card instead of
-   its code being on the integration branch. On a parent's spec, an evidence row for a
-   process fact of the run (sub-issues merged or reviewed, the gate passing on the parent
-   branch) fails 7.4, to be cut, since the Done judge establishes those itself; a parent
-   criterion that states one is a breach of the card standard, reported for the card to
-   drop it, never a question. Across a parent's sub-issues, find every figure that the
-   dispositions of more than one of them state (a load, a size, a count, a cost): each such
-   disposition must state the figure its own change measured and name the others, and the
-   parent's disposition must state the finished figure measured on the parent branch once
-   all of them are merged, with an evidence row under the parent criterion it bears on
-   where one does, never a new criterion (4.3). One that is missing, or one keyed to a
-   "last to merge" sub-issue, fails 4.2, and either is a delegation, never a question.
+   its code being on the integration branch. Judge every disposition about a figure only
+   the build can measure (a read count, a load time, a size, a cost) by whether it states
+   the bound the change must stay within and names the evidence row that measures it, never
+   by whether a predicted value is plausible; one that predicts a value instead, or names no
+   row, fails 4.2. Across a parent's sub-issues, find every figure the dispositions of more
+   than one of them move: each must state the bound for its own change, and the finished
+   figure must be an evidence row on the sub-issue the work order puts last among them,
+   adding no criterion (4.3). One that is missing fails 4.2, and is a delegation, never a
+   question.
 
 ## Rules
 
@@ -197,7 +198,8 @@ delegation.
       against each recorded class.
 - [ ] I ran `criteria-ids`, `spec-lint` and, where 9.2 applies, `stamp-check` for every
       card, and every condition a command decides quotes that command's output.
-- [ ] Every condition 1.1 to 9.3 has a row for every card checked, none left blank.
+- [ ] Every condition 1.1 to 9.3 has a row for every card checked that has a spec, and 8.2
+      a row for a parent card, none left blank.
 - [ ] Every fail and every judgment pass rests on text I quoted or a section I named.
 - [ ] Nothing I could not check is reported as a pass.
 - [ ] Every decision is sorted by the decision line; nothing on the developer's side is a

@@ -24,9 +24,10 @@ If the project has no profile, touch no tracker: tell the user, and offer to run
 
 Read the whole card before judging it: every field the profile writes a part
 to, every additional field it names, every comment with its date and author, the
-names of its attachments, whether it is a parent issue or a sub-issue and of which parent, as the binding says to
-read it, the spec line if it has one, and the related data any team module
-names. Note the highest criterion ID the card has ever carried, from its
+names of its attachments, whether it is a sub-issue and of which parent, as
+the binding says to read it, for a parent issue its sub-issues, as the
+binding's "Sub-issues" section lists them, the spec line if it has one, and the
+related data any team module names. Note the highest criterion ID the card has ever carried, from its
 criteria, its comments and, where the tracker keeps one, its revision history;
 `criteria-ids --card <n>` lists the IDs the criteria carry now. A card
 written before the profile, or under an earlier one, may hold a part in another
@@ -52,9 +53,9 @@ and hand the card to the reviewer only once you believe it meets the standard.
 Give every criterion its stable ID as the acceptance criteria module says,
 keeping each existing ID with its criterion, and run `criteria-ids --text <file>`
 on the draft, which fails on a duplicate ID. Write the suggested model and
-effort for the card as it now stands, and on a parent issue the work order, with
-the tracker's sub-issue order set to match it when the card is written. On a
-sub-issue, open the description with the line naming its parent.
+effort for the card as it now stands. On a sub-issue, open the description with
+the line naming its parent. A parent issue holds only the parts "Parent issues"
+in `card-standard.md` lists, shaped from the template's parent skeleton.
 Your own check earns the handoff; it is not the verdict.
 
 Once the card's parts are shaped, apply each team module in the profile to the
@@ -70,7 +71,8 @@ brief. Give it the full paths to `card-standard.md` and the project profile and
 its team modules, and the card's full content — each part with the field it is in or
 will be written to, each team field's value, the related data any team module
 names, whether the card is a parent issue or a sub-issue and of which parent,
-for a parent issue its sub-issues in the tracker's order, and for a draft, the
+for a parent issue the numbers of its sub-issues as the tracker lists them, and
+for a draft, the
 names of the files to be attached; for a rewrite, also any comments you will post with
 it, the criteria with their IDs as they stand on the card now, and the highest
 criterion ID the card has ever carried. The reviewer only
@@ -106,19 +108,22 @@ finds. Keep the suggestions you left, for the user at acceptance.
 Request grilling brings the card to the Definition of Request. Ask the user
 about each gap the review found and each open question on the card, one
 question at a time, until the card has what it needs and no open question is
-left. Ask before anything goes to another review: another review never closes a
-gap only the user can fill. Each question is specific and answerable: what you
-need to know, and why the card needs it. Do not invent an answer or fill a gap
-with an assumption; where the user does not know yet, the gap becomes an open
-question on the card, and the card does not meet the Definition of Request
-until it is answered. Say so at acceptance.
+left. Put each question through "Before anything is asked" in
+`decision-line.md` first, and ask only what reaches the user there. Ask before
+anything goes to another review: another review never closes a gap only the
+user can fill. Each question is specific and answerable: what you need to know,
+and why the card needs it. Do not invent an answer or fill a gap with an
+assumption; where the user does not know yet, the gap becomes an open question
+on the card, and the card does not meet the Definition of Request until it is
+answered. Say so at acceptance.
 
-When this skill created or changed the card, the card has no spec line, and it
-is written, verified and meets the Definition of Request — the last review found
-no breach, no question and no open question, and nothing written since added
-one — fire the `request-met` event with
-`devfactory event request-met --card <id>`, as `events.md` says. A hook that
-fails is reported to the user with its output. Never move the card yourself.
+When the card has no spec line and its measure found that it meets the
+Definition of Request — the last review found no breach, no question and no
+open question, and nothing written since added one — fire the `request-met`
+event with `devfactory event request-met --card <id>`, as `events.md` says,
+once anything the skill writes is written and verified. It fires on that
+verdict whether or not the skill changed the card. A hook that fails is
+reported to the user with its output. Never move the card yourself.
 
 Whether each answer is recorded as a comment depends on where you are in the
 process — see the skill you are running.
@@ -133,9 +138,9 @@ anything changed after the review, the user's own changes at acceptance
 included, write no receipt, and `grill` judges the card itself.
 
 1. Write the card facts file to a scratch file, one line per fact, from the card
-   as read back: each team field, each comment, each attachment, its parent or
-   sub-issue standing and each piece of related data a team module names, in
-   the forms `spec-template.md` gives.
+   as read back: each team field, each comment, each attachment, its parent,
+   each of its sub-issues on a line of its own, in any order, and each piece of
+   related data a team module names, in the forms `spec-template.md` gives.
 2. Run `devfactory receipt write <spec dir> --check request --card <id> --facts
    <file>` (on a tracker `gh` does not reach, `--text` with the card as read
    back), where `<spec dir>` is the card's folder under the profile's specs
@@ -180,9 +185,9 @@ additions as comments, a requested change that carries new information is
 recorded first. Requested changes do not reopen the review: show the changed
 card to the user again.
 
-In settled mode the requester has already answered — a question relayed during
-a run, or an acceptance not given — and that answer is
-the acceptance: record it as the comment, write the fold without asking, verify
+In settled mode the requester has already answered, and another skill has handed
+the answer to `add-to-card`, as "Settled mode" in that skill says. That answer
+is the acceptance: record it as the comment, write the fold without asking, verify
 it, then report the folded text to the requester as done, with the verdict and
 anything the review still found where the skill measures the card, and say they
 may object. An objection is a new addition: record it and fold it like any
@@ -207,15 +212,16 @@ anything that did not land rather than assuming it did.
 
 ## Re-derive the spec
 
-If the card has a spec, follow "The spec" in `card-process.md` once the writes
-are verified. When a part of the card changed, run the `grill` skill's
-re-derivation for the conditions the changed part feeds, or for the whole spec
-when the interface determination or a scope boundary changed, so the spec is
-re-stamped with the card's new revision, and report to the user what changed in
-the spec. When only a comment was added and no part changed, do nothing to the
-spec. A card with no spec has nothing to re-derive. When the caller passes
-`no-rederive`, because it has `grill` amend the spec for the same answer next,
-skip this step.
+If the card has a spec line, follow "The spec" in `card-process.md` once the
+writes are verified. When a part of the card changed, hand to the `grill`
+skill's Re-derive for the conditions the changed part feeds, or for the whole
+spec when the interface determination or a scope boundary changed, naming each
+part that changed, so the spec is re-stamped with the card's new revision, and
+report to the user what changed in the spec. `grill` fires whatever event the
+re-derivation's outcome calls for; the card skill fires none for it. When only a
+comment was added and no part changed, do nothing to the spec. A card with no
+spec line has nothing to re-derive. When the caller of `add-to-card` passes
+`no-rederive`, the caller owns the re-derivation, so skip this step.
 
 Never write the spec line: `grill` writes it directly, as "The spec line" in
 `card-standard.md` says.

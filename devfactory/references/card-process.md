@@ -23,9 +23,7 @@ time. The two are deliberately separate.
    fails a card; anything that is a matter of judgement is a suggestion, which
    the agent may take or leave. This is request grilling: the agent asks the
    user every question the review raises and every open question on the card,
-   once each has passed "Before anything is asked" in
-   [`decision-line.md`](decision-line.md), so one the profile's Standing answers
-   settle is followed and cited rather than asked, and
+   as "Request grilling" in [`working-a-card.md`](working-a-card.md) says, and
    folds the answers in — what the user does not know yet stays an open question
    on the card, which keeps it short of the
    [Definition of Request](definition-of-request.md) — and fixes each breach, by removing or narrowing
@@ -70,19 +68,15 @@ names:
 - **Interactive**, the default: the addition is recorded and folded, the user
   sees the rewritten sections, and nothing is written to the card's parts until
   they accept them or ask for changes.
-- **Settled**: the requester has already answered — a question the coordinator
-  relays during a development run, a request question or a change the requester
-  gives while a spec is approved,
-  the requester's words on an acceptance not given, or a change the requester
-  asks for during a run. The answer is recorded as
-  the comment, folded and written without a further round on its wording, the
-  write is verified, and the folded text is reported to the requester as done.
-  The requester may object afterwards; an objection is a new addition, recorded
-  and folded like any other.
+- **Settled**: the requester has already answered, and another skill hands the
+  answer to `add-to-card`; "Settled mode" in that skill lists who does. The
+  answer is recorded as the comment, folded and written without a further round
+  on its wording, the write is verified, and the folded text is reported to the
+  requester as done. The requester may object afterwards; an objection is a new
+  addition, recorded and folded like any other.
 
-So acceptance of the rewritten wording stays for interactive additions made
-outside a development run and outside approval; the requester's answer is the
-acceptance everywhere else.
+So the user accepts the rewritten wording of every interactive addition, and a
+settled answer is its own acceptance.
 
 ### Additions through an agent
 
@@ -97,7 +91,10 @@ above.
 An agent cannot tell when someone has changed a card directly, so re-evaluation
 is a procedure in its own right rather than a reaction to an edit. It runs when
 someone asks for it, and checks the card against the standard whatever has
-changed on it and however.
+changed on it and however. It is also how a parent issue that still carries
+criteria, supporting information or a spec line is brought to "Parent issues" in
+the standard, as the `re-evaluate-card` skill says. It takes no answer handed
+over by another skill: that goes through `add-to-card`.
 
 1. **Measure** the title, description and acceptance criteria against the
    standard, including whether they carry what in the comments changes the
@@ -105,8 +102,8 @@ changed on it and however.
 2. **Fold in** any comment whose outcome-changing content is missing. A comment a user added directly is
    already the record, so folding it adds nothing further.
 3. **Request grilling.** Ask the user about any gap and any open question on the
-   card that a standing answer does not settle, as "Creating a card" says. Their answers are new additions, so they are recorded as comments and
-   then folded in.
+   card, as "Request grilling" in `working-a-card.md` says. Their answers are
+   new additions, so they are recorded as comments and then folded in.
 4. **Measure again** with one follow-up review of the changed text; whatever it
    still finds goes to the user.
 5. **Accept.** The user sees the rewritten sections, the verdict, anything the
@@ -148,15 +145,15 @@ longer matches the card.
 A card may have a spec: the specification folder beside the code that
 development reads, laid out in [`spec-template.md`](spec-template.md) and stamped
 with the card revision it was derived from. Once a card has one, the card and
-its spec change together.
+its spec change together. A parent issue never has one, as "Parent issues" in
+[`card-standard.md`](card-standard.md) says.
 
 - Every write to the card through a card skill is followed by re-deriving the
   spec for the conditions the changed part feeds, re-stamping it with the card's
   new revision, and reporting what changed in it. The `grill` skill does the
   re-derivation, which first checks the changed card against the Definition of
-  Request. A dispatcher that folds a requester's answer and then has `grill`
-  amend the spec for it asks for no re-derivation, because the amendment
-  carries the spec forward.
+  Request. A caller that hands `add-to-card` an answer with `no-rederive` owns
+  that re-derivation itself.
 - The spec line is not an addition: `grill` writes it directly, as
   [`card-standard.md`](card-standard.md) says, and records no comment for it.
 - A change to the interface determination or to a scope boundary re-grounds the
@@ -193,7 +190,8 @@ The owner made each of these choices when the process was settled.
 - **A user's own comment is not re-recorded** when it is folded in; recording it
   again would duplicate the record.
 - **Re-evaluation runs on request,** not automatically before work starts or on a
-  schedule.
+  schedule; it is also the route that restructures a parent issue still
+  carrying criteria, supporting information or a spec line.
 - **An interactive update ends with the user accepting the rewrite,** because
   folding is the agent's interpretation of the user's words and is where meaning
   drifts.
@@ -218,12 +216,13 @@ The owner made each of these choices when the process was settled.
 - **The set of cards is settled before drafting,** so a split is the user's
   decision before any card exists, not a cleanup after large cards are written.
 - **A settled answer is its own acceptance.** The requester has just said what
-  they want, in their own words — to a question relayed
-  during a run, or in refusing an acceptance; a second round on the wording of
-  the fold would stall the work for no new decision. The fold is reported as
-  done, so drift is still caught, and an objection is folded like any other
-  addition. Interactive additions made outside a run keep
-  the acceptance, because nothing there replaces it.
+  they want, in their own words; a second round on the wording of the fold
+  would stall the work for no new decision. The fold is reported as done, so
+  drift is still caught, and an objection is folded like any other addition.
+  Interactive additions keep the acceptance, because nothing there replaces it.
+- **A card-changing answer takes one route.** Whichever skill receives it, it
+  goes through `add-to-card` in settled mode and the spec is re-derived from the
+  changed card, so every such answer is recorded and folded the same way.
 - **Criteria keep their IDs through every fold.** What cites a criterion — a
   work order, a comment, a spec, a gap, evidence — must still point at the same
   criterion after the card changes.

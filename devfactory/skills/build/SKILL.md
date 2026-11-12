@@ -1,6 +1,6 @@
 ---
 name: build
-description: Build one card in one session from its approved spec — check the stamp, make the delegated calls up front, build to the criteria with the tests and evidence the spec requires, stop on a question the spec does not answer, and have a separate reviewer pass the result before reporting. Use when a session is briefed to build a card, as a sub-issue in a parent issue run or as a standalone card.
+description: Build one card in one session from its approved spec — check the stamp, make the delegated calls up front, build to the criteria with the tests and evidence the spec requires, stop on a question the spec does not answer, and have a separate reviewer pass the result before reporting. Entered from a coordinator's brief, for a sub-issue in a parent issue run, or from `start`, for a standalone card.
 allowed-tools:
   - Read
   - Glob
@@ -23,31 +23,25 @@ allowed-tools:
 One session builds one card from its spec, in its own worktree, without asking anything the
 card, the spec, the profile, the repository or the decision line already answers. It
 never reviews or accepts its own work: a separate reviewer passes it, and the requester
-accepts it.
+accepts it. A session comes here in one of two ways: a coordinator's brief hands it a
+sub-issue of a parent issue run, or `start` hands it a standalone card.
 
 In a parent issue run the session reports to the coordinator, which its brief names; every
-question and report goes there, and the coordinator owns merging and every event but
-`development-started`. A standalone card reports to the requester directly and fires its
-own events; after its review passes it hands to `accept`, and `release` merges it once.
-In a parent issue run the coordinator has already fired `work-started` for this card.
-"Report" below means to whichever applies. This skill never moves a card on the board: it
-fires the events in `../../references/events.md` with `devfactory event <name> --card
-<n>`, and the project's hooks move cards as the project wants. A hook that fails is
-reported with its output, and the work carries on.
+question and report goes there. The coordinator decides when the session merges and fires
+every event for the run but the two this session fires for its own card,
+`development-started` and `readiness-lost`. A standalone card reports to the requester
+directly and fires its own events; after its review passes it hands to `accept`, and
+`release` merges it once. In a parent issue run the coordinator has already fired
+`work-started` for this card. "Report" below means to whichever applies. This skill never
+moves a card on the board: it fires the events in `../../references/events.md` with
+`devfactory event <name> --card <n>`, and the project's hooks move cards as the project
+wants. A hook that fails is reported with its output, and the work carries on.
 
 **Reporting to the coordinator.** In a parent issue run, every report, question and stop
-reaches the coordinator as a message this session sends, never only as the final message
-of its turn: send it with `SendMessage` to the coordinator's `local_…` id, which the brief
-gives and the session's own prompt names as the session that started it (load the tool
-with `ToolSearch` first when it is deferred), then end the turn with the same text as the
-final message. The desktop app relays a finished turn to the coordinator only as a note it
-may hold back after many in a row, so a report left as the final message alone can sit
-unread until the requester next types. For the same reason, keep the turn open while
-waiting on your own work: run the test gate in the foreground when it fits the shell's
-limit, and otherwise in the background with a wait inside the turn (the Monitor tool where
-the session has it), rather than ending the turn to wait for its notification. Every turn
-a session ends wakes the coordinator for nothing. End a turn only to wait for the
-coordinator, once the message is sent.
+goes to the coordinator by message, the turn's closing message is one line saying the
+report was sent, and the session ends a turn only to wait for the coordinator, as
+[`../../references/reporting-to-the-coordinator.md`](../../references/reporting-to-the-coordinator.md)
+says. That reference also says what each report carries and how to wait inside the turn.
 
 `devfactory` below means running the plugin's script with `python`: the script is
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
@@ -63,19 +57,19 @@ run `devfactory begin build` again whenever you resume after a wait, and when yo
 messaged again to fix a finding or a refusal, before the first change. Markers and the
 profile are found at the repository (worktree) root, wherever the shell's working
 directory is.
+When `begin` prints `plugin-changed`, load this skill again before you continue.
 
-**The test gate.** The full gate runs at three points and nowhere else: before the
-change review (step 8), after the rebase for a sub-issue's merge into the parent branch
-(step 10), and after the rebase for the merge into the integration branch, which
-`release` runs. At each point, commit first so the working tree is clean, then run the
-profile's Test gate. When it names a Recorded gate, run that with no selection, and take
-a printed record as the result just as you would a fresh pass, once its tree is the tree
-in hand (`git rev-parse HEAD^{tree}`); run the Forced rerun only when you have a reason to
-think something outside the tree changed the result. Never write or edit a record
-yourself. With no Recorded gate, run the Command. While building between those points, run
-only the tests the current edit touches.
+**Tests while building.** Run the tests the change touches as you build, with the
+profile's Test gate `Affected tests` command where it names one, and run no full gate
+before a review: the full gate's run before a merge is the change reviewer's own. The gate
+after the rebase for a merge runs as
+[`../../references/test-gate.md`](../../references/test-gate.md) says under "When the gate
+runs".
 
 ## Read these first, in full
+
+A file you have already read in full in this session, under the plugin version `begin`
+printed, need not be read again.
 
 - [`../../references/working-a-card.md`](../../references/working-a-card.md): loading the
   profile and reading a card.
@@ -87,6 +81,10 @@ only the tests the current edit touches.
   conditions a question names.
 - [`../../references/definition-of-done.md`](../../references/definition-of-done.md): what
   the result is judged against.
+- [`../../references/test-gate.md`](../../references/test-gate.md): when the gate runs and
+  what a Recorded gate prints.
+- [`../../references/reporting-to-the-coordinator.md`](../../references/reporting-to-the-coordinator.md):
+  how a session in a parent issue run reports, asks, stops and waits.
 
 ## Steps
 
@@ -105,11 +103,12 @@ only the tests the current edit touches.
 3. **Check the status and the stamp.** A build starts only on a spec whose status is
    `approved`, wherever the card sits on the board. Run
    `devfactory stamp-check --card <n> --spec <spec dir>` in this worktree (Ready condition
-   9.2). When the status is not `approved` or the check fails, fire `readiness-lost` for
-   the card when its spec status is `Ready` or `approved`, and start nothing: report the
-   status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. A stale
-   spec is re-derived through `grill`, never worked around. In a parent issue run this
-   report goes by message as "Reporting to the coordinator" says.
+   9.2). When the status is not `approved` or the check fails, start nothing: report the
+   status and the check's output (`changed <old> <new>`, `not-ancestor`), and wait. When
+   the card's spec status is `Ready` or `approved`, fire `readiness-lost` for the card
+   once, as the session stops to wait. A stale spec is re-derived through `grill`, never
+   worked around. When the session resumes, run this step again; once it passes, step 4
+   fires `development-started`, the event for where the card now stands.
 
 4. **Fire `development-started`** for the card, before the first change.
 
@@ -119,9 +118,11 @@ only the tests the current edit touches.
    log: the call, the choice, the reason. A developer's call that only comes to light later
    is made and logged the same way when it arises. The log is committed with the work.
 
-6. **Build to the criteria.** Work in this session's worktree, on the branch the profile's
-   Branches and merging names (its Sub-issue branch entry in a parent issue run), and
-   commit as each piece is done.
+6. **Build to the criteria.** Work in this session's worktree and commit as each piece is
+   done. In a parent issue run, work on the branch the brief names; when the app started
+   the session on another branch, keep that branch and name it to the coordinator in the
+   first report. For a standalone card, work on the branch the profile's Branches and
+   merging names.
    - Build what the criteria and the spec ask for and nothing beyond them (Done 5.1).
    - Write the tests the request types require (Done 1.2). Each test cites the criterion ID
      it exercises and asserts an observable outcome (Done 2.2).
@@ -133,9 +134,8 @@ only the tests the current edit touches.
      only those the check names stale, each by its row's Generated by command. Boot each
      environment once per capture pass and capture every row it serves before moving on;
      restart it only after a change to code it serves.
-   - Run only the tests the current edit touches as you go; the full gate waits for the
-     points "The test gate" names. Follow the project's own rules for anything else a
-     change carries.
+   - Run the tests the change touches as you go, as "Tests while building" says. Follow
+     the project's own rules for anything else a change carries.
 
 7. **A question.** When the work needs a decision the spec does not record:
    1. Apply "Before anything is asked" in `decision-line.md` and the spec's delegations
@@ -143,48 +143,54 @@ only the tests the current edit touches.
       cited in the log. A question on the developer's side is decided and logged as step 5
       says, not asked. A question on the requester's side that a recorded decision, the
       profile or the spec already answers is followed, and the answer is cited in the log.
-   2. A question that survives stops this card's work. Report it in this shape, in a parent
-      issue run by message as "Reporting to the coordinator" says, and wait:
-
-      ```text
-      Question: <what must be decided, and why the work needs it now>
-      Options: <each realistic option, and what it leads to>
-      Recommendation: <one option, and why>
-      Ready condition failed: <the condition that should have caught it, such as Ready 3.2>
-      ```
-
+   2. A question that survives stops this card's work. Report it in the shape
+      `reporting-to-the-coordinator.md` gives under "What each report carries", to the
+      coordinator by message in a parent issue run and to the requester for a standalone
+      card, and wait.
    3. When the answer arrives and it changes the card (its outcome, a criterion, its scope
-      or the work order), first put it on the card through `add-to-card` in settled mode
-      with no-rederive, the answer being the requester's acceptance: that is request
-      grilling's fold, never `grill`'s. Then, for every answer, run `grill` in amend mode
-      with the question, the answer word for word and the Ready condition that failed. It
-      writes the spec amendment and the gap entry on this card's branch. Report
-      whether the amendment changes what another card depends on, then continue from the
-      amended spec.
+      or the work order), put it on the card through `add-to-card` in settled mode, the
+      answer being the requester's acceptance, and then bring the spec along through
+      `grill` Re-derive, giving it the question, the answer word for word and the Ready
+      condition that failed, so that it writes the gap entry on this card's branch. When
+      the answer leaves the card as it is, run `grill` Amend with the same three, which
+      writes the spec amendment and the gap entry on this card's branch. When a re-derive
+      leaves the spec below `approved`, `grill` has fired `readiness-lost`: wait, and on
+      resuming run step 3 again. Report whether the change to the spec changes what
+      another card depends on, then continue from the spec as it now stands.
 
-8. **Review.** When the card is built, commit everything, write the criteria file with
-   `devfactory criteria-ids --card <n>` into a file outside the repository, compute the
-   base revision as below, then run `devfactory evidence-check <spec dir> --criteria
-   <file> --base <base revision>` and `devfactory gaps check <spec dir>`, and run the test
-   gate as "The test gate" says. These are the checks a script can make, so no review round
-   is spent on them: evidence folders, sidecars, evidence that a clean checkout would lack,
-   a sidecar revision a rebase left behind with its change altered, evidence captured
-   before a later change to the code the card touches, a checkpoint the evidence row does
-   not name, an open or malformed gap entry, and the gate. Fix every finding they report
-   and every gate failure (an artifact whose sidecar revision is stale is captured again at
-   the current revision, and its sidecar names that revision), or, for an open gap,
-   settle it as step 7 says, before any review starts. Then start the `change-reviewer` agent by name with the Agent
-   tool; it carries its own definition
-   ([`../../agents/change-reviewer.md`](../../agents/change-reviewer.md)), tools and model.
-   Give it the path to the plugin's `references/` folder, the card with its criteria, the
-   spec path, the profile path, the base revision (the merge-base of this branch with the
-   parent branch, or with the integration branch for a standalone card, computed at review
-   time), the revision under review, and a clean checkout at that revision, made as a
-   worktree of this repository (`git worktree add --detach <path> <revision>`) so it reads
-   the same gate records; never how the work was built or what you think of it. Fix each
-   finding, commit, rerun the checks and the gate, and start a fresh review of the new
-   revision. A finding that needs a decision the spec does not record is a question,
-   handled as step 7 says.
+8. **Review.** When the card is built, write the criteria file with
+   `devfactory criteria-ids --card <n>` into a file outside the repository and compute the
+   base revision: the merge-base of this branch with the parent branch, or with the
+   integration branch for a standalone card, computed at review time. Before each review:
+   - Commit everything, then, at that exact revision, run `devfactory evidence-check <spec
+     dir> --criteria <file> --base <base revision>` and `devfactory gaps check <spec
+     dir>`. These are the checks a script can make, so no review round is spent on them:
+     evidence folders, sidecars, evidence that a clean checkout would lack, a sidecar
+     revision a rebase left behind with its change altered, evidence captured before a
+     later change to the code the card touches, a checkpoint the evidence row does not
+     name, and an open or malformed gap entry. Start no review while either reports
+     anything: fix each finding (an artifact whose sidecar revision is stale is captured
+     again at the current revision, and its sidecar names that revision), or, for an open
+     gap, settle it as step 7 says, commit, and run both checks again. Make no commit
+     between the check that comes back clean and the verdict.
+   - Start the `change-reviewer` agent by name with the Agent tool; it carries its own
+     definition ([`../../agents/change-reviewer.md`](../../agents/change-reviewer.md)),
+     tools and model. Read that definition's Inputs section, not the whole definition.
+     Give it the path to the plugin's `references/` folder, the card with its criteria,
+     the spec path, the profile path, the base revision, the revision the clean checks ran
+     at as the revision under review, and a clean checkout at that revision, made as a
+     worktree of this repository (`git worktree add --detach <path> <revision>`) so it
+     reads the same gate records; never how the work was built or what you think of it.
+   - Wait for the verdict inside the turn, as `reporting-to-the-coordinator.md` says under
+     "Waiting inside the turn". Do the same for any command you run in the background.
+   - After each verdict, write the report's lines under Findings and under Unstable, each
+     already in the form `<Done id> | <criterion ID or -> | <text>`, into a file outside
+     the repository, run `devfactory reviews add <spec dir> --round <n> --verdict <v>
+     --findings <file>` (with no `--findings` when both headings say "none"), and then
+     remove the reviewer's checkout with `git worktree remove --force <path>`.
+   - On a FAIL, fix each finding, commit, and start the next round from the checks above.
+     A finding that needs a decision the spec does not record is a question, handled as
+     step 7 says.
 
    After a FAIL there are at most two further rounds. When the third review still fails,
    sort its findings as "Findings after the review limit" in `decision-line.md` says,
@@ -193,51 +199,50 @@ only the tests the current edit touches.
      evidence record or sidecar, a gap entry not written, a spec that no longer matches the
      built code while the behaviour it describes is unchanged): fix them and carry on,
      recording each gap entry as usual. A spec that no longer matches is amended through
-     `grill` in amend mode. After a code fix, run the checks, the gate and one more review; when it
-     passes, go on to step 9. When every fix was a spec-only amendment, go on to step 9
-     without a further review.
+     `grill` Amend. Carry on to step 9 without a further review only when every fix was a
+     spec amendment made through `grill` and `devfactory spec-only <spec dir> --base <the
+     failed revision>` prints `spec-only`; the report then says, in these words, "no
+     review passed this revision", lists the last review's findings and the amendment that
+     answers each, and never says the card passed. Otherwise run the checks and one more
+     review; when it passes, go on to step 9.
    - **Any finding that changes what an observer sees or can do, what persisted data ends
      up as, or scope**, or the extra review still failing: stop and report the findings,
-     in a parent issue run by message as "Reporting to the coordinator" says, and wait.
+     in a parent issue run by message as `reporting-to-the-coordinator.md` says, and wait.
 
-9. **Report**, in a parent issue run by message as "Reporting to the coordinator" says:
-   what was built, by criterion ID; the review verdict and how many rounds it
-   took, and, when the review limit was passed, each developer-side finding fixed without
-   asking and whether a further review ran; the delegated calls made, from the log; the gaps raised, with their amendments;
-   the branch and revision; the test gate's result, saying whether it was a fresh run or a
-   record; and anything left unverified.
+9. **Report** what `reporting-to-the-coordinator.md` says the build report carries, under
+   "What each report carries": in a parent issue run to the coordinator by message, and
+   for a standalone card to the requester.
 
 10. **Finish.**
     - **In a parent issue run**, wait. Merge only when the coordinator says it is this
-      card's turn, exactly as the brief says: rebase onto the parent branch, run the test
-      gate as "The test gate" says, which prints the record when the rebase left the tree
-      unchanged, and fast-forward only on a pass. Fire no other event, never merge
-      into the integration branch, and never push. When the fast-forward refuses, report
-      it by message and wait. After the merge, report it by message and wait again:
-      this session, its worktree and its branch stay until `release` reaps them after
-      acceptance.
+      card's turn, exactly as the brief says: rebase onto the parent branch, run the gate
+      as `test-gate.md` says under "When the gate runs" (the Recorded gate, which prints
+      the record when the rebase left the tree unchanged and runs fresh otherwise; the
+      Command where there is no Recorded gate), and fast-forward only on a pass. Fire no
+      other event, never merge into the integration branch, and never push. When the
+      fast-forward refuses, report it by message and wait. After the merge, report it by
+      message and wait again: this session, its worktree and its branch stay until
+      `release` reaps them after acceptance.
     - **A standalone card**: the review's PASS is its Done verdict, since the change
       reviewer applies every Definition of Done condition but 6, which only a parent issue
       has; so is step 8's carrying on after spec-only amendments past the review limit.
       Fire `done` and stop building without merging: go straight into `accept`, asking
-      nothing first, which hands to `release`, and `release` merges the work once and ends
-      by marking this session completed and archiving it, as its step 8 says.
+      nothing first, which hands to `release`, and `release` merges the work once and,
+      when it reaps, marks this session completed and archives it.
 
 ## Fixing a finding or a refusal
 
 In a parent issue run the coordinator may message a kept session with a Done-judge finding
-or an acceptance refusal to fix; the parent-fixes session the coordinator starts receives
-the ones no single sub-issue owns, and its card and spec are the parent's. Run
+or an acceptance refusal to fix, among them one that no single sub-issue owns. Run
 `devfactory begin build`, rebase onto the parent branch, and fix only what the message
-names, against the card and spec the brief gives. A sub-issue's session has already run
-steps 1 to 4 and runs them again only as far as reading anything changed. The parent-fixes
-session runs steps 1 to 3 for the parent the first time it is messaged, and skips step 4:
-the coordinator fired `development-started` for the parent. Write any gap entry the message asks for.
-Then review the fix as step 8 says, with the base revision computed against the parent
-branch, report as step 9 says, and merge only when the coordinator says it is your turn,
-as step 10 says. When the coordinator says the fix is a spec-only amendment past the Done
-judge's limit, amend the spec through `grill` in amend mode and report without a review.
-Every report here goes to the coordinator by message, as "Reporting to the coordinator"
-says.
+names, against the card and spec the message names. The session has already run steps 1
+to 4 for its own card and runs them again only as far as reading anything changed; for a
+card and spec the message names that are not its own, it reads them as step 2 says. Write
+any gap entry the message asks for. Then review the fix as step 8 says, with the card and
+spec the message names and the base revision computed against the parent branch, report as
+step 9 says, and merge only when the coordinator says it is your turn, as step 10 says.
+When the coordinator says the fix is a spec-only amendment past the Done judge's limit,
+amend the spec through `grill` Amend and report without a review. Every report here goes
+to the coordinator by message, as `reporting-to-the-coordinator.md` says.
 
 Stop every agent you started before you finish, and tell each to stop its own.

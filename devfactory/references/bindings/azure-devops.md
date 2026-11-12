@@ -111,6 +111,23 @@ A card's parent, such as its epic, is the work item its
 A card's epic is the nearest ancestor of type Epic: follow parents upward until
 one is an Epic, or there are no more.
 
+## Sub-issues
+
+A sub-issue is linked to its parent by a hierarchy link: a
+`System.LinkTypes.Hierarchy-Reverse` relation on the sub-issue, which Azure
+DevOps pairs with a `System.LinkTypes.Hierarchy-Forward` relation on the parent.
+
+- **Link:** `az boards work-item relation add --id <sub-issue> --relation-type
+  parent --target-id <parent>`.
+- **List:** `az boards work-item show --id <parent> --expand relations`; each
+  `System.LinkTypes.Hierarchy-Forward` relation is a sub-issue, its id the last
+  segment of the relation's `url`.
+- **Unlink:** `az boards work-item relation remove --id <sub-issue>
+  --relation-type parent --target-id <parent> --yes`.
+
+Azure DevOps keeps no order of a parent's sub-issues that the plugin relies on:
+the order is the parent's work order.
+
 ## Attachments
 
 An attachment is added in two steps: upload the file's bytes to

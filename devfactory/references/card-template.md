@@ -7,10 +7,10 @@ of the description and write it there: under its heading if the field holds
 other parts, without it if the part is alone in the field. Each prompt in italics
 says what the section holds; replace it, and delete any section marked *(when
 there is any)* that has nothing to say. Where such a section stays, drop the
-marker from its heading. Treat the parts marked *(on a sub-issue only)* and
-*(on a parent issue only)* the same way: delete each on any other card, and drop
-the marker where it stays. The rules for each part are in its module, listed in
-[`card-standard.md`](card-standard.md).
+marker from its heading. Treat the part marked *(on a sub-issue only)* the same
+way: delete it on any other card, and drop the marker where it stays. A parent
+issue has a skeleton of its own, at the end. The rules for each part are in its
+module, listed in [`card-standard.md`](card-standard.md).
 
 ---
 
@@ -68,20 +68,44 @@ included but is not, or the reverse, and where it is tracked if known.*
   never reused; a new criterion takes the next number above the highest the
   card has ever carried. Never renumber.*
 
-*On a parent issue, only what the combined result shows beyond its sub-issues'
-criteria; never that every sub-issue is done, merged, reviewed or passing the
-tests together. With nothing beyond them, one line saying so.*
-
-### Work order *(on a parent issue only)*
-
-1. *Sub-issue — waits on nothing, or on which sub-issue and why: needs its
-   result, changes the same files, or both need something only one session can
-   hold at a time. May run alongside which sub-issues.*
-
 ### Suggested model and effort
 
 *The model, then the effort level (Low, Medium or High), in one line; then a
 short reason drawn from the work.*
+
+## Additional fields *(when the profile names any)*
+
+- *Field — the value its team module recommends, and the one-line reason.*
+
+---
+
+# A parent issue
+
+A parent issue holds these parts and nothing else, as "Parent issues" in
+[`card-standard.md`](card-standard.md) says.
+
+## Title
+
+*A small, pithy, direct phrase naming what the set of cards achieves.*
+
+## Description
+
+### Purpose
+
+*One short paragraph: why these cards belong together. No requirement, and no
+restating of a sub-issue.*
+
+### Work order
+
+1. *#number — waits on nothing, or on which sub-issue and why: needs its
+   result, changes the same files, or both need something only one session can
+   hold at a time. May run alongside which sub-issues. Each sub-issue once, by
+   its number only.*
+
+### Suggested model and effort
+
+*The model, then the effort level (Low, Medium or High), in one line, for the
+session that coordinates the run; then a short reason drawn from the run.*
 
 ## Additional fields *(when the profile names any)*
 
