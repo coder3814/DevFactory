@@ -61,21 +61,33 @@ them:
 
 - **Suggested model and effort**, after the acceptance criteria. A build session runs on
   it, or on the profile's default when the card suggests none.
-- **Work order**, on a parent issue only: its sub-issues in the order to work them, each
-  saying what it waits on (one of: needs the other's result; changes the same files; both
-  need something only one session can hold) and which may run alongside it. Sub-issues run
-  in parallel by default. A parent waits on another parent only for that parent's work, and
-  the wait is met once that code is on the integration branch and the waiting parent's
-  branch is rebased onto it, checked by content because a rebase changes commit ids; no
-  release, board column or closed card is waited for.
+- **Work order**, on a parent issue only: its sub-issues by number alone, never by title or
+  scope, in the order to work them, each saying what it waits on (one of: needs the
+  other's result; changes the same files; both need something only one session can hold)
+  and which may run alongside it. Sub-issues run in parallel by default. The work order on
+  the card is the order: the tracker's own order of sub-issues is not kept in step with it,
+  and nothing judges that order. A parent waits on another parent only for that parent's
+  work, and the wait is met once that code is on the integration branch and the waiting
+  parent's branch is rebased onto it, checked by content because a rebase changes commit
+  ids; no release, board column or closed card is waited for.
 
-A parent issue's outcome is that every sub-issue is done, so its criteria never restate
-that or any step of the run (sub-issues merged or reviewed, the gate passing together); they
-state only what the combined result shows beyond its sub-issues' criteria, and a parent may
-have none. The Done judge establishes the process facts under 6.1, so a parent run captures
-no evidence for them. Seven parent runs showed why: a criterion "every sub-issue of this
-parent is done" got an evidence row nobody captured, and caused ten Done findings and six
-extra sessions.
+**A parent issue** is a card with sub-issues. It holds a title, a purpose (one short
+paragraph saying why these cards belong together), the work order, and the suggested model
+and effort of the session that coordinates it, and nothing else: no issue or request, no
+what needs to be achieved, no acceptance criteria, no supporting information, no scope and
+no open questions. Its outcome is that every sub-issue is done, so it has no spec, no spec
+line, no stamp, no status and no evidence. A requirement only the combined result can show
+is a criterion on the sub-issue that completes it, and the work order has that sub-issue
+wait on the ones it needs. The Done judge establishes the process facts under Done 6.1, so
+a parent run captures no evidence for them: a criterion such as "every sub-issue of this
+parent is done" asks for an evidence row nobody can capture. How a sub-issue is linked to
+its parent on the tracker, unlinked and listed is the binding's, in its "Sub-issues"
+section. A parent that still carries criteria, supporting information or a spec is not
+worked: `start`, `grill` and `check-ready` stop and say it goes through `re-evaluate-card`,
+which restructures it with the requester, moving each criterion the combined result shows
+to the sub-issue that completes it and dropping the rest as restating the outcome; `grill`,
+run for the parent afterwards, removes the old `spec.md`, `evidence/` and any wireframe in
+one commit and ledgers nothing.
 
 A sub-issue carries a line naming its parent. Criteria carry **stable IDs** (`C1`, `C2`, …)
 that survive amendment: a removed criterion's ID is never reused, and a new one takes the
@@ -95,6 +107,7 @@ runs. It holds:
 - `receipts.md`: the receipts (section 2.8). The card's first passing request check creates
   the folder to hold its receipt, so the folder can exist before `spec.md` does; a folder
   without `spec.md` is not a spec.
+- `reviews.md`: the review record (section 2.9).
 - `evidence/`: what the Done judge consumes, added during development, one folder per
   criterion ID, each artifact with a one-line sidecar recording its revision, checkpoint and
   what produced it. Evidence is captured after the last commit that changes the code it
@@ -107,6 +120,12 @@ runs. It holds:
   files an artifact depends on, so the build captures evidence together just before each
   review and recaptures only what the check names.
 
+A parent issue's folder at the same path, `<specs path>/<parent id>/`, is the run's
+**records folder**: it holds only `receipts.md`, `gaps.md` and `reviews.md`, each created
+when first written. The set's ready receipt, the gap entries about the work order (Ready
+8.2) and the Done judge's review record go there, and `release` ledgers and deletes it as it
+does a spec folder.
+
 The card points at its spec with exactly one line, `Spec: <path> @ <commit>`, the last line
 of the description body, where the commit is the spec folder's own commit. `grill` rewrites
 that line after every commit of the spec folder, and the card revision the stamp hashes
@@ -115,8 +134,9 @@ excludes any line of that form, so writing it never makes the spec stale.
 The spec is written before development starts, wherever the card sits on the board, and lands on the
 integration branch through a commit of its own. During development it is amended on the
 sub-issue's branch and merges with the work. At release its gap entries are appended to the
-project's gap ledger and the folder is deleted, not archived; history keeps it, and the
-durable facts have already gone wherever the project keeps decisions.
+project's gap ledger, its review record to the review ledger, and the folder is deleted, not
+archived; history keeps it, and the durable facts have already gone wherever the project
+keeps decisions.
 
 ### 2.3 What the spec holds
 
@@ -147,6 +167,16 @@ In this order, general to specific:
 9. **Project bindings used**: the profile entries this spec relies on, by name.
 10. **Amendments**: version, date, what changed, and the gap or rejection that drove it.
 
+**The status** moves `drafting`, then `Ready`, then `approved`, and is stated once, in
+`grill` under "The status". It is `drafting` while anything is open, `Ready` when the last
+check found nothing open or the requester settled everything it found, and `approved` when
+the requester approves the Ready spec. A re-derive or an amend keeps the status it found
+when every change it made is the requester's recorded answer folded as given or on the
+developer's side of the decision line, since the requester's answer approves the change it
+makes; otherwise the status returns to `Ready` and approval is asked again, or to `drafting`
+with anything still open. A status below what it was, with the work stopped, is the case in
+which `readiness-lost` fires (section 3).
+
 ### 2.4 The project profile
 
 One folder per project, `.devfactory/` at the repository root:
@@ -154,6 +184,9 @@ One folder per project, `.devfactory/` at the repository root:
 - `profile.md`: the profile.
 - `modules/`: the team modules the profile names.
 - `gaps.md`: the gap ledger, the gap records of released cards (section 2.7).
+- `reviews.md`: the review ledger, the review records of released cards (section 2.9).
+- `post-release/`: one folder per released card with evidence rows only the live release
+  can show, holding those rows and their capture until the next release deletes it.
 - `.active/`: the marker folder the hooks read (section 8), ignored by git.
 - `hooks/`: the project's event hooks, one script per event it wants acted on (section 3).
 
@@ -165,9 +198,11 @@ One folder per project, `.devfactory/` at the repository root:
   column: no skill reads a card's column or moves a card.
 - **The work**: where specs live; where recorded decisions live, so the checker can read
   them (they are never kept in the profile); the test gate, the command or procedure that
-  proves existing behaviour, optionally with a recorded gate, a project-owned command that
-  records each pass against the git tree it tested and prints that record instead of
-  rerunning on the same tree; the environments available for checkpoints and what each can
+  proves existing behaviour, optionally with an Affected tests command a build runs for the
+  tests its change touches, and a recorded gate, a project-owned command that records each
+  pass against the git tree it tested and prints that record instead of rerunning on the
+  same tree, with the Forced rerun that runs it fresh (`references/test-gate.md` says when
+  each runs); the environments available for checkpoints and what each can
   and cannot show; **Data access**, each population of existing data a card's rules might
   act on and how it is read without writing, which `grill` and the readiness checker run
   data rules through; the fixed-concern list extensions; the owner-step types the project
@@ -228,22 +263,25 @@ condition no command covers yet says so in its tag, and the definition lists it 
 ### 2.7 The gap record
 
 `gaps.md` beside the spec: one entry per question asked from Ready onward, per refused
-acceptance, and per Done-check miss, each naming the Ready or Done condition that let it
-through. A question answered before the spec first earns Ready is folded into the spec, not
-recorded as a gap.
+acceptance, and per Done-check miss, each naming exactly one Ready or Done condition that
+let it through, written `Ready <id>` or `Done <id>`, which `gaps add` refuses unless the id
+exists in the definition, and a **Kind**: `miss`, the default, or `request-change` when the
+requester changed their mind rather than answered a miss. A question answered before the
+spec first earns Ready is folded into the spec, not recorded as a gap.
 
 Gap records survive release: before a spec folder is deleted, its entries are appended to
 the project ledger `.devfactory/gaps.md`, each under the card ID and the spec's request
-types. The readiness checker reads the ledger and every live `gaps.md` before grilling, so a
-recurring class is asked up front next time, and `curate` reads the same records.
+types, by `gaps ledger`, which skips an entry the ledger already holds for that card. The
+readiness checker reads the ledger and every live `gaps.md` before grilling, so a recurring
+class is asked up front next time, and `curate` reads the same records.
 
 ### 2.8 The receipts
 
-Without receipts every hand-off re-judged what the stage before it had just judged: `grill`
-started a fresh card reviewer on a card `create-card` had just passed, and the start of a
-parent issue run started a fresh readiness checker on specs `grill` had just stamped. That
-cost the time of the check, and because a fresh reviewer finds something different every
-time, it raised new questions about content that had not changed.
+Without receipts every hand-off would re-judge what the stage before it had just judged:
+`grill` would start a fresh card reviewer on a card `create-card` had just passed, and the
+start of a parent issue run a fresh readiness checker on specs `grill` had just stamped.
+Because a fresh reviewer finds something different every time, each re-judgment raises new
+questions about content that has not changed.
 
 A receipt records, field by field, the fingerprint of everything a passing check read, in
 `receipts.md` in the card's spec folder, committed with the code. `devfactory receipt write`
@@ -252,32 +290,47 @@ writes it and `devfactory receipt check` compares it; nothing else reads or writ
 - **Request**, written when the card reviewer finds the card meets the Definition of Request
   and the card as written is exactly what it measured: the card revision, a hash of the card
   facts (each team field, each comment with its text, each attachment, the parent and the
-  sub-issues in the tracker's order, and the related data a team module names), the
-  plugin's version with a hash of its references and agents, and a hash of the profile and
-  its team modules. `create-card` and `re-evaluate-card` write it; `grill`'s request gate
-  compares it and starts a reviewer only when it differs, writing a new one on a pass.
+  sub-issues, compared as a set, and the related data a team module names), the standard,
+  a hash of the plugin's references and agents alone, so that a version bump alone leaves
+  it matching, and a hash of the profile and its team modules. `create-card` and
+  `re-evaluate-card` write it; `grill`'s request gate compares it and starts a reviewer only
+  when it differs, writing a new one on a pass.
 - **Ready**, written when `grill` stamps a spec Ready and when `check-ready` finds nothing
-  open: the spec folders measured together, a hash of their files with the Status value left
-  out so approval keeps it matching, a hash of the gap ledger and every live gap record, the
-  standard, the profile, and the head commit the check read. The commit matches while it is
-  an ancestor of the head and nothing outside the specs path and `.devfactory/` has changed
-  since, because everything under those is fingerprinted on its own. `check-ready` compares
-  it at development start, after the stamps, and starts no checker when it matches.
+  open: the spec folders measured together, a hash of their files with the Status value,
+  `receipts.md` and `reviews.md` left out so approval and review keep it matching, a hash of
+  the gap ledger and every live gap record, the standard, the profile, and the commit the
+  checker reported reading, which `receipt write` takes as `--commit`. The commit matches
+  while it is an ancestor of the head and nothing outside the specs path and `.devfactory/`
+  has changed since, because everything under those is fingerprinted on its own. For a
+  parent's set the receipt is written in the records folder with `--parent`, which also
+  records the parent card's revision. `check-ready` compares it, after the stamps, and starts
+  no checker when it matches.
 
 A receipt never replaces the stamp. The stamp says the spec still answers the card; the
 receipt says a check need not run again.
+
+### 2.9 The review record
+
+`reviews.md` beside the spec, or in a parent's records folder: one block per change review
+or Done judgment, headed with its date, round and verdict, and one line per finding naming
+its Done condition, its criterion ID or `-`, and its text. `devfactory reviews add` writes
+it after each verdict, from the report's findings and unstable tests, validating each Done
+condition as `gaps add` does; nobody writes it by hand. It is left out of the spec-content
+hash, and `spec-lint`, `evidence-check` and `gaps check` ignore it. At release `reviews
+ledger` appends each block under the card's heading in `.devfactory/reviews.md`, skipping
+blocks already there, and `curate` reads the ledger and every live record.
 
 ## 3. The lifecycle
 
 | Stage | What happens | Who acts | Exit |
 |---|---|---|---|
 | Request | The card is created or restructured under the card standard, and request grilling asks the owner every question the card reviewer raises and every open question, until none is left. | `create-card`, `re-evaluate-card`, the card reviewer agent, the owner | The card meets the Definition of Request |
-| Grilling | Specification grilling first checks the card against the Definition of Request, which a matching request receipt has already done, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back to request grilling. | `grill`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
-| Approval | The owner approves the Ready spec. For a parent issue, every sub-issue is Ready first. | the owner | Spec status `approved` |
-| Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
-| Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Past the review or judgment limit, a round whose findings were all fixed by spec-only amendments goes on to acceptance as Done. | the Done judge agent | Done verdict, or a spec-only round past the limit |
+| Grilling | Specification grilling first checks the card against the Definition of Request, which a matching request receipt has already done, then drafts the spec from the card, the code, the recorded decisions and the data population; the readiness checker measures it; the owner answers each question only the spec settles. It never changes the card: a question whose answer would is handed back, and the answer reaches the card through `add-to-card` in settled mode. For a parent issue, every sub-issue not yet Ready is grilled, and then `check-ready` checks the set at creation. | `grill`, `check-ready`, the card reviewer and readiness checker agents, the owner | Ready earned and stamped |
+| Approval | The owner approves the Ready spec. For a parent issue, one approval covers the set, once every sub-issue is Ready and the set check reports nothing open. | the owner | Spec status `approved` |
+| Development | Work starts through `start`, which reads the card and hands a parent issue to `coordinate` and a standalone card to `build`. A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `start`, `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
+| Done | The Done judge measures the parent branch against every sub-issue's card and spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Past the review or judgment limit, a round whose findings were all fixed by spec-only amendments, which `spec-only` confirms, goes on to acceptance as Done, reported as "no review passed this revision". | the Done judge agent | Done verdict, or a spec-only round past the limit |
 | Acceptance | The owner judges the result against the evidence: every criterion is shown with its artifact, and one question accepts them all or names the refused ones. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
-| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger, and post-release rows kept in `.devfactory/post-release/<card>/`; specs deleted; once live, post-release rows captured read-only there and committed to go out with the next release, which deletes them; sessions marked completed and archived under the release authorisation, then worktrees and branches removed; gap records curated. | `release` | Cards closed |
+| Release | Rebase onto the integration branch and run the gate; one records commit appends the gap entries and review records to the ledgers, writes post-release plans to `.devfactory/post-release/<card>/` and deletes the spec folders and the parent's records folder; merge and ship by the profile's release procedure; close the cards; once live, capture the post-release rows read-only and commit them to go out with the next release, which deletes them; curate; mark the sessions completed and archive them, then remove worktrees, branches and review checkouts. | `release` | Cards closed |
 
 Three definitions gate the work, one per hand-off: the Definition of Request
 (`references/definition-of-request.md`) before a spec is written, the Definition of Ready
@@ -289,65 +342,118 @@ moves one. At each hand-off the skill fires an event — `request-met`, `ready`,
 `work-started`, `development-started`, `readiness-lost`, `done`, `refused`, `accepted`,
 `released` — with `devfactory event`, which runs
 the project's hook for it in `.devfactory/hooks/` if there is one and does nothing
-otherwise (`references/events.md`). A project that wants its cards moved, to whatever
-columns its board has, writes those hooks; a failed hook is reported and never holds back
-the work.
+otherwise (`references/events.md`, which is the one statement of when each fires and by
+whom). A project that wants its cards moved, to whatever columns its board has, writes those
+hooks; a failed hook is reported and never holds back the work. `request-met` fires on the
+measure's verdict, whether or not the measuring skill changed the card. `readiness-lost`
+fires on the outcome, never on the change behind it: when a card whose spec was Ready or
+approved is left not Ready and the work on it has stopped, because a re-derive stops to wait
+for the requester or ends below the status it found (`grill`), the build's status and stamp
+check fails (`build`), or the readiness check reports it not Ready and stops (`check-ready`).
+A card change re-derived straight back to the status it had fires nothing, and the skill
+that brings a card back fires the event for where it now stands.
 
-`build` and `coordinate` check the spec's status before any work
-starts. Results merge into the parent branch in the order they finish, except that a card
-that waits on another merges after the card it waits on. A standalone card is not merged
-when its review passes; `release` merges it once, after acceptance.
+**Work starts through `start`.** "Start work on card N", or `/devfactory:start N`, reaches
+`start` and nothing else. It reads the card once and hands over in the same session and
+turn: a card with sub-issues to `coordinate`, any other card to `build`. `build` is entered
+only from a coordinator's brief or from `start`, and `coordinate` only from `start`. `build`
+and `coordinate` check the spec's status before any work starts. Results merge into the
+parent branch in the order they finish, except that a card that waits on another merges
+after the card it waits on. A standalone card is not merged when its review passes;
+`release` merges it once, after acceptance.
+
+**The full gate's run before a merge is the reviewer's** (`references/test-gate.md`, the one
+statement of when the gate runs). The builder runs the tests its change touches while it builds,
+with the profile's Affected tests command where there is one, and runs no full gate before a
+review. The change reviewer, and the Done judge, decide every other condition first, and
+only when nothing else fails run the full gate fresh on the revision under review (the
+Forced rerun where the profile names a Recorded gate, else the Command) before giving PASS
+or DONE; a failing test that passes on its one rerun passes and is named unstable. After
+the rebase for a merge, of a sub-issue into the parent branch or of the work onto the
+integration branch, the merging session runs the Recorded gate, which prints the record
+when the rebase left the tree unchanged and runs fresh otherwise, or the Command where there
+is no Recorded gate. Nobody writes or edits a record by hand.
+
+**Before each review**, the build commits, then runs `evidence-check --base` and `gaps check`
+at that exact revision, starts no review while either reports anything, and makes no commit
+between that check and the verdict. After each verdict it records the findings with
+`reviews add` and removes the reviewer's checkout.
 
 **Loops are bounded.** After a change review or the Done judge fails, the work gets at most
 two further rounds. A third failure asks nothing when every finding is on the developer's
 side (a missing test, an incomplete evidence record, a spec that no longer matches the
-built code with no change to what an observer sees): the findings are fixed, a code fix
-gets one more review or judgment, and a spec-only amendment goes straight on to
-acceptance. Only findings that change what an observer sees or can do, what persisted data
-ends up as, or scope stop the work and go to the requester, through the coordinator in a
-parent issue run.
+built code with no change to what an observer sees): the findings are fixed and a code fix
+gets one more review or judgment. The work carries on without a further review only when
+every fix is a spec amendment made through `grill` and `devfactory spec-only <spec dir>
+--base <the failed revision>` prints `spec-only`; the report then says, in these words, "no
+review passed this revision", lists the last review's findings with the amendment that
+answers each, and never says the card passed, and `accept` shows that line in its question.
+Only findings that change what an observer sees or can do, what persisted data ends up as,
+or scope stop the work and go to the requester, through the coordinator in a parent issue
+run.
 
 **Sessions are kept.** In a parent issue run, each sub-issue's session, worktree and branch
 are kept until the run is accepted and released. A Done-judge finding or a refusal that
 belongs to one sub-issue is fixed by that sub-issue's kept session, on its branch rebased
-onto the parent branch; one no sub-issue owns is fixed by the run's parent-fixes session,
-started with the others and waiting for such findings. Either is reviewed and merged as any
-sub-issue's work is. `release` ends them: each is stopped, its worktree checked for
+onto the parent branch; one no sub-issue owns goes to the kept session of the sub-issue
+whose files it touches most, which fixes it against the card and spec the message names. No
+session is started for a finding. Either fix is reviewed and merged as any sub-issue's work
+is, and judged again. `release` ends them: each is stopped, its worktree checked for
 uncommitted work that is not regenerated output, marked completed and archived, with no
-further question, since the release authorisation covers it; only then are the branches and
-any worktree left removed. An idle session holds its worktree open, so removing the folder
+further question; only then are the branches, any worktree left and every detached review
+or judge checkout removed. An idle session holds its worktree open, so removing the folder
 before archiving fails or hangs.
 
 **Every session starts in the requester's turn.** The Claude desktop app starts a session
-only on a turn the requester's own message began; on a notification turn a start waits for
-a click. So the coordinator starts every sub-issue's session and the parent-fixes session
-in the turn of the "start work" message, each briefed to wait for the readiness check and
-for its work-order waits, and then sets each going by message, which works from any turn.
-A sub-issue added mid-run is the one start that can wait for a click.
+only on a turn the requester's own message began. So, in the turn of the "start work"
+message, the coordinator starts two agents, one reading the parent and every sub-issue
+(number, model and effort, spec status, waits) and one firing `work-started` and creating
+the parent branch and its worktree, says what it started and ends the turn. When both have
+reported, it ends a turn with one question that names every session to start. The
+requester's reply begins a turn of their own, and in it the coordinator starts every
+session, each with its branch name and briefed to wait for the readiness check and for its
+work-order waits, and then sets each going by message, which works from any turn. A
+sub-issue added mid-run gets its session through the same single question. A session is
+never proposed as a card.
 
-**Sessions report by message.** The app relays a session's finished turn to the
-coordinator as a note, and stops relaying those notes after many in a row with no message
-from the requester, holding them for the coordinator's next turn; a coordinator once sat
-idle overnight with a finished sub-issue's report held back. So every report, question and
-stop a build session makes in a parent issue run goes to the coordinator as a message the
-session sends to the coordinator's session id, and its final message only repeats it. A
-session keeps its turn open while its own commands run, so the coordinator is not woken
-each time one waits on a background test run, and the coordinator ends a turn that a note
-woke without acting when the note carries nothing the session has not already sent.
+**Sessions report by message.** Every report, question and stop a build session makes in a
+parent issue run goes to the coordinator as a message the session sends to the
+coordinator's session id (`references/reporting-to-the-coordinator.md`). The turn's closing
+message is one line saying the report was sent, and the session ends a turn only to wait for
+the coordinator. While it waits on its own work, a reviewer it started or a background
+command, it keeps the turn open with a blocking wait in slices under the shell's limit. The
+app's note that a session ended a turn carries nothing, and the coordinator does not act on
+it. At each milestone (sessions started, a session set going, a merge, a finding sent, a
+judgment) the coordinator says one line to the requester. A wait on another parent is
+checked again by an agent at every wake while it is unmet.
 
 **Stops are few.** Before any question reaches the requester it is tested against the
 profile's Standing answers and the decision line (section 7). A step the process already
 prescribes, such as going into acceptance after the Done judge's DONE, is not asked for.
 The release is asked once, or not at all when the requester authorised it ahead of time,
-in their starting instruction or their acceptance answer. `curate` asks once per pass,
+in their starting instruction or their acceptance answer. An authorisation to release
+starts the `release` skill and nothing more: a question the project's release procedure
+asks is answered only by a profile standing answer and is otherwise asked, as `release`
+says under "What an authorisation covers". `curate` asks once per pass,
 with every proposal numbered, drops what the plugin, the project's own records or the
 profile already hold or the requester has declined, and asks only about writes,
 retirements and changes to a project document.
 
+**Release runs in one order and can run again.** `release` loads the profile and confirms
+each card's acceptance; settles what the profile leaves open; rebases and runs the gate;
+makes the records commit on the branch being merged once the gate passes, with no further
+gate run since it changes no code path; merges and ships; closes the cards and fires
+`released`; captures post-release evidence; runs `curate`; and stops and reaps. It can be
+run again at any time for the same cards: each step first looks whether its result is
+already there and skips it when it is, and work held rather than released is released by
+running it again. It ends by listing each step as done, skipped as already done, or not done
+with the reason. A coordinator's last step confirms from that list that `curate` ran and
+that every post-release plan was captured or reported.
+
 ## 4. Definition of Ready
 
 A spec is Ready when every condition holds, evaluated over the card, the spec, the profile
-and the repository. Cheap presence checks come first; the end-to-end test is last.
+and the repository. Presence checks come first; the end-to-end test is last.
 
 **1. The request is classified**
 1.1 The spec declares the request type(s): feature, bug fix, refactor, data correction,
@@ -376,7 +482,12 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
     `[machine: presence]` The core list: existing data changed; security; performance;
     release sequencing (does the change need anything before or after the deploy); owner
     steps. The profile may extend it.
-4.2 Each disposition is true of the request as specified. `[judgment]`
+4.2 Each disposition is true of the request as specified. `[judgment]` A disposition
+    about a figure only the build can measure (a read count, a load time, a bundle size)
+    states the bound the change must stay within and the evidence row that measures it,
+    and predicts no value; a bound exceeded as built is a Done 4.3 finding. Where several
+    sub-issues move one figure, each states the bound for its own change, and the finished
+    figure is an evidence row on the sub-issue the work order puts last among them.
 4.3 A non-trivial disposition's demands appear in the spec's requirements or evidence rows
     under the criteria they bear on; a disposition adds no criterion. `[machine]`
 
@@ -404,7 +515,9 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
 **8. The owner's part is scheduled**
 8.1 Every owner step has a moment in the run. `[machine: presence]`
 8.2 For a parent issue, the work order's waits each cite an allowed reason, no pair marked
-    parallel would collide, and no wait holds back work that could run. `[judgment]`
+    parallel would collide, and no wait holds back work that could run. `[judgment]` It is
+    judged from the parent card with its sub-issues' specs, and its gap entries go in the
+    parent's records folder.
 
 **9. The spec grounds the work**
 9.1 Every project binding the spec relies on exists in the profile. `[machine]`
@@ -416,7 +529,7 @@ and the repository. Cheap presence checks come first; the end-to-end test is las
 9.3 A fresh agent could decompose and build the work from the card, the spec, the profile
     and the repository without a single new question, every decision either grounded in them
     or delegated under principle 5. `[judgment]` This is the purpose of the definition tested
-    directly; conditions 1 to 8 catch its common failures cheaply.
+    directly; conditions 1 to 8 catch its common failures before it.
 
 The definition does not trace criteria through tags in commits, which needs a commit
 discipline the plugin cannot enforce; does not require video evidence, since capture
@@ -430,8 +543,10 @@ A change is Done when every condition holds, evaluated over the spec, the base r
 the revision under evaluation.
 
 **1. The tests exist and pass**
-1.1 The profile's test gate passes at the revision under evaluation. `[machine]` A recorded
-    gate's record of a pass on the same tree counts as the run; one from another tree never.
+1.1 The profile's test gate passes at the revision under evaluation. `[machine]` The pass
+    is the change reviewer's or the Done judge's own fresh run of the full gate on that
+    revision, made last when nothing else fails; a printed record never decides it. A test
+    that fails on that run and passes on its one rerun passes, and is named unstable.
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the
     declared surface unchanged; a data correction has the dry run's counts matching the
@@ -461,10 +576,11 @@ the revision under evaluation.
     scaffolding. `[judgment]`
 
 **6. For a parent issue**
-6.1 Every sub-issue is done in the combined result, and every parent criterion is met by
-    it, including what no single sub-issue could show. `[judgment]` The Done judge
-    establishes the first part itself: each sub-issue's change is merged and conditions 1
-    to 5 hold for it on the parent branch. No artifact is captured for these process facts.
+6.1 Every sub-issue is done in the combined result. `[judgment]` A parent has no criteria
+    of its own. The Done judge establishes this itself from the revision under evaluation:
+    each sub-issue's change is merged and conditions 1 to 5 hold for it on the parent
+    branch, looked at hardest for what no single review could see. No artifact is captured
+    for these process facts; the judge's verdict is their record.
 
 Exclusions: intent is not gated; the owner judges it at acceptance. Nothing is checked by
 taste; every check carries a mode.
@@ -477,21 +593,35 @@ the whole definition to a parent branch.
 ### 6.1 Before development
 
 A card changes only through the plugin's card skills, which the tracker guard enforces
-(section 8). Each skill, after writing the card, re-derives the spec for the conditions the
-changed part feeds, re-stamps, and reports what changed. A change to the interface
-determination or to a scope boundary re-grounds the whole spec. A comment that changes no
-part of the card changes nothing. An addition is folded wherever the card sits; a card with
-a spec is protected by its stamp, not by a frozen column. A direct edit on the tracker is caught by the stamp at the
-next check and handled the same way.
+(section 8). Each card skill, after writing a card that has a spec, hands to `grill`
+Re-derive, which re-runs the conditions the changed parts feed (3.3 and 3.4 whenever the
+criteria, what needs to be achieved or the scope changed), re-stamps, sets the status as
+section 2.3 says, and reports what changed. A change to the interface determination or to a
+scope boundary re-grounds the whole spec. A comment that changes no part of the card
+changes nothing. An addition is folded wherever the card sits; a card with a spec is
+protected by its stamp, not by a frozen column. A direct edit on the tracker is caught by
+the stamp at the next check and handled the same way.
 
 `add-to-card` runs in one of two modes, named by its caller:
 
 - **Interactive**, the default: the addition is recorded and folded, and the requester
   accepts the rewritten wording or asks for changes. This holds for additions made outside
   a run and outside approval.
-- **Settled**: the requester has already answered (a request question handed back from
-  specification grilling, a change asked for at approval, a relayed question, a refusal). The answer is the acceptance; the fold is written without a further round on
-  its wording, and the requester may still object.
+- **Settled**: the requester has already answered. The answer is the acceptance; the fold
+  is written without a further round on its wording, and the requester may still object.
+
+**One route for an answer that changes a card.** Any answer the requester has already given
+that changes a card goes through `add-to-card` in settled mode, whichever skill received it:
+`grill` handing back a request question or a change asked for at approval, `check-ready`,
+`build`, `coordinate` or `accept`. Then `grill` Re-derive brings the spec along, and when the
+answer came after the spec earned Ready, writes the gap entry, with `--kind request-change`
+when the requester changed their mind rather than answered a miss. `grill` Amend is only for
+an answer that leaves the card as it is. A breach `grill`'s request gate finds that needs no
+one's answer, the card's own consistency such as a stale model-and-effort reason or a
+sub-issue missing from the work order, is fixed through `add-to-card` in settled mode and
+measured once more; only a breach that needs the requester's answer stops the card.
+`re-evaluate-card` takes no handed-over answer: it is for an audit the user asks for and for
+restructuring a parent issue that still carries criteria, supporting information or a spec.
 
 ### 6.2 During development
 
@@ -501,18 +631,21 @@ Only two things change a spec in development.
 **A question the spec did not answer.** The session first applies principle 5 and the spec's
 delegations; a question they answer is decided and logged, not asked. A surviving question
 goes to the coordinator in a fixed shape: the question, the options, a recommendation, and
-the Ready condition that failed. The owner's answer becomes a spec amendment on the
-sub-issue's branch and a gap entry. When the answer changes the card, it goes onto the card
-first, through `add-to-card` in settled mode, and the amendment then checks the changed card
-against the Definition of Request; `grill` itself never writes the card. A changed dependency re-checks
-the work order. The session rebases on the amended spec and continues.
+the Ready condition that failed. When the owner's answer leaves the card as it is, `grill`
+Amend writes it into the spec on the sub-issue's branch with a gap entry. When it changes the
+card, it takes the one route above: onto the card through `add-to-card` in settled mode,
+then `grill` Re-derive, which applies the request gate to the changed card, re-derives the
+spec and writes the gap entry; `grill` itself never writes the card. A changed dependency
+re-checks the work order. The session continues from the spec as it now stands.
 
 **An acceptance not given.** The refusal names the criterion the result fails or states the
 outcome that is missing, and that sorts it:
 
 - *Fails a stated criterion*: a defect, not a change. It is fixed as section 3 says, by the
-  kept session that owns it; the Done judge's miss is a gap entry against the Done
-  condition.
+  kept session that owns it, or, when no sub-issue owns it, by the kept session of the
+  sub-issue whose files it touches most; the miss is a gap entry against the Done condition
+  that should have caught it. The fix is reviewed, merged and, in a parent run, judged again
+  by the Done judge; `done` fires again, and `accept` runs again.
 - *Meets every criterion but is not what was wanted*: a request change. The owner's words
   are recorded on the card and folded through `add-to-card` in settled mode; the spec is
   re-derived for the conditions those criteria feed and re-stamped; the work continues to a
@@ -523,8 +656,9 @@ outcome that is missing, and that sorts it:
   from the outcome under review.
 
 Acceptance is asked against the evidence plan: every criterion is shown with its artifact
-and promise, caveats flagged, and one question accepts them all or names the refused ones
-by ID, so a refusal arrives already classified.
+and promise, caveats flagged, the line "no review passed this revision" with its findings
+when the build's report carries it, and one question accepts them all or names the refused
+ones by ID, so a refusal arrives already classified.
 
 ## 7. The decision line and the standing answers
 
@@ -548,10 +682,16 @@ skill proposes them from the gap records for the owner to accept.
 
 **The profile does not build up.** Only the readiness checker and the skills' "Before
 anything is asked" test read Standing answers; the change reviewer reads the test gate and
-the environments, and the Done judge the test gate. So `curate` classifies every finding
-before it proposes anything, by the first test that holds: plugin-general (it holds on any
-project, changes how a skill, agent or condition behaves, or targets a reader that never
-reads Standing answers), reported as a plugin defect and recorded as "sent to the plugin";
+the environments, and the Done judge the test gate. `curate` loads the profile as it stands
+on the integration branch (`devfactory profile --rev <integration branch>`), under its own
+marker, and reads the gap ledger, the review ledger and every live `gaps.md` and
+`reviews.md`. It counts an event once, entries with the same question on the same date
+being one event; groups the misses by the condition that let them through and lists the
+request changes apart, never counting one against a condition; and groups the review
+findings by Done condition and by text that repeats across cards. It classifies every
+finding before it proposes anything, by the first test that holds: plugin-general (it
+holds on any project, changes how a skill, agent or condition behaves, or targets a reader
+that never reads Standing answers), reported as a plugin defect and recorded as "sent to the plugin";
 the developer's side of the decision line, reported and not written; a project fact the
 template has a section for, proposed for it; a matter the project's own documents govern,
 proposed there and never edited by `curate`; and only then a standing answer. It drops
@@ -578,25 +718,34 @@ DevFactory/
       configure-project/    the profile: board, specs, test gate, environments, data access,
                             concerns, wireframe fidelity, branches, hooks, permissions
       create-card/          a card to the card standard, with stable criterion IDs and the
-                            two core sections
+                            two core sections; a parent issue's title, purpose, work order
+                            and model and effort, its sub-issues linked as the binding says
       add-to-card/          fold an addition, interactive or settled; re-derive the spec
-      re-evaluate-card/     measure a card against the standard; re-derive the spec
+      re-evaluate-card/     audit a card against the standard, or restructure a parent that
+                            still carries criteria; re-derive the spec
       grill/                draft the spec from the card, code, decisions and data; run the
-                            checker; ask; stamp; commit; write the spec line
-      check-ready/          the readiness check alone, for a card or every sub-issue of a
-                            parent; reports, asks, folds
-      coordinate/           a parent issue on the Claude desktop app: start every
-                            session up front, settle, relay, merge, judge, accept
+                            checker; ask; stamp; commit; write the spec line; for a parent,
+                            grill its set and run the set check
+      check-ready/          the readiness check alone, for a card or a parent's set, at
+                            creation from grill or at development start from coordinate;
+                            reports, asks, folds
+      start/                start work on a card: read it once and hand a parent issue to
+                            coordinate and a standalone card to build
+      coordinate/           a parent issue on the Claude desktop app: agents read the run,
+                            one question starts every session, settle, relay, merge, judge,
+                            accept
       build/                one card in one session: check the stamp, make the delegated
-                            calls, build, review, report
+                            calls, build, review, record the review, report
       accept/               show the owner every criterion's evidence, accept in one answer;
-                            classify a refusal
-      release/              release by the profile's procedure; ledger the gaps; delete
-                            specs; close cards; archive sessions, remove worktrees
-                            and branches
-      curate/               read the gap records; classify each finding, report plugin
-                            defects and decision-line misses, propose profile entries
-                            and retirements
+                            classify a refusal; hand to release
+      release/              rebase and gate; ledger the gaps and reviews and delete specs
+                            and records folders; merge and ship by the profile's procedure;
+                            close cards; capture post-release evidence; curate; archive
+                            sessions, remove worktrees, branches and review checkouts;
+                            list each step's outcome
+      curate/               read the gap and review records; count each event once; classify
+                            each finding, report plugin defects and decision-line misses,
+                            propose profile entries and retirements
     agents/
       card-reviewer.md      measures a card against the card standard
       readiness-checker.md  applies the Definition of Ready
@@ -604,88 +753,122 @@ DevFactory/
       done-judge.md         applies the Definition of Done to a parent branch
     references/
       card-standard.md, card-template.md, card-process.md, working-a-card.md, modules/
-      definition-of-ready.md, definition-of-done.md, decision-line.md
+      definition-of-request.md, definition-of-ready.md, definition-of-done.md,
+      decision-line.md
       spec-template.md, profile-template.md
+      events.md             the events, when each fires and by whom, and how a project
+                            hooks them
+      test-gate.md          when the test gate runs, who runs it, what a recorded pass is
+                            worth
+      spec-procedure.md     the passages grill and check-ready share: dispatching the
+                            checker, asking, folding, a card-changing answer, the ready
+                            receipt, landing a commit
+      reporting-to-the-coordinator.md   how a session in a parent run reports, asks, stops
+                            and waits
       bindings/github-projects.md, bindings/azure-devops.md
-      agents.md             each agent and the skill that starts it
+      agents.md             each agent, the skill that starts it and the references it
+                            reads
       examples/work-type-module.md   a team module example, a Work Type field
     scripts/
       devfactory.py         the machine checks and helpers: stamp, stamp-check, spec-lint,
                             criteria-ids, gaps add, gaps check, gaps ledger,
-                            evidence-check, receipt write, receipt check, begin, end,
-                            markers, profile, event
-      README.md             the commands, their arguments and exit codes
+                            evidence-check, spec-only, reviews add, reviews ledger,
+                            receipt write, receipt check, begin, end, markers, profile,
+                            event
+      README.md             the commands, their flags and exit codes
       tests/                the script's tests
     hooks/
       hooks.json            the four hooks, each switched by its line in the profile
-      guard_tracker.py      PreToolUse: refuses a tracker write while no card skill runs
-      guard_git.py          PreToolUse: refuses a push, or a change to a protected branch,
-                            except as the running skill's marker allows
+      guard_tracker.py      PreToolUse (Bash, PowerShell): refuses any tracker command that
+                            is not a known read while no skill that writes cards runs
+      guard_git.py          PreToolUse (Bash, PowerShell): refuses a push, or a change to a
+                            protected branch, except as the running skill's marker allows
       stamp_notice.py       UserPromptSubmit: says whether a named card's spec is current
-      session_context.py    SessionStart: the profile, the event hooks, the skills to use
-                            and any active marker
+      session_context.py    SessionStart: the profile, the event hooks, every skill by its
+                            full name, the decision line and the markers
       hooks_lib.py          shared by the hooks: input, repository root, command tokens,
                             profile and markers through the script
       tests/                the hooks' tests
 ```
 
 **Scripts.** `scripts/devfactory.py` decides every `[machine]` condition that has a command
-(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), writes
-and compares the receipts (`receipt`), holds the
-markers (`begin`, `end`, `markers`), is the one profile reader (`profile`), and fires the
-events (`event`). Every script
-and hook is Python 3, standard library only, run with `python`, and tested with `unittest`;
-the plugin has no Node dependency. In the owner's words (the owner, 2026-11-07): "I'm much
-more comfortable using Python scripts than Node for anything." The script and the hooks find
-the profile, the markers and the gap ledger under `.devfactory/` at the repository (or
-worktree) root, wherever the shell's working directory is.
+(`stamp`, `stamp-check`, `spec-lint`, `criteria-ids`, `gaps`, `evidence-check`), confirms a
+change is spec-only past the review limit (`spec-only`), records and ledgers the reviews
+(`reviews`), writes and compares the receipts (`receipt`), holds the markers (`begin`,
+`end`, `markers`), is the one profile reader (`profile`), and fires the events (`event`).
+Every command declares its flags, an unknown flag is a usage error, and `--help` prints the
+commands and their flags; `scripts/README.md` is the statement of each command's flags,
+output and exit codes. Every script and hook is Python 3, standard library only, run with
+`python`, and tested with `unittest`; the plugin has no Node dependency. In the owner's
+words (the owner, 2026-11-07): "I'm much more comfortable using Python scripts than Node for
+anything." The script and the hooks find the profile, the markers and the ledgers under
+`.devfactory/` at the repository (or worktree) root, wherever the shell's working directory
+is.
 
 **Markers.** A skill marks itself running with `begin <skill>` and `end <skill>`, which
-write and remove `.devfactory/.active/<skill>`. A marker expires after the profile's Marker
-lifetime, a line of its Hooks section, 12 hours by default, and an expired marker counts as
-no skill running. `begin` refreshes a marker, and every skill that holds one across a wait
-runs `begin` again on resume. `markers` lists the markers and, with `--clear-stale`,
-removes the expired ones.
+write and remove `.devfactory/.active/<skill>`. `begin` prints `began <skill> <plugin
+version>` and stores the version in the marker; when it refreshes a marker written under
+another version it also prints `plugin-changed <old> <new>`, and the skill loads itself
+again before it continues. A marker expires after the profile's Marker lifetime, a line of
+its Hooks section, 12 hours by default, and an expired marker counts as no skill running.
+`begin` refreshes a marker, and every skill that holds one across a wait runs `begin` again
+on resume. A `devfactory begin <skill>` earlier in the same command counts, for both guards,
+as that skill's fresh marker for the rest of that command. `markers` lists the markers and,
+with `--clear-stale`, removes the expired ones.
 
 **Hooks.** Four ship in `hooks/hooks.json`, each switched on or off by its line in the
 profile's Hooks section, all on by default. Each allows silently on a missing profile, when
-its line says off, and on any error of its own.
+its line says off, and on any error of its own. Both guards judge every command a session
+gives its Bash or PowerShell tool, in each part of the command line and inside `bash -c`,
+`sh -c` and `powershell -Command`.
 
-- The **tracker guard** refuses a tracker write (an issue edit, comment or create, a project
-  item edit or add, the Azure DevOps equivalents, a GraphQL mutation or a query read from a
-  file, and any other API call that is not a GET) unless a card-writing skill is running:
-  `create-card`, `add-to-card`, `re-evaluate-card`, `grill`, `check-ready`, `build`,
-  `coordinate`, `accept` or `release`. A `configure-project` or `curate` marker does not
-  unlock it.
-- The **git guard** protects the integration branch and every parent branch. It refuses any
-  push, and any change to a protected branch: a merge, pull, rebase, cherry-pick, hard
-  reset, amend or forced branch move while HEAD is on it, the same through `cd`, `git -C`,
-  `--git-dir` or `--work-tree` into its worktree, or a rebase that names it. Every path is
-  resolved to one canonical form before matching, so a Windows path with either slash, an
-  MSYS `/c/…` path and a Cygwin `/cygdrive/c/…` path name one place, and a target it cannot
-  resolve to a repository is refused while the session is guarded. Merging, pulling or rebasing a protected
-  branch into an unprotected one is never refused, nor is a plain commit. A `release` or
-  `coordinate` marker allows everything. A `build` marker allows the fast-forward into a
-  parent branch, which a build session makes with
-  `git -C <parent worktree> merge --ff-only <branch>` from its own worktree. A `grill`
-  marker allows its spec commit and fast-forward onto the integration branch, so `grill`
-  holds its marker through the spec commit and the spec line. A `create-card` or
-  `re-evaluate-card` marker allows the same fast-forward, which lands a request receipt.
+- The **tracker guard** refuses every `gh issue`, `gh project`, `gh label` and `az boards
+  work-item` subcommand that is not a known read, every `gh api` call that is not a GET,
+  and every `az rest` call that is not a GET against a work-item API, unless a skill that
+  writes cards is running: `create-card`, `add-to-card`, `re-evaluate-card`, `grill`,
+  `check-ready`, `build`, `coordinate`, `accept`, `release` or `configure-project`. A
+  `start` or `curate` marker does not unlock it.
+- The **git guard** protects the integration branch and every parent branch, and judges a
+  command by its effect on one. It refuses any push, and any change to a protected branch: a
+  merge, pull, rebase, cherry-pick, hard reset, a reset to a revision in any mode, an amend,
+  a forced branch move, a rename or delete of it (`branch -m|-M|-d|-D`), an `update-ref` of
+  `refs/heads/<branch>`, or a `checkout -B` or `switch -C` of it, while HEAD is on it, the
+  same through `cd`, `git -C`, `--git-dir` or `--work-tree` into its worktree, or a command
+  that names it. A `checkout` or `switch <branch>` earlier in the same command sets the
+  branch later parts are judged against. Every path is resolved to one canonical form before
+  matching, so a Windows path with either slash, an MSYS `/c/…` path and a Cygwin
+  `/cygdrive/c/…` path name one place; a target it cannot resolve to a repository, and a
+  `git -c alias.<x>=…` invocation, are refused while the session is guarded. Merging,
+  pulling or rebasing a protected branch into an unprotected one is never refused, nor is a
+  plain commit. A `release` or `coordinate` marker allows everything, except that a session
+  whose own root holds a fresh `build` marker gains nothing from a `release` or `coordinate`
+  marker in another root. A `build` marker allows the fast-forward into a parent branch,
+  which a build session makes with `git -C <parent worktree> merge --ff-only <branch>` from
+  its own worktree. A `grill` marker allows its spec commit and fast-forward onto the
+  integration branch, so `grill` holds its marker through the spec commit and the spec
+  line. A `create-card`, `re-evaluate-card` or `curate` marker allows the same fast-forward,
+  which lands a request receipt or a profile change.
 - The **stamp notice** gives a prompt that names a card with a spec the result of
   `stamp-check`. It never blocks.
 - The **session context** gives a session in a project with a profile the profile's
-  location, the project's event hooks, the skills, the decision line and any active
-  marker.
+  location, the project's event hooks, every skill by its full name (`devfactory:start` and
+  the rest), the decision line and the active and stale markers.
 
-**Agents** carry their whole definition inline (character, inputs, rules, report format,
-checklist), with `name`, `description`, `tools` and `model` in their frontmatter. The four
-run read-only on the most capable model, and skills start them by name with the Agent tool,
-passing every input the definition lists and no model. They decide each `[machine]`
-condition by running the command the definition names and quoting its output. Build
-sessions run on the card's suggested model and effort, or the profile's default.
+**Agents** carry their character, inputs, rules, report format and checklist, with `name`,
+`description`, `tools` and `model` in their frontmatter, and read the references their
+definitions name, so a definition works only with those references beside it
+(`references/agents.md`). The four run
+read-only on the most capable model, and skills start them by name with the Agent tool,
+after reading the definition's Inputs section rather than the whole definition, passing
+every input it lists and no model. They decide each `[machine]` condition by running the
+command the definition names and quoting its output. Build sessions run on the card's
+suggested model and effort, or the profile's default.
 
 **Skills** declare their pre-approved commands in `allowed-tools`, and paths in a skill are
-relative to its folder.
+relative to its folder. Each skill's "Read these first, in full" opens by saying a file
+already read in full in the session, under the plugin version `begin` printed, need not be
+read again. No skill tells a session to read another skill's `SKILL.md`: a passage two
+skills need lives in a reference.
 
 **The coordinator** names the Claude desktop app's session tools directly and needs the
 desktop app; the card and spec skills run in any Claude Code client.
