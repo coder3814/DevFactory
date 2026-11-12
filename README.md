@@ -69,8 +69,10 @@ own work.
 **Treats every question as a defect in the spec.** A question asked after Ready is a gap:
 recorded with the condition that let it through, answered as a spec amendment, and kept in a
 project ledger after release. The checker reads the ledger before every grilling, and a
-curate skill proposes which questions should become standing answers in your project's
-profile.
+curate skill sorts each recurring miss: a fix for the plugin, a call the developer could
+have made, a fact or a standing answer for your project's profile, or a change to a
+document your project already keeps. It also retires profile entries that something else
+now holds, so the profile stays short.
 
 **Enforces its own rules.** Four hooks ship with the plugin, each switchable per project. A
 tracker guard refuses a raw write to your board unless a card skill is running. A git guard

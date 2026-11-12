@@ -4,7 +4,18 @@ How a project configures DevFactory: its board, where its specs live, how its wo
 where it can be shown, and the answers it has already settled. The `configure-project` skill
 writes the profile by reading the board and the repository and asking the project's owner;
 every other skill reads it first, before touching a card, a spec or a branch. The plugin
-holds the process; everything that varies by project is here and nowhere else.
+holds the process; the profile holds what varies by project.
+
+Two rules keep it short:
+
+- **Only departures from the defaults.** A section or line whose default holds is left
+  out, and its absence means the default: the parts the card standard places, the specs
+  path `specs/`, every hook on, a Marker lifetime of 12 hours. The defaults are stated
+  below with each section.
+- **Point, don't copy.** Any entry may be a pointer to where the project already records
+  it, such as "as CLAUDE.md's push sections say" or "per decision 0042", instead of a copy;
+  readers follow the pointer. Policy the project keeps in its instructions, its recorded
+  decisions or its skills is pointed to, never repeated here.
 
 ## Where it lives
 
@@ -13,6 +24,9 @@ One folder per project, `.devfactory/` at the repository root:
 - `profile.md`: the profile, laid out below.
 - `modules/`: the team modules the profile names.
 - `gaps.md`: the gap ledger, the gap records of released cards, which `release` appends to.
+- `post-release/`: one folder per released card with evidence rows only the live release
+  can show, holding those rows and their capture until the next release deletes it, as
+  [`spec-template.md`](spec-template.md) says under `evidence/`.
 - `.active/`: the marker folder. A card or spec skill writes a marker here when it begins
   and removes it when it ends, and the hooks read it to tell whether one is running.
   `configure-project` adds `.devfactory/.active/` to `.gitignore`, so markers are never
@@ -33,16 +47,7 @@ where, so the readiness checker can read them.
 ## Where each part is written
 | Part | Field |
 |---|---|
-| Title | <title field> |
-| Summary | <description field> |
-| The issue or request | <description field> |
-| What needs to be achieved | <description field> |
-| Scope | <description field> |
-| Supporting information | <description field> |
-| Open questions | <description field> |
-| Acceptance criteria | <description field> |
-| Work order | <description field> |
-| Suggested model and effort | <description field> |
+| <only a part moved off the card standard's default> | <the field it is written to> |
 
 ## Additional fields
 | Field or fields | Team module |
@@ -52,7 +57,7 @@ where, so the readiness checker can read them.
 
 
 ## Specs
-- Path: <specs/, or another path>
+- Path: <only when not specs/>
 - Not code: <optional: paths whose changes never make evidence stale, such as where change
   notes go, comma-separated>
 
@@ -100,17 +105,11 @@ where, so the readiness checker can read them.
 - Default model and effort: <used when a card suggests none>
 
 ## Hooks
-- Tracker guard: <on / off>
-- Git guard: <on / off>
-- Stamp notice: <on / off>
-- Session context: <on / off>
-- Marker lifetime: <hours>h
-
-## Permissions
-- <an allowlist entry, for example `Bash(gh issue view *)`>
+- <only a hook that is off, by its name, for example "Stamp notice: off">
+- Marker lifetime: <only when not 12h>
 
 ## Standing answers
-- **<the question, as it was asked>** <the answer, and where it came from>
+- **<the question>** <the answer> (<card numbers it came from>)
 
 ## Declined proposals
 - **<the proposal, as curate made it>** declined <date>, after <run or card>: <the requester's words>
@@ -125,8 +124,9 @@ where, so the readiness checker can read them.
   standard maps onto that tracker, and the entries that binding asks for. The bindings are
   [`azure-devops.md`](bindings/azure-devops.md) and
   [`github-projects.md`](bindings/github-projects.md).
-- **Where each part is written** lists every core module. The defaults, and the rules for
-  moving a part into another field, are in [`card-standard.md`](card-standard.md).
+- **Where each part is written** lists only the parts moved off the default; with none
+  moved, the section is left out. The defaults, and the rules for moving a part into
+  another field, are in [`card-standard.md`](card-standard.md).
 - **Additional fields** is optional: none, or as many entries as the team wants. Each names
   the field or fields and the team module that works them. One module may cover several
   fields. A module whose field is `none` holds rules the team adds for the card as a whole,
@@ -140,7 +140,7 @@ where, so the readiness checker can read them.
 ### The work
 
 - **Specs** is where each card's spec folder goes, as `<path><card>/`; the default is
-  `specs/`. The folder's layout is in [`spec-template.md`](spec-template.md). **Not code**
+  `specs/`, and a Path line is written only for another path. The folder's layout is in [`spec-template.md`](spec-template.md). **Not code**
   is optional: paths, on one line and separated by commas, whose changes `evidence-check`
   never counts as a change to the code when it tests evidence for staleness, such as the
   folder change notes go in. The specs path and `.devfactory/` never count without it.
@@ -219,8 +219,9 @@ where, so the readiness checker can read them.
 
 ### Hooks and permissions
 
-- **Hooks** switches each of the plugin's four hooks on or off for this project; all four
-  are on by default, and a hook whose line says off does nothing. The **tracker guard**
+- **Hooks** switches off any of the plugin's four hooks for this project; all four are on
+  by default, so a line is written only for a hook that is off, and a hook whose line says
+  off does nothing. The Marker lifetime line is written only when it is not 12 hours. The **tracker guard**
   refuses a write to the tracker while no card skill is running, so every card change goes
   through the card skills. The **git guard** refuses a push, or a merge or rebase into the
   integration branch or a parent branch, while neither `release` nor `coordinate` is
@@ -229,22 +230,37 @@ where, so the readiness checker can read them.
   The **session context** prints, when a session starts, where the profile is, the event
   hooks the project has, which skill does what, and whether a card skill is running. The guards
   read the markers in `.devfactory/.active/`.
-- **Permissions** lists the allowlist entries `configure-project` writes to the project's
-  `.claude/settings.json`, so the skills' reads run without a prompt each time, such as
-  reading a card, listing the board, reading the git log and running the plugin's script.
-  Only read commands belong here; a write to the tracker or to a branch is never
-  pre-approved.
+- **Permissions** are not kept in the profile. The project's `.claude/settings.json` is
+  their record: `configure-project` writes the read-only allowlist entries there, so the
+  skills' reads run without a prompt each time, such as reading a card, listing the board,
+  reading the git log and running the plugin's script, and shows them. A write to the
+  tracker or to a branch is never pre-approved.
 
 ### Standing answers
 
-A standing answer is a question the project has settled once that would otherwise be asked
-every run, such as where post-release checks run or what a push carries. Each entry is the
-question as it was asked and its answer, with where the answer came from (a gap entry, a
-decision, the owner).
+A standing answer is a question on the requester's side of the decision line that the
+project has settled once and that would otherwise be asked every run, such as what a push
+carries. Each entry is the question, its answer, and one short citation of the card
+numbers it came from; quotes, spec versions, commit ids and dates stay in the gap ledger
+and git.
 
-The plugin ships no answers; it ships the rule: **a question answered twice in gap records
-becomes an entry.** `curate` proposes entries from the gap records, and the owner accepts
-them. A spec that relies on an entry names it under Project bindings used.
+The plugin ships no answers; it ships the rule: **a question answered the same way on two
+separate occasions becomes an entry.** Separate occasions are separate runs or separate
+questions; several gap entries recording one event count once. `curate` proposes entries
+from the gap records, and the owner accepts them. A spec that relies on an entry names it
+under Project bindings used.
+
+A standing answer works only through a reader that reads it. The readiness checker reads
+Standing answers, and every skill tests a question against them before asking it. The
+change reviewer reads only the test gate and the environments, and the Done judge only the
+test gate. So a rule meant to change a review, a Done judgment or how a skill or agent
+works belongs in the plugin, not here, and neither does one that would hold on any
+project, a call on the developer's side of the decision line, or a procedure the project's
+instructions, decisions or skills already own, which is pointed to instead. `curate`
+classifies each proposal by these tests before it proposes anything here, and retires an
+entry once the plugin or the project's own records hold it, a code identifier or figure it
+names has changed, or the condition it answers can no longer arise; a retired entry is
+deleted outright.
 
 Every question any skill would put to the requester is first tested against these entries,
 as "Before anything is asked" in [`decision-line.md`](decision-line.md) says: when an entry
@@ -252,8 +268,9 @@ answers it, the skill acts on the entry and cites it, and nothing is asked.
 
 ### Declined proposals
 
-What the requester chose not to write when `curate` proposed it, one entry per proposal:
-the proposal, the date, the run or card it followed, and the requester's words. `curate`
+What the requester chose not to write or retire when `curate` proposed it, one entry per
+proposal: the proposal, the date, the run or card it followed, and the requester's words;
+and each finding `curate` reported as a plugin defect, marked "sent to the plugin". `curate`
 writes this section and reads it before proposing, so a proposal declined in one run is
 not asked again in another. No other skill reads it.
 

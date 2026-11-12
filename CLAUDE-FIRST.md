@@ -106,10 +106,10 @@ session tools directly (`start_session`, `SendMessage`, `stop_session`,
 
 ## Profile additions (`.devfactory/profile.md`)
 
-- `## Hooks`: `- Tracker guard: on|off`, `- Git guard: on|off`, `- Stamp notice: on|off`,
-  `- Session context: on|off`, `- Marker lifetime: <hours>h`. Default all on and 12h. A hook
-  reads its own line and exits silently when off.
-- `## Permissions`: the allowlist entries `configure-project` writes to
-  `.claude/settings.json` in the project (read commands only).
+- `## Hooks`: `- Tracker guard: off`, `- Git guard: off`, `- Stamp notice: off`,
+  `- Session context: off`, `- Marker lifetime: <hours>h`, each written only when it departs
+  from the default of all on and 12h. A hook reads its own line and exits silently when off.
+- No `## Permissions` section: `configure-project` writes the read-only allowlist entries to
+  `.claude/settings.json` in the project, which is their record.
 - The Sessions `Runtime` line is removed; the coordinator needs the Claude desktop app and
   says so.

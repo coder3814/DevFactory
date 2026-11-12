@@ -178,10 +178,14 @@ One folder per project, `.devfactory/` at the repository root:
   and a sub-issue branch are named, who merges what and when, and the release procedure
   (the project's steps or the skill it names).
 - **Sessions**: the default model and effort.
-- **Hooks**: one on or off line per hook, all on by default, and the Marker lifetime.
-- **Permissions**: the read-only allowlist entries `configure-project` writes to the
-  project's `.claude/settings.json`, so the skills' reads run without a prompt. A write to
-  the tracker or to a branch is never pre-approved.
+- **Hooks**: a line only for a hook that is off, all being on by default, and the Marker
+  lifetime only when it is not 12 hours.
+
+The profile records only departures from the defaults, and any entry may point to where
+the project already records it (its instructions, a recorded decision, a skill) instead of
+copying it. Permissions are not kept in it: the read-only allowlist entries
+`configure-project` writes to the project's `.claude/settings.json` are their record. A
+write to the tracker or to a branch is never pre-approved.
 - **Standing answers** (section 7).
 
 `configure-project` writes the profile from the board, the repository and the owner's
@@ -333,7 +337,9 @@ profile's Standing answers and the decision line (section 7). A step the process
 prescribes, such as going into acceptance after the Done judge's DONE, is not asked for.
 The release is asked once, or not at all when the requester authorised it ahead of time,
 in their starting instruction or their acceptance answer. `curate` asks once per pass,
-with every proposal numbered, and drops what the profile already holds or has declined.
+with every proposal numbered, drops what the plugin, the project's own records or the
+profile already hold or the requester has declined, and asks only about writes,
+retirements and changes to a project document.
 
 ## 4. Definition of Ready
 
@@ -528,13 +534,31 @@ profile, a design system or an existing pattern in the code already answers; any
 spec delegates. When several sub-issues share a gap, the checker asks for the rule, not the
 case.
 
-**The standing answers** are profile entries: the questions a project has answered once that
-would otherwise be asked every run, such as where post-release checks run, whether a data
-change is rehearsed and how, what a push carries, how finished branches are removed, or
-which models run the project's own pipeline agents. Each entry is the question as it was
-asked, its answer, and where the answer came from. The plugin ships no answers; it ships the
-rule that a question answered twice in gap records becomes a profile entry, and the `curate`
+**The standing answers** are profile entries: the requester-side questions a project has
+answered once that would otherwise be asked every run, such as whether a data change is
+rehearsed and how, or what a push carries. Each entry is the question, its answer, and one
+short citation of the card numbers it came from; quotes, versions, commits and dates stay
+in the gap ledger and git. The plugin ships no answers; it ships the rule that a question
+answered the same way on two separate occasions (separate runs or separate questions,
+several entries about one event counting once) becomes a profile entry, and the `curate`
 skill proposes them from the gap records for the owner to accept.
+
+**The profile does not build up.** Only the readiness checker and the skills' "Before
+anything is asked" test read Standing answers; the change reviewer reads the test gate and
+the environments, and the Done judge the test gate. So `curate` classifies every finding
+before it proposes anything, by the first test that holds: plugin-general (it holds on any
+project, changes how a skill, agent or condition behaves, or targets a reader that never
+reads Standing answers), reported as a plugin defect and recorded as "sent to the plugin";
+the developer's side of the decision line, reported and not written; a project fact the
+template has a section for, proposed for it; a matter the project's own documents govern,
+proposed there and never edited by `curate`; and only then a standing answer. It drops
+what the plugin, the recorded decisions, the project instructions, the project's skills
+or the profile already hold, and recommends writing only profile facts and standing
+answers. Each pass first tests every standing answer and curated line for retirement:
+once the plugin or the project's own records hold it, a code identifier or figure it names
+has changed, or the condition it answers can no longer arise, it is proposed for
+deletion in the same question, and deleted outright with its new home named in the commit
+message.
 
 ## 8. Plugin layout
 
@@ -567,8 +591,9 @@ DevFactory/
       release/              release by the profile's procedure; ledger the gaps; delete
                             specs; close cards; archive sessions, remove worktrees
                             and branches
-      curate/               read the gap records; propose checker emphasis and profile
-                            entries
+      curate/               read the gap records; classify each finding, report plugin
+                            defects and decision-line misses, propose profile entries
+                            and retirements
     agents/
       card-reviewer.md      measures a card against the card standard
       readiness-checker.md  applies the Definition of Ready

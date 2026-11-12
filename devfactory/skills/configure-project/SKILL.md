@@ -1,6 +1,6 @@
 ---
 name: configure-project
-description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the default model and effort, which of the plugin's hooks are on, the read commands pre-approved in the project's Claude Code settings, and the standing answers. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
+description: Create or edit the project profile that configures DevFactory for one project — the board (where it lives and how to reach it, which field each part of a card is written to, any additional fields with the team module that works each one), where specs and recorded decisions live, the test gate, the environments checkpoints can be captured in, how each population of existing data is read without writing, concern extensions, owner-step types, wireframe fidelity and the design-review procedure, branches and merging with the sub-issue branch pattern and the release procedure, the default model and effort, which of the plugin's hooks are off, the read commands pre-approved in the project's Claude Code settings, and the standing answers, recording only departures from the defaults and pointing to what the project already records. Use when the user wants to set up, configure or change DevFactory for a project, add or change a team field and its module, change which hooks run or which reads are pre-approved, migrate an old card-standard board profile, or when another DevFactory skill finds no profile.
 allowed-tools:
   - Read
   - Glob
@@ -51,15 +51,26 @@ writes to the tracker. Ask the owner one question at a time with the
 AskUserQuestion tool, and wherever the board or the repository suggests an
 answer, propose it as the first option rather than asking from blank.
 
+The profile records only departures from the defaults, as the template says:
+an answer that is the default writes no line, and a section left at its
+default is left out. Where the project already records an answer, in its
+instructions (`CLAUDE.md`), its recorded decisions or its skills, write a
+pointer to it, such as "as CLAUDE.md's push sections say", never a copy.
+
 1. **Begin.** Run `devfactory begin configure-project`. When whoever started you handed
    over answers the owner has already given (a brief that names the board, the test gate,
    the environments and so on), take each as that step's answer, show it in the summary at
    step 19, and ask only the questions no answer covers.
 2. **Start from what exists.** If the project already has `.devfactory/profile.md`,
    read it and its team modules; change only what the owner asks for, and go
-   straight to the steps that cover it. Where it lacks a section the template
-   has, offer to fill that section through its step; a profile with no Hooks
-   section runs every hook, as the template's default says. A Folding or Stages
+   straight to the steps that cover it. A section it lacks whose absence means
+   the default (where each part is written, the specs path, the hooks, the
+   Marker lifetime) is not offered: its absence is the answer. Offer to fill
+   only a section that has no default, such as the test gate or the
+   environments, through its step. Offer to remove a line that only restates a
+   default, a Permissions section, which `.claude/settings.json` now records,
+   and an entry that copies what the project's instructions, decisions or
+   skills already say, which becomes a pointer. A Folding or Stages
    section the template no longer has is read by nothing: offer to remove it,
    and, where the owner wants their old stage moves kept, to write them as event
    hooks in step 6. If the project has
@@ -88,7 +99,8 @@ answer, propose it as the first option rather than asking from blank.
    GitHub Projects no field can hold a part, so keep the defaults. Read a few
    of the board's recent cards and tell the owner where they keep each part
    today: a card whose parts sit elsewhere is still read, and its parts move to
-   the profile's fields the next time the card is rewritten.
+   the profile's fields the next time the card is rewritten. Record only the
+   parts moved off the default; with none moved, leave the section out.
 5. **Add fields.** List the work item type's fields, the required fields with
    no default first, and ask which ones the team wants its cards to carry. On
    GitHub Projects, list the fields the binding says a card can carry. For
@@ -105,12 +117,13 @@ answer, propose it as the first option rather than asking from blank.
    adds a hook for that event in `.devfactory/hooks/`. Ask whether the owner
    wants any hook now; write each one they ask for, as `events.md` says, with
    the tracker's own CLI and the column names they give, and show it before
-   writing it in step 19. Say that the Permissions entry for the plugin's script
+   writing it in step 19. Say that the allowlist entry for the plugin's script
    also lets `devfactory event` run these hooks without a prompt, so each hook
    writes to the tracker unattended.
 7. **Place specs and recorded decisions.** Propose `specs/` as the specs path,
    or another path outside any documentation system the project runs where
-   `specs/` would sit inside one, and ask. Look for where the project already
+   `specs/` would sit inside one, and ask. Write a Path line only for a path
+   other than `specs/`. Look for where the project already
    keeps its decisions, such as a decisions or architecture-decision folder,
    propose that path, and ask; if it keeps none, ask where they are. When the
    project's own rules have work commit notes beside the code that are not code,
@@ -184,19 +197,20 @@ answer, propose it as the first option rather than asking from blank.
     ask whether the owner wants any off. Say that the tracker guard covers
     `gh api graphql` mutations and `gh api` calls with `-f`, `-F`, `--input`,
     `--method` or a non-GET `-X`, besides the issue, project and board
-    commands. Record one `on` or `off` line for each in the Hooks section. Then
-    ask for the Hooks section's `Marker lifetime`, proposing the default of 12
-    hours: a marker older than that no longer counts as a running skill, and
-    `begin` refreshes it. Record it as the `Marker lifetime` line, `12h` by
-    default. For troubleshooting, tell the owner: a guard that lets a write
+    commands. Record an `off` line only for each hook the owner turns off, and
+    nothing for one left on. Then ask for the `Marker lifetime`, proposing the
+    default of 12 hours: a marker older than that no longer counts as a running
+    skill, and `begin` refreshes it. Record a `Marker lifetime` line only when
+    the owner chooses another value. With every hook on and the default
+    lifetime, leave the Hooks section out. For troubleshooting, tell the owner: a guard that lets a write
     through while no skill is running points to a marker an interrupted skill
     left behind, which `devfactory markers` lists with its age and
     `devfactory markers --clear-stale` removes once past its lifetime; a guard
     that refuses a running skill's write points to an expired marker, which
     that skill's `begin` refreshes.
 17. **Choose the permissions.** Propose the allowlist entries for the
-    Permissions section, read commands only, in the `Bash(<command> *)`
-    spelling: the plugin's script, `Bash(python *devfactory.py*)`; the binding's
+    project's `.claude/settings.json`, which is their only record (the profile
+    keeps no copy), read commands only, in the `Bash(<command> *)` spelling: the plugin's script, `Bash(python *devfactory.py*)`; the binding's
     reads, `Bash(gh issue view *)`, `Bash(gh project item-list *)` and
     `Bash(gh api -X GET *)` for GitHub Projects, or
     `Bash(az boards work-item show *)` for Azure DevOps; and the repository
@@ -207,16 +221,21 @@ answer, propose it as the first option rather than asking from blank.
     accept, drop or add entries. Refuse any entry that writes, such as a
     tracker edit, a push or a merge: writes are never pre-approved.
 18. **Record standing answers.** Explain what a standing answer is and the rule
-    that a question answered twice in gap records becomes one, as the template
-    says. Start the section empty unless the owner has answers to record now;
-    record each as the question, its answer and where the answer came from.
+    that a question answered the same way on two separate occasions becomes
+    one, as the template says, and what does not belong there: a rule that
+    would hold on any project or that changes how a skill or agent works, which
+    belongs in the plugin; a call on the developer's side of the decision line;
+    and a procedure the project's own instructions, decisions or skills already
+    own, which is pointed to. Start the section empty unless the owner has
+    answers to record now; record each as the question, its answer and, when it
+    came from cards, one short citation of their numbers.
 19. **Accept and write.** Show the profile and every team module in full, the
     allow entries to be added to `.claude/settings.json` and the `.gitignore`
     line, and get the owner's acceptance or changes. Once accepted:
     - write the profile and modules to `.devfactory/profile.md` and
       `.devfactory/modules/`, and each event hook the owner asked for to
       `.devfactory/hooks/`, with the Write tool;
-    - merge the Permissions entries into the project's `.claude/settings.json`
+    - merge the accepted allowlist entries into the project's `.claude/settings.json`
       under `permissions.allow`: read the file with the Read tool, add each
       entry it does not already hold with the Edit tool, and keep every other
       key and every existing entry, never removing one; when the file does not

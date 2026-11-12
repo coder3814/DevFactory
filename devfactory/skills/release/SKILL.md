@@ -72,13 +72,18 @@ theirs to take when its moment comes, whatever authorised the release.
    procedure and every project skill it names for merging or releasing. Confirm that each
    card to release is in Acceptance with the requester's acceptance recorded on it.
 
-2. **Settle what the profile leaves open.** When neither the profile's release procedure
-   nor its Standing answers say how this work is released (where it merges, what ships
+2. **Settle what the profile leaves open.** When none of the profile's release procedure,
+   its Standing answers, the project instructions (`CLAUDE.md`) and the project's skills
+   say how this work is released (where it merges, what ships
    it), ask the requester, once, for each thing they leave open. What is checked once the
    release is live is the evidence plan's post-release rows, which step 5 captures, and is
-   never asked. Then propose the answer
-   for the release procedure or as a standing answer and, when the requester accepts, write
-   it to the profile with where it came from.
+   never asked. Before proposing anything, classify the answer as `curate` step 5 does and
+   drop it when the plugin, the recorded decisions, the project instructions or a project
+   skill already hold it. An answer the project instructions or a project skill own is
+   proposed there, by name, and not written. Otherwise propose it for the release
+   procedure, as a pointer where the project already records it, or as a standing answer,
+   and, when the requester accepts, write it to the profile as the rule alone with one
+   short citation of the card numbers it came from.
 
 3. **Keep the gap records, then delete the spec folders.** For every card this release
    carries, the parent's and each sub-issue's in a run, first append every entry in its
