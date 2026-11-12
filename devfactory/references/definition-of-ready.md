@@ -154,7 +154,13 @@ These conditions apply when the request's rules act on existing data.
 
 7.3 Every checkpoint named is one the profile's environments can provide.
     `[machine: the checker reads]`
-    A checkpoint names a profile environment whose "can show" covers what the row promises.
+    A checkpoint names a profile environment whose "can show" covers what the row promises,
+    or the built-in **Repository** checkpoint, which every project has without a profile
+    entry. Repository shows three things: the output of a command run from a clean checkout
+    at the recorded revision, git history, and the card's comments; it shows nothing about a
+    running system, so a row that promises behaviour of one names an environment. A
+    Repository row keeps the bar of 7.1 and 7.4: one that records a process fact of the run,
+    such as a review passing or a step being taken, fails 7.4.
 
 7.4 Every row uses the lightest artifact that could fail it, from what the project already
     has. `[judgment]`

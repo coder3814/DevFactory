@@ -178,6 +178,10 @@ where, so the readiness checker can read them.
 - **Environments** lists every place a checkpoint can be captured. A spec's evidence row
   names one by its heading, and Ready condition 7.3 checks that its "can show" covers what
   the row promises. "Reached by" is in the project's words: a command, a deploy, a sign-in.
+  The **Repository** checkpoint is built in and needs no entry: command output from a clean
+  checkout at the recorded revision, git history and the card's comments, nothing about a
+  running system. An environment's "can show" is never widened to cover these; no
+  environment is named Repository.
 - **Data access** names each population of existing data a card's rules might act on and
   how it is read without writing, so the readiness checker can run the rules against it
   (Ready condition 5). A population with no entry makes condition 5 unchecked, never passed.

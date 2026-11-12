@@ -138,7 +138,9 @@ In this order, general to specific:
    each resolved.
 7. **Evidence plan**: one row per criterion: how it is shown (test, image, log, query,
    output), what the artifact will show, under what condition, how it is generated, and the
-   environment (checkpoint) it is captured in. A row only the live release can show is
+   environment (checkpoint) it is captured in: a profile environment, or the built-in
+   Repository checkpoint for command output from a clean checkout, git history and the
+   card's comments, which shows nothing about a running system. A row only the live release can show is
    marked post-release, and only when no checkpoint before release could fail it.
 8. **Owner steps**: each step only the requester can take (approve a mock-up, sign in
    somewhere, run something in production) with the moment in the run it happens.

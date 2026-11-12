@@ -135,7 +135,10 @@ answer, propose it as the first option rather than asking from blank.
     reveals, such as a local run configuration, a container compose file or a
     deploy workflow and the targets it deploys to. Ask which environments exist,
     and for each, what a checkpoint there can show, what it cannot, and how it
-    is reached, in the project's words, one environment at a time.
+    is reached, in the project's words, one environment at a time. Say that the
+    Repository checkpoint is built in, for command output from a clean checkout, git
+    history and the card's comments, so no environment's "can show" lists those and none
+    is named Repository.
 10. **Name the data access.** Propose the populations of existing data a card's
     rules might act on from what the repository reveals, such as a database
     schema, migrations, data files or seed data, and ask which exist. For each,
