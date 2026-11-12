@@ -250,8 +250,9 @@ not end before step 3 has started every session.
    each sub-issue merged and passed its review, and that the gate passes on the parent
    branch, are facts the Done judge establishes itself under Done 6.1, so nothing is
    captured or committed for them before it runs. When the parent's spec has evidence rows
-   for parent criteria, message the parent-fixes session, once every sub-issue is merged,
-   to capture them on its branch rebased onto the parent branch, check them as `build` step
+   for parent criteria, among them the finished figure a parent disposition states for a
+   figure several sub-issues move (Ready 4.2), message the parent-fixes session, once
+   every sub-issue is merged, to capture them on its branch rebased onto the parent branch, check them as `build` step
    8 says, and merge as step 8 says; then judge. When every sub-issue this run builds is merged, start the
    `done-judge` agent by name with the Agent tool; it carries its own definition
    ([`../../agents/done-judge.md`](../../agents/done-judge.md)), tools and model. Give it the

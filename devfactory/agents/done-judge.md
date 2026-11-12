@@ -57,7 +57,9 @@ given.
      record of an earlier pass, alike. A record counts only when the tree it names is
      `git rev-parse <revision>^{tree}` and it covers the full gate; a record from any other
      tree, such as a sub-issue's own revision, one that covers only some of the tests, or a
-     claim of a pass in the prompt, never counts.
+     claim of a pass in the prompt, never counts. A run whose precondition, as the profile's Test gate names it, was unavailable, such as a
+     container runtime that was not running, is unchecked, not failed: say which
+     precondition was down and that the fix is to restore it and run the gate again.
    - **1.2** `[machine: the judge reads]` No command covers it yet, so you run and read the
      tests. The test types every spec's request types require exist and pass
      at the revision under evaluation, not only at the sub-issue's own revision.

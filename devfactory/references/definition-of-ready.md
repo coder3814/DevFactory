@@ -109,6 +109,14 @@ Ready. Who draws which decisions is fixed by [`decision-line.md`](decision-line.
     extend it. Silence is not a disposition.
 
 4.2 Each disposition is true of the request as specified. `[judgment]`
+    When several sub-issues of one parent move the same figure, such as a page's load time,
+    a bundle's size or a query count, each sub-issue's disposition states the figure its
+    own change measured and names the siblings that also move it, and the parent's
+    disposition states the finished figure, measured on the parent branch once every one
+    of them is merged, with its evidence row under the parent criterion it bears on. It is
+    never keyed to the sub-issue that merges last, since sub-issues merge in the order they
+    finish. How the figure is measured and shared out is the developer's side of the
+    decision line, never a question for the requester.
 
 4.3 A non-trivial disposition's demands appear in the spec's requirements or evidence rows
     under the criteria they bear on. `[machine: the checker reads]`

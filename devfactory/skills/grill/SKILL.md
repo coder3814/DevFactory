@@ -313,10 +313,14 @@ that, every time you commit the spec folder, write the line again with that comm
    | What needs to be achieved, acceptance criteria | 1.2, 2, 3.2, 4.2, 4.3, 5, 6.1, 7, 9.3 |
    | Supporting information | 3.2, 4.2, 9.1, 9.3 |
    | Open questions | 2.3, and whatever the answered question changed |
-   | Work order, or a sub-issue added or removed | 8.2, 9.3 for the parent |
+   | Work order, or a sub-issue added or removed | 8.2, 9.3 for the parent; 3.2, 4.2, 9.3 for each sub-issue whose spec cites a wait the change adds or drops |
    | Suggested model and effort | none |
 
-   Condition 6.1 is re-derived on every criterion change, never carried over. Condition 9.2
+   A work-order change re-derives every sub-issue spec that cites a wait it adds or drops,
+   such as a Release sequencing disposition or an edge row that relies on another
+   sub-issue merging first: the revised waits replace the old ones outright, and nothing
+   in a spec may still rely on a wait the work order no longer gives. Condition 6.1 is
+   re-derived on every criterion change, never carried over. Condition 9.2
    is not applicable in a re-derive check, because the card has changed against the old
    stamp by definition; the new stamp replaces it.
 4. **Revise** the spec sections those conditions read, as New step 5 says.

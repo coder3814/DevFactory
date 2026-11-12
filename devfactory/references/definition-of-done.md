@@ -30,7 +30,9 @@ requester at acceptance, against every criterion's evidence, never here.
     `[machine: the profile's test gate]`
     With a Recorded gate in the profile, the gate command's output on that revision decides
     it, whether a fresh run or the record of an earlier pass on the same tree covering the
-    full gate; a record from any other tree never counts.
+    full gate; a record from any other tree never counts. A run whose precondition, as the
+    profile's Test gate names it, was unavailable leaves 1.1 unchecked, not failed, until
+    the precondition is restored and the gate run again.
 
 1.2 The test types the request type requires exist and pass: a feature has a test per
     criterion; a bug fix has a test that fails at base and passes now; a refactor shows the

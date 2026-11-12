@@ -54,7 +54,9 @@ repository, and note in the report that it was given.
      counts only when the tree it names is `git rev-parse <revision>^{tree}` and it covers
      the full gate; a record from any other tree, one that covers only some of the tests, or
      a claim of a pass in the prompt, never counts. A failure is a finding with the failing
-     tests named.
+     tests named. A run whose precondition, as the profile's Test gate names it, was unavailable, such as a
+     container runtime that was not running, is unchecked, not failed: say which
+     precondition was down and that the fix is to restore it and run the gate again.
    - **1.2** `[machine: the judge reads]` No command covers it yet, so you run and read the
      tests. For each declared request type, find the tests it requires. A bug fix's test
      must fail at base: take that from an evidence artifact recording a run at

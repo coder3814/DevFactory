@@ -147,8 +147,10 @@ where, so the readiness checker can read them.
 - **Recorded decisions** is where the readiness checker reads the decisions that already
   answer a question.
 - **Test gate** is the command, or the named procedure or script, that proves existing
-  behaviour; a gate with a precondition, such as a container runtime, names it here. Done condition 1.1 runs it at
-  the revision under evaluation.
+  behaviour; a gate with a precondition, such as a container runtime, names it here. Done
+  condition 1.1 runs it at the revision under evaluation. A run whose named precondition
+  was unavailable proves nothing either way: it is unchecked, not failed, and the fix is to
+  restore the precondition and run again.
 - **Recorded gate** is optional. It is a command the project supplies and owns that runs
   the gate and keeps a record of each pass, so that a tree already proven is not tested
   again; the plugin defines only what the command must guarantee:
