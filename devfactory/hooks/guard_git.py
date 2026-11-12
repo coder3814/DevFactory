@@ -5,8 +5,11 @@ outside the skills that own them, and refuses every push outside release and coo
 Refused: `git push`; and `git merge`, `git pull`, `git rebase`, `git cherry-pick`,
 `git reset --hard`, `git commit --amend` and `git branch -f` when the branch they change
 (HEAD in the effective directory, `cwd` after any `cd <dir>` and `git -C <dir>`, the branch a
-rebase names, or the branch `git branch -f` moves) is protected. Merging, pulling or rebasing
-a protected branch into an unprotected one is never refused. Allowed: everything while a
+rebase names, or the branch `git branch -f` moves) is protected. Every directory a command
+targets (`cd`, `-C`, `--git-dir`, `--work-tree`, the session's cwd) is resolved to one
+canonical form first, so a drive path with either slash, `/c/x` and `/cygdrive/c/x` are one
+place; a target the guard cannot resolve to a repository is refused in a guarded session.
+Merging, pulling or rebasing a protected branch into an unprotected one is never refused. Allowed: everything while a
 `release` or `coordinate` marker is fresh; under `build`, a `git merge --ff-only` onto a
 parent branch; under `grill`, `create-card` or `re-evaluate-card`, a `git merge --ff-only`
 onto the integration branch, which lands a spec or a receipt (a plain
@@ -45,7 +48,7 @@ VALUE_OPTIONS = {
 
 
 def resolve(base, p):
-    return os.path.abspath(os.path.join(base, p))
+    return lib.canonical(base, p)
 
 
 def parse_git(words, d):
@@ -54,11 +57,20 @@ def parse_git(words, d):
         return None
     i = 1
     git_dir = d
+    options = []
     while i < len(words) and words[i].startswith('-'):
         opt = words[i]
+        name, eq, value = opt.partition('=')
         if opt == '-C' and i + 1 < len(words):
             git_dir = resolve(git_dir, words[i + 1])
             i += 2
+        elif name in ('--git-dir', '--work-tree'):
+            if not eq:
+                value = lib.word(words, i + 1) or ''
+                i += 1
+            # Resolved against the -C directory before it, as git does.
+            options += [name, resolve(git_dir, value)]
+            i += 1
         elif opt in GLOBAL_WITH_VALUE:
             i += 2
         else:
@@ -83,7 +95,7 @@ def parse_git(words, d):
         else:
             args.append(w)
         j += 1
-    return {'sub': sub, 'args': args, 'flags': flags, 'raw': raw, 'dir': git_dir}
+    return {'sub': sub, 'args': args, 'flags': flags, 'raw': raw, 'dir': git_dir, 'options': options}
 
 
 def has_short(git, letter):
@@ -152,8 +164,8 @@ def classify(git):
     return None
 
 
-def current_branch(d):
-    r = lib.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=d, timeout=5)
+def current_branch(d, options=()):
+    r = lib.run(['git'] + list(options) + ['rev-parse', '--abbrev-ref', 'HEAD'], cwd=d, timeout=5)
     if r.error is not None or r.status != 0:
         return ''
     b = r.stdout.strip()
@@ -200,6 +212,19 @@ def guard_for(root, cache):
     return guard
 
 
+def target_root(o):
+    """The project root a git invocation acts on, in canonical form, or '' when its
+    directory and --git-dir or --work-tree options name no repository."""
+    options = o.get('options') or []
+    named = dict(zip(options[::2], options[1::2]))
+    if '--git-dir' in named and '--work-tree' not in named:
+        r = lib.run(['git', '--git-dir', named['--git-dir'], 'rev-parse', '--path-format=absolute',
+                     '--git-common-dir'], cwd=o['dir'] if os.path.isdir(o['dir']) else None, timeout=5)
+        common = (r.stdout or '').strip() if r.error is None and r.status == 0 else ''
+        return lib.canonical(os.path.dirname(lib.canonical(common))) if common else ''
+    return lib.git_toplevel(o['dir'], options)
+
+
 def fresh_markers(roots, cache):
     names = set()
     for root in roots:
@@ -218,7 +243,7 @@ def decide(o, guard, active):
                     'the release skill.')
         return ('DevFactory: a push goes through the release skill, or coordinate for a parent issue; '
                 'neither is running.')
-    branch = normalise_branch(o['branch']) if o['branch'] else current_branch(o['dir'])
+    branch = normalise_branch(o['branch']) if o['branch'] else current_branch(o['dir'], o.get('options', ()))
     integration = guard['is_integration'](branch)
     parent = not integration and guard['is_parent'](branch)
     if not integration and not parent:
@@ -255,6 +280,7 @@ def main():
         git = parse_git(words, d)
         o = git and classify(git)
         if o:
+            o['options'] = git['options']
             ops.append(o)
     if not ops:
         return
@@ -263,7 +289,18 @@ def main():
     guards = {}
     marker_cache = {}
     for o in ops:
-        root = lib.project_root(o['dir'])
+        root = target_root(o)
+        if not root:
+            # The guard cannot tell which repository and branch this changes, so it fails
+            # closed wherever the session itself is guarded.
+            if guard_for(session_root, guards) and not (
+                    fresh_markers([session_root], marker_cache) & {'release', 'coordinate'}):
+                lib.deny('DevFactory: this git %s targets %s, which the guard cannot resolve to a '
+                         'repository, so it cannot tell whether a protected branch changes; give the '
+                         'directory as an existing path (C:/..., /c/... or relative), or run it under '
+                         'release or coordinate.' % (o['kind'], o['dir']))
+                return
+            continue
         guard = guard_for(root, guards)
         if not guard:
             continue

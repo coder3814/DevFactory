@@ -659,8 +659,11 @@ its line says off, and on any error of its own.
   unlock it.
 - The **git guard** protects the integration branch and every parent branch. It refuses any
   push, and any change to a protected branch: a merge, pull, rebase, cherry-pick, hard
-  reset, amend or forced branch move while HEAD is on it, the same through `cd` or `git -C`
-  into its worktree, or a rebase that names it. Merging, pulling or rebasing a protected
+  reset, amend or forced branch move while HEAD is on it, the same through `cd`, `git -C`,
+  `--git-dir` or `--work-tree` into its worktree, or a rebase that names it. Every path is
+  resolved to one canonical form before matching, so a Windows path with either slash, an
+  MSYS `/c/…` path and a Cygwin `/cygdrive/c/…` path name one place, and a target it cannot
+  resolve to a repository is refused while the session is guarded. Merging, pulling or rebasing a protected
   branch into an unprotected one is never refused, nor is a plain commit. A `release` or
   `coordinate` marker allows everything. A `build` marker allows the fast-forward into a
   parent branch, which a build session makes with

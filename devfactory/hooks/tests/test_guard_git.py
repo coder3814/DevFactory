@@ -73,6 +73,57 @@ class GuardGitTest(unittest.TestCase):
         self.deny(self.run_guard(session, 'cd "%s" && git merge card-7' % target), r'parent branch')
         self.assertEqual(self.run_guard(target, 'git -C "%s" merge parent-12' % session), '')
 
+    def path_forms(self, target):
+        """Every spelling of target a command may use, by name."""
+        forward = target.replace('\\', '/')
+        forms = {'native': target, 'forward slashes': forward}
+        if os.name == 'nt' and len(target) > 1 and target[1] == ':':
+            rest = forward[2:]
+            forms['MSYS /c/'] = '/%s%s' % (target[0].lower(), rest)
+            forms['Cygwin /cygdrive/c/'] = '/cygdrive/%s%s' % (target[0].lower(), rest)
+            forms['other case'] = target.swapcase()
+        return forms
+
+    def test_every_spelling_of_a_git_c_target_reaches_the_protected_branch(self):
+        session = self.on('card-7')
+        target = self.on('main')
+        for name, path in self.path_forms(target).items():
+            with self.subTest(form=name):
+                self.deny(self.run_guard(session, 'git -C "%s" merge --ff-only card-7' % path),
+                          r'integration branch')
+        with self.subTest(form='relative'):
+            rel = os.path.relpath(target, session)
+            self.deny(self.run_guard(session, 'git -C "%s" merge --ff-only card-7' % rel), r'integration branch')
+
+    def test_every_spelling_of_a_cd_target_reaches_the_protected_branch(self):
+        session = self.on('card-7')
+        target = self.on('main')
+        for name, path in self.path_forms(target).items():
+            with self.subTest(form=name):
+                self.deny(self.run_guard(session, 'cd "%s" && git merge card-7' % path), r'integration branch')
+
+    def test_git_dir_and_work_tree_targets_reach_the_protected_branch_in_every_spelling(self):
+        session = self.on('card-7')
+        target = self.on('main')
+        for name, path in self.path_forms(target).items():
+            with self.subTest(form=name):
+                git_dir = path.rstrip('/\\') + '/.git'
+                self.deny(self.run_guard(session, 'git --git-dir="%s" merge card-7' % git_dir), r'integration branch')
+                self.deny(self.run_guard(session, 'git --git-dir "%s" --work-tree "%s" merge card-7' % (git_dir, path)),
+                          r'integration branch')
+        self.assertEqual(self.run_guard(target, 'git --git-dir="%s/.git" merge main' % session.replace('\\', '/')), '')
+
+    def test_a_target_the_guard_cannot_resolve_fails_closed_in_a_guarded_session(self):
+        session = self.on('card-7')
+        missing = os.path.join(session, 'no-such-dir')
+        for c in ['git -C "%s" merge card-7' % missing, 'git -C "%s" rebase main' % missing,
+                  'git -C "/z/no/such/place" merge --ff-only card-7']:
+            with self.subTest(command=c):
+                self.deny(self.run_guard(session, c), r'cannot resolve')
+        self.assertEqual(self.run_guard(self.on('card-7', ['release']), 'git -C "%s" merge card-7' % missing), '')
+        self.assertEqual(self.run_guard(self.on('card-7', profile=None), 'git -C "%s" merge card-7' % missing), '')
+        self.assertEqual(self.run_guard(session, 'git -C "%s" status' % missing), '')
+
     def test_build_may_fast_forward_a_parent_branch_also_from_its_own_worktree_but_nothing_else(self):
         session = self.on('card-7', ['build'])
         parent = self.on('parent-12')

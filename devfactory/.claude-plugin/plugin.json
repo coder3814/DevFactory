@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "devfactory",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Carries a change from a card to an accepted unattended build: the request as a card that meets a Definition of Request, a specification that earns a Definition of Ready, a parent issue run as one session per sub-issue, and a Definition of Done, configured per project by a project profile, with Python scripts for its machine checks, four hooks that enforce its rules, and events at each hand-off that a project hooks to move its own cards.",
   "author": {
     "name": "Chad Myers"

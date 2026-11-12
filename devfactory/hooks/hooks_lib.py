@@ -39,16 +39,45 @@ def read_input():
     return json.loads(sys.stdin.buffer.read().decode('utf-8'))
 
 
+MSYS_DRIVE = rx(r'^/(?:cygdrive/)?([A-Za-z])(?=/|\Z)')
+
+
+def canonical(base, p=None):
+    """One absolute form for a path a command names, resolved against base: on Windows an
+    MSYS or Git Bash drive path (/c/x) or a Cygwin one (/cygdrive/c/x) becomes C:\\x, either
+    slash is accepted, and the result is absolute, so the same directory resolves to the same
+    repository however a command spelled it; Windows matches its case without regard to it."""
+    path = base if p is None else p
+    if p is not None and p.startswith('~'):
+        path = os.path.expanduser(p)
+    if os.name == 'nt':
+        path = path.replace('\\', '/')
+        path = MSYS_DRIVE.sub(lambda m: m.group(1).upper() + ':', path, count=1)
+        if re.match(r'^[A-Za-z]:\Z', path):
+            path += '/'
+    if p is not None and base is not None:
+        path = os.path.join(canonical(base), path)
+    return os.path.abspath(path)
+
+
 def input_cwd(data):
     cwd = data.get('cwd') if isinstance(data, dict) else None
-    return os.path.abspath(cwd or os.environ.get('CLAUDE_PROJECT_DIR') or os.getcwd())
+    return canonical(cwd or os.environ.get('CLAUDE_PROJECT_DIR') or os.getcwd())
+
+
+def git_toplevel(d, options=()):
+    """The work-tree root git reports for a directory and any --git-dir or --work-tree
+    options, in canonical form, or '' when git finds no work tree there."""
+    if not os.path.isdir(d):
+        return ''
+    r = run(['git'] + list(options) + ['rev-parse', '--show-toplevel'], cwd=d, timeout=5)
+    top = (r.stdout or '').strip() if r.error is None and r.status == 0 else ''
+    return canonical(top) if top else ''
 
 
 def project_root(d):
     """The repository root of a directory (a worktree's own root), else the directory itself."""
-    r = run(['git', 'rev-parse', '--show-toplevel'], cwd=d, timeout=5)
-    top = (r.stdout or '').strip() if r.error is None and r.status == 0 else ''
-    return os.path.abspath(top or d)
+    return git_toplevel(d) or canonical(d)
 
 
 def has_profile(root):
