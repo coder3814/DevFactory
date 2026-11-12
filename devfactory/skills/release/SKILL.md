@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session, worktree and branch. Use only when the requester says in the conversation to release a card or a parent issue run they have accepted; never on an agent's own judgment.
+description: Release accepted work as the project profile says — merge and ship by the project's own release procedure, append the released specs' gap entries to the project's gap ledger and delete their spec folders in the release, close the cards and fire their released events, curate the gap records, and reap every session (marked completed, then archived without asking), worktree and branch. Use only when the requester says in the conversation to release a card or a parent issue run they have accepted; never on an agent's own judgment.
 allowed-tools:
   - Read
   - Glob
@@ -105,20 +105,41 @@ theirs to take when its moment comes, whatever authorised the release.
 
 6. **Curate.** Run `curate`.
 
-7. **Stop and reap.** Stop every session and agent the work started, the sub-issue
-   sessions a parent run kept until acceptance included, remove every worktree and delete
-   every branch it left, the parent's included, as the profile's Branches and merging says.
-   Stop each session with `stop_session` before its worktree goes. A session cannot remove
-   the worktree it works in, so have a subagent working from another checkout remove each
-   one, then archive the session with `archive_session` once its worktree and branch are
-   gone. Reaping asks nothing a standing answer or this step settles:
+7. **Stop and reap.** Once the release is live and the cards are closed, end every
+   session and agent the work started: each sub-issue's session, the parent-fixes session
+   and the sessions a parent run kept until acceptance, or a standalone card's build
+   session. The requester's authorisation to release, whether given ahead of time or in
+   the conversation, is also their explicit agreement to everything this step does,
+   `archive_session` included, so reaping never asks "archive these sessions?". For each
+   session, in this order:
+   1. Stop it with `stop_session` when it is mid-turn, and stop every agent it started.
+   2. Check its worktree: have a subagent working from another checkout read `git status`
+      there. When the only uncommitted changes are regenerated build output (files the
+      project's build or test gate writes, such as compiled assets, caches or test
+      reports), carry on and discard it. When anything else is uncommitted, such as a
+      change note under `docs/_intake/`, report it and leave that session, its worktree
+      and its branch alone; the next steps skip it.
+   3. Mark it completed with `mark_completed`, the sidebar's flag that it is done.
+   4. Archive it with `archive_session`. Archiving stops the session and lets the app
+      remove its worktree, which an idle session otherwise holds open: removing the
+      folder first fails with "Permission denied" or hangs.
+
+   Only after those sessions are archived, have a subagent working from another checkout
+   delete every branch the run left, the parent's included, and remove any worktree still
+   there, as the profile's Branches and merging says. A parent branch or worktree a kept
+   session still holds stays. In a standalone card the session running `release` is the
+   build session, and archiving it ends its turn, so it does this last: it reports, runs
+   `devfactory end release`, detaches its worktree's HEAD (`git switch --detach`) and
+   deletes its own branch, then marks itself completed and archives itself. Reaping asks
+   nothing a standing answer or this step settles:
    - A branch whose work reached the integration branch by a rebase, so that `git branch
      -d` refuses it, is removed the way the profile's Branches and merging or a standing
      answer (such as "How is a finished branch removed?") says, force-deletion included,
      once its commits' changes are confirmed on the integration branch. Ask only when
      neither says.
-   - A reaped worktree whose only uncommitted changes are regenerated build output (files
-     the project's build or test gate writes, such as compiled assets, caches or test
-     reports) is removed with that output discarded, without asking. Any other uncommitted
-     change is reported and its worktree kept.
-   Report anything you cannot confirm is gone.
+   - A reaped worktree whose only uncommitted changes are regenerated build output is
+     removed with that output discarded, without asking. Any other uncommitted change is
+     reported and its worktree kept.
+
+   Report anything you cannot confirm is gone: a session not archived, a worktree kept, a
+   branch not deleted.

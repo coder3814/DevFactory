@@ -73,7 +73,7 @@ and spec skill calls `begin <skill>` as its first action and `end <skill>` as it
 including on the path where it stops to ask. Every `[machine]` condition is checked by the
 script named in the definitions, never by reading. The coordinator names the desktop
 session tools directly (`start_session`, `SendMessage`, `stop_session`,
-`archive_session`) and the runtime file is folded into it and deleted.
+`mark_completed`, `archive_session`) and the runtime file is folded into it and deleted.
 
 ## Decisions taken during the build
 

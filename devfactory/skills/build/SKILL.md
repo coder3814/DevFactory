@@ -218,7 +218,8 @@ only the tests the current edit touches.
       reviewer applies every Definition of Done condition but 6, which only a parent issue
       has; so is step 8's carrying on after spec-only amendments past the review limit.
       Fire `done` and stop building without merging: go straight into `accept`, asking
-      nothing first, which hands to `release`, and `release` merges the work once.
+      nothing first, which hands to `release`, and `release` merges the work once and ends
+      by marking this session completed and archiving it, as its step 7 says.
 
 ## Fixing a finding or a refusal
 

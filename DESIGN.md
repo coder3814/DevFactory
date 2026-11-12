@@ -254,7 +254,7 @@ receipt says a check need not run again.
 | Development | A build starts only on an approved spec. One session per sub-issue builds from the spec in its own worktree; questions go through the coordinator as gaps; each session's work is reviewed by a separate agent against the spec; results merge into the parent branch. | `coordinate`, `build`, the change reviewer agent | Every sub-issue merged |
 | Done | The Done judge measures the parent branch against the parent spec and the Definition of Done; a standalone card's passing change review is its Done verdict. Past the review or judgment limit, a round whose findings were all fixed by spec-only amendments goes on to acceptance as Done. | the Done judge agent | Done verdict, or a spec-only round past the limit |
 | Acceptance | The owner judges the result against the evidence: every criterion is shown with its artifact, and one question accepts them all or names the refused ones. A refusal is classified (section 6.2). | `accept`, the owner | Accepted |
-| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions, worktrees and branches removed; gap records curated. | `release` | Cards closed |
+| Release | Merge, push, release and close by the profile's release procedure; gap entries appended to the ledger; specs deleted; sessions marked completed and archived under the release authorisation, then worktrees and branches removed; gap records curated. | `release` | Cards closed |
 
 Three definitions gate the work, one per hand-off: the Definition of Request
 (`references/definition-of-request.md`) before a spec is written, the Definition of Ready
@@ -289,7 +289,11 @@ are kept until the run is accepted and released. A Done-judge finding or a refus
 belongs to one sub-issue is fixed by that sub-issue's kept session, on its branch rebased
 onto the parent branch; one no sub-issue owns is fixed by the run's parent-fixes session,
 started with the others and waiting for such findings. Either is reviewed and merged as any
-sub-issue's work is.
+sub-issue's work is. `release` ends them: each is stopped, its worktree checked for
+uncommitted work that is not regenerated output, marked completed and archived, with no
+further question, since the release authorisation covers it; only then are the branches and
+any worktree left removed. An idle session holds its worktree open, so removing the folder
+before archiving fails or hangs.
 
 **Every session starts in the requester's turn.** The Claude desktop app starts a session
 only on a turn the requester's own message began; on a notification turn a start waits for
@@ -545,7 +549,8 @@ DevFactory/
       accept/               show the owner every criterion's evidence, accept in one answer;
                             classify a refusal
       release/              release by the profile's procedure; ledger the gaps; delete
-                            specs; close cards; remove sessions, worktrees and branches
+                            specs; close cards; archive sessions, remove worktrees
+                            and branches
       curate/               read the gap records; propose checker emphasis and profile
                             entries
     agents/

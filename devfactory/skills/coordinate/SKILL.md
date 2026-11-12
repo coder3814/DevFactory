@@ -47,7 +47,8 @@ root, wherever the shell's working directory is.
 | Start a session, briefed to wait | `start_session` with `initiation: "user_asked"`, `context: "fresh"`, its own worktree (`use_worktree: true`) cut from the parent branch (`source_branch`), the `model` and `effort` the card's Suggested model and effort names, the brief below as `prompt`, and the run's goal and constraints as `background`. Record the session id and name the result returns. |
 | Tell a waiting session to begin, send it an answer or a finding, or give it its turn to merge | `SendMessage` to the session's `local_…` id, never its display name. |
 | Read a session's report | The session sends every report, question and stop as a message (the brief says so), which wakes this session on any turn. A `<side-sessions-event>` note quoting a session's final message is not the channel: the app holds those notes back after many in a row with no message from the requester. On a note that carries nothing the session has not already sent by message, such as a session ending a turn to wait, do nothing and end the turn. When a session's note or final message shows a report it did not send, message it to send its report. Read what a report leaves out from the card and the spec it updated, or ask the session to restate a part. |
-| Stop a session | `stop_session`, then `archive_session` once its worktree and branch are gone. |
+| Stop a session | `stop_session`. |
+| Finish a session | `mark_completed`, then `archive_session`, which stops it and lets the app remove its worktree. Only `release` step 7 does this for the run's sessions, under the release authorisation; its worktrees and branches are removed after the sessions are archived. |
 
 The desktop app shapes the run:
 
@@ -61,7 +62,8 @@ The desktop app shapes the run:
   sub-issue added to the parent mid-run; say so when it happens, with the reason.
 - **Messaging works from any turn**, so set each session going when its waits are met, and
   relay answers and findings, from a notification turn.
-- **A session cannot remove the worktree it works in.** Have a separate subagent remove it.
+- **A session holds the worktree it works in, even idle.** Archive the session first, then
+  have a separate subagent remove whatever is left of the worktree.
 - **A report is a claim, not proof.** Check the branch, the spec and the card before acting
   on it or telling the requester it is done.
 - **Link every session you name** as `[title](#local_<id>)` so the requester can open it.
@@ -168,8 +170,7 @@ not end before step 3 has started every session.
    folds committed anything to the integration branch, have an agent rebase the parent
    branch onto it before any session begins. A sub-issue the check finds no longer Ready
    keeps its session waiting until its spec is approved again; one that leaves the run has
-   its session stopped, its worktree and branch removed by a subagent, and the session
-   archived.
+   its session stopped and archived, then its worktree and branch removed by a subagent.
 
 5. **Set each going.** Message a sub-issue's session to begin when all of these hold:
    - the readiness check of step 4 reported nothing open;
@@ -292,9 +293,10 @@ not end before step 3 has started every session.
     belongs to, or by the parent-fixes session when no sub-issue owns it, reviewed and
     merged the same way, and then goes back to `accept`.
 
-11. **Stop.** Once `release` has reaped, confirm that every session and agent you started,
-    the parent-fixes session included, has stopped, and that each agent stopped its own.
-    Report anything you cannot confirm has stopped. Run `devfactory markers --clear-stale`
+11. **Stop.** Once `release` has reaped, confirm that every session you started, the
+    parent-fixes session included, is marked completed and archived, and that every agent
+    you started has stopped, each having stopped its own. Report anything you cannot
+    confirm: a session not archived, a worktree kept, a branch not deleted. Run `devfactory markers --clear-stale`
     to remove any marker left behind past its lifetime, then run `devfactory end
     coordinate`.
 
