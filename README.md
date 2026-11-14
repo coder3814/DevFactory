@@ -88,12 +88,10 @@ plugin, a call the developer could have made, a fact or a standing answer for yo
 project's profile, or a change to a document your project already keeps. It also retires
 profile entries that something else now holds, so the profile stays short.
 
-**Enforces its own rules.** Four hooks ship with the plugin, each switchable per project.
-Both guards judge every command a session gives its Bash or PowerShell tool. A tracker guard
+**Enforces its own rules.** Three hooks ship with the plugin, each switchable per project.
+A tracker guard judges every command a session gives its Bash or PowerShell tool, and
 refuses any command against your board that is not a known read unless a skill that writes
-the board is running. A git guard refuses a change to the integration or a parent branch, and a
-push while a card skill is running, unless the skill that owns that step is running; work
-that belongs to no card is pushed with no skill running. A stamp notice tells a session
+the board is running. A stamp notice tells a session
 whether the card it was asked about has changed since its spec earned Ready. A
 session-context hook puts the profile, the event hooks, every skill by its full name and the
 decision line in front of every new session. Machine checks are Python scripts, so two
@@ -109,7 +107,7 @@ checkers agree by construction.
 - **One approval, one acceptance.** The rewritten wording of a card is not re-approved on
   every edit; your answer is the acceptance, and you judge intent once at the end against the
   evidence plan, every criterion shown with its evidence and accepted in one answer.
-- **Rules that hold under load.** The guards block what prose rules only discourage.
+- **Rules that hold under load.** The tracker guard blocks what prose rules only discourage.
 - **A process that learns.** Every miss is recorded against the condition that let it through,
   and the gaps become the next grilling's checklist.
 - **Project-agnostic.** Everything about your project lives in one profile: the board, where

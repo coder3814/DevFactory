@@ -23,7 +23,7 @@ PROFILE = '\n'.join([
     '- Can show: everything',
     '',
     '## Hooks',
-    '- Git guard: on',
+    '- Stamp notice: on',
     '',
     '## Standing answers',
     '- **Which log format?** JSON lines: decided in review',
@@ -90,7 +90,7 @@ class MarkersProfileTest(unittest.TestCase):
 
         marker(d, 'coordinate', 13)
         r = run(['begin', 'build'], d)
-        self.assertRegex(r.lines[1], r'^stale coordinate since \S+ \(13h ago, older than 12h; the guards ignore it\)$')
+        self.assertRegex(r.lines[1], r'^stale coordinate since \S+ \(13h ago, older than 12h; the tracker guard ignores it\)$')
 
     def test_begin_prints_and_stores_the_plugin_version_and_reports_a_marker_from_another(self):
         d = temp_dir(self)
@@ -136,13 +136,13 @@ class MarkersProfileTest(unittest.TestCase):
 
     def test_markers_lists_each_with_its_age_honours_the_lifetime_and_clears_the_stale_ones(self):
         d = temp_dir(self)
-        write(os.path.join(d, '.devfactory', 'profile.md'), PROFILE.replace('- Git guard: on', '- Git guard: on\n- Marker lifetime: 2h'))
+        write(os.path.join(d, '.devfactory', 'profile.md'), PROFILE.replace('- Stamp notice: on', '- Stamp notice: on\n- Marker lifetime: 2h'))
         marker(d, 'build', 1)
         marker(d, 'grill', 3)
         r = run(['markers'], d)
         self.assertEqual(r.code, 0, r.stderr)
         self.assertRegex(r.lines[0], r'^active build since \S+ \(1h ago\)$')
-        self.assertRegex(r.lines[1], r'^stale grill since \S+ \(3h ago, older than 2h; the guards ignore it\)$')
+        self.assertRegex(r.lines[1], r'^stale grill since \S+ \(3h ago, older than 2h; the tracker guard ignores it\)$')
         r = run(['markers', '--clear-stale'], d)
         self.assertEqual(r.code, 0)
         self.assertRegex(r.lines[1], r'^cleared grill \(3h old\)$')

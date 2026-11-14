@@ -48,8 +48,8 @@ says. That reference also says what each report carries and how to wait inside t
 is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin build` as your first action, and keep the marker for
-the whole build: through every question, wait, review round and the merge, since the git
-guard allows the parent branch's fast-forward only under it. Run `devfactory end build` as
+the whole build: through every question, wait, review round and the merge, since the tracker
+guard allows your card writes only under it. Run `devfactory end build` as
 your last action: in a parent issue run after the merge is reported, and for a standalone
 card once you hand to `accept`, or when you stop with nothing left to do. A marker expires
 after the profile's Marker lifetime (12 hours by default), and `begin` refreshes it, so

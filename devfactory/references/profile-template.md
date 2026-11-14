@@ -220,38 +220,20 @@ where, so the readiness checker can read them.
 
 ### Hooks and permissions
 
-- **Hooks** switches off any of the plugin's four hooks for this project; all four are on
+- **Hooks** switches off any of the plugin's three hooks for this project; all three are on
   by default, so a line is written only for a hook that is off, and a hook whose line says
-  off does nothing. The Marker lifetime line is written only when it is not 12 hours. Both
-  guards judge every command a session gives its Bash or PowerShell tool. The **tracker
+  off does nothing. The Marker lifetime line is written only when it is not 12 hours. The
+  tracker guard judges every command a session gives its Bash or PowerShell tool. The **tracker
   guard** refuses every `gh issue`, `gh project`, `gh label` and `az boards work-item`
   subcommand that is not a known read, every `gh api` call that is not a GET, and every
   `az rest` call that is not a GET against a work-item API, unless a skill that writes the
-  tracker is running, so every card change goes through the skills that own it. The **git
-  guard** keeps the integration branch and parent branches from being changed outside the
-  skills that own them. It refuses a push while any skill other than `release` or
-  `coordinate` is running, and allows one when no skill is running, so work that belongs to
-  no card is pushed without one. While neither `release` nor `coordinate` is running, it
-  refuses every merge, pull, rebase, cherry-pick, hard reset, reset to another
-  revision, amended commit, forced branch move, rename or delete, `update-ref`,
-  `checkout -B` or `switch -C` that changes a protected branch, wherever in the command
-  line it appears, `bash -c`, `sh -c` and `powershell -Command` included. A `git checkout
-  <branch>` or `git switch <branch>` earlier in the same command line sets the branch later
-  parts are judged against. Under `build` it
-  allows a `git merge --ff-only` onto a parent branch, and under `grill`, `check-ready`,
-  `create-card`, `re-evaluate-card` or `curate` a `git merge --ff-only` onto the
-  integration branch, which lands a spec, a receipt or a profile change; a plain `git
-  commit` is never refused. A target it cannot resolve to a repository and a `git -c
-  alias.<name>=...` invocation are refused in a guarded session. A `devfactory begin
-  <skill>` earlier in the same command line, joined by `&&`, `;` or a newline, counts as
-  that skill's fresh marker for the rest of it. A session whose own root holds a fresh
-  `build` marker gains nothing from a `release` or `coordinate` marker in another root. The
+  tracker is running, so every card change goes through the skills that own it. The
   **stamp notice** says,
   when a prompt names a card that has a spec, whether the spec is still current or the card
   has changed since it earned Ready; it never blocks. The **session context** prints, when a
   session starts, where the profile is, the event hooks the project has, which skill does
   what, each by its full name (`devfactory:start` and the rest), and whether a card skill is
-  running. The guards read the markers in `.devfactory/.active/`.
+  running. The tracker guard reads the markers in `.devfactory/.active/`.
 - **Permissions** are not kept in the profile. The project's `.claude/settings.json` is
   their record: `configure-project` writes the read-only allowlist entries there, so the
   skills' reads run without a prompt each time, such as reading a card, listing the board,

@@ -1438,7 +1438,7 @@ def list_markers(root):
 
 def describe_marker(m):
     if m['stale']:
-        return 'stale %s since %s (%s ago, older than %sh; the guards ignore it)' % (
+        return 'stale %s since %s (%s ago, older than %sh; the tracker guard ignores it)' % (
             m['name'], m['time'], m['age'], js_number(m['lifetime']))
     return 'active %s since %s (%s ago)' % (m['name'], m['time'], m['age'])
 

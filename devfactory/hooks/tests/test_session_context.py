@@ -42,7 +42,7 @@ class SessionContextTest(unittest.TestCase):
     def test_names_an_active_marker_and_reports_a_stale_one(self):
         out = self.run_context(project(self, profile=PROFILE, markers=['grill', ('build', 30)]))
         self.assertRegex(out, r'Active card skill markers: grill \(\d+s\)\.')
-        self.assertRegex(out, r'Stale markers, which the guards ignore: build \(1d\); clear them')
+        self.assertRegex(out, r'Stale markers, which the tracker guard ignores: build \(1d\); clear them')
 
     def test_reads_the_profile_at_the_repository_root_from_a_subfolder(self):
         cwd = project(self, profile=PROFILE, branch='main')

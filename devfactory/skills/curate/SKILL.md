@@ -32,8 +32,7 @@ agent works belongs in the plugin, never in Standing answers.
 `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`; if that variable is empty in your shell, it
 is `../../scripts/devfactory.py` relative to this skill's folder.
 
-**Markers.** Curate runs under its own marker, which the git guard accepts for the
-commits steps 6 and 7 make on the integration branch. Run `devfactory begin curate` as your
+**Markers.** Curate runs under its own marker. Run `devfactory begin curate` as your
 first action and `devfactory end curate` as your last, including when you stop to ask the
 requester or to report, and `devfactory begin curate` again when you resume. A marker
 expires after the profile's Marker lifetime (12 hours by default), and `begin` refreshes

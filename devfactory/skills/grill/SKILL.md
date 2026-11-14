@@ -27,10 +27,9 @@ this skill's folder.
 **Markers.** Run `devfactory begin grill` as your first action and `devfactory end grill`
 as your last. Whenever you end your turn to wait for the requester's answer, or to report,
 run `devfactory end grill` first, and `devfactory begin grill` again when you resume. The
-tracker guard allows your card writes only while the marker is there, and the git guard
-allows your spec commit onto the integration branch, and its fast-forward there, only
-under it; so hold the marker through each spec commit and the spec line written after it,
-and end it only once both are done. A marker expires after the profile's Marker lifetime
+tracker guard allows your card writes only while the marker is there, so hold the marker
+through each spec commit and the spec line written after it, and end it only once both
+are done. A marker expires after the profile's Marker lifetime
 (12 hours by default), and `begin` refreshes it. Markers and the profile are found at the
 repository (worktree) root, wherever the shell's working directory is. When `begin` prints
 `plugin-changed`, load this skill again before you continue.

@@ -1,5 +1,5 @@
 {
-  "description": "DevFactory guards and context: tracker and git guards, the spec stamp notice and the session context. Each is switched by its line in the project profile's Hooks section.",
+  "description": "DevFactory guards and context: the tracker guard, the spec stamp notice and the session context. Each is switched by its line in the project profile's Hooks section.",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,11 +9,6 @@
             "type": "command",
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/guard_tracker.py\"",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/guard_git.py\"",
-            "timeout": 15
           }
         ]
       }

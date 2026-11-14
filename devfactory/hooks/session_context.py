@@ -64,7 +64,7 @@ def main():
     out.append('Active card skill markers: %s.' % ', '.join(label(m) for m in active) if active
                else 'No card skill is running (no fresh marker in .devfactory/.active/).')
     if stale:
-        out.append('Stale markers, which the guards ignore: %s; '
+        out.append('Stale markers, which the tracker guard ignores: %s; '
                    'clear them with the script\'s "markers --clear-stale".' % ', '.join(label(m) for m in stale))
 
     lib.emit('\n'.join(out[:MAX_LINES]) + '\n')

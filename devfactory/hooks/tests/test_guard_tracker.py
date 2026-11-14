@@ -13,7 +13,7 @@ PROFILE = '\n'.join([
     '',
     '## Hooks',
     '- Tracker guard: on',
-    '- Git guard: on',
+    '- Stamp notice: on',
     '',
 ])
 

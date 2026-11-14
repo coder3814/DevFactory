@@ -32,9 +32,8 @@ tool too.
 is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin coordinate` as your first action and keep the marker
-for the whole run, through every turn and wait: the git guard allows a merge into the
-integration or the parent branch, and a push while another skill's marker is fresh, only
-under it or under `release`. Run
+for the whole run, through every turn and wait: the tracker guard allows card writes
+only under it. Run
 `devfactory end coordinate` as your last action, at step 11, or when you stop and report
 the run abandoned. A marker expires after the profile's Marker lifetime (12 hours by
 default), and `begin` refreshes it, so run `devfactory begin coordinate` again whenever

@@ -40,7 +40,6 @@ the README, the `--help` text and the tests together.
 | Event | Matcher | Script |
 |---|---|---|
 | PreToolUse | `Bash\|PowerShell` | `guard_tracker.py` |
-| PreToolUse | `Bash\|PowerShell` | `guard_git.py` |
 | UserPromptSubmit | — | `stamp_notice.py` |
 | SessionStart | — | `session_context.py` |
 
@@ -86,7 +85,6 @@ the definitions, never by reading. The coordinator names the desktop session too
 - `context: fork` is not used: a forked skill cannot start agents or ask the requester, which is what `check-ready` and `curate` do.
 - `release` is model-invocable, but runs only on the requester's explicit word in the conversation: `accept` and `coordinate` ask whether to release and start it themselves on a yes, or start it without asking when the requester authorised the release ahead of time, in their starting instruction or their acceptance answer. It does not set `disable-model-invocation: true`, which refuses the session's call even after the requester said to release. What an authorisation covers is stated once, in `release` under "What an authorisation covers".
 - The agents' overview is `references/agents.md`, because plugin validation treats every file in `agents/` as an agent.
-- Git guard semantics are stated in `DESIGN.md` section 8, "Hooks", and the merge each session makes in `build` and `coordinate`.
 - `release` reaps: it stops, marks completed and archives every session the work started, then removes the worktrees, the branches and every detached review or judge checkout the run left. `coordinate`'s last step confirms from `release`'s closing list what was reaped and runs `markers --clear-stale`, which `configure-project`'s troubleshooting also names.
 - The hooks read the profile through the script's `profile` command, so hooks and skills read it the same way.
 - Skills pre-approve the script as `Bash(python *devfactory.py*)`, with no spaces around the name, and name it as `${CLAUDE_PLUGIN_ROOT}/scripts/devfactory.py`, or `../../scripts/devfactory.py` relative to the skill's folder when that variable is empty in the shell.
@@ -114,7 +112,7 @@ the definitions, never by reading. The coordinator names the desktop session too
 The profile's sections and their defaults are in `references/profile-template.md`. Two
 rules there bind the hooks:
 
-- `## Hooks`: `- Tracker guard: off`, `- Git guard: off`, `- Stamp notice: off`,
+- `## Hooks`: `- Tracker guard: off`, `- Stamp notice: off`,
   `- Session context: off`, `- Marker lifetime: <hours>h`, each written only when it departs
   from the default of all on and 12h. A hook reads its own line and exits silently when off.
 - No `## Permissions` section: `configure-project` writes the read-only allowlist entries to

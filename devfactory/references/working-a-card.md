@@ -148,7 +148,7 @@ included, write no receipt, and `grill` judges the card itself.
 3. Commit `receipts.md`, and nothing else, as its own commit, the way `grill`
    commits a spec: directly on the integration branch when the profile's
    branches and merging allows a direct commit there, otherwise on a branch then
-   fast-forwarded onto it, which the git guard allows under this skill's marker.
+   fast-forwarded onto it.
 
 ## Fold
 

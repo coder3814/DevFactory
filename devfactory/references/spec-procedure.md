@@ -110,6 +110,5 @@ parent's set; `receipt check` takes no `--commit`.
 A spec folder, or a file of a parent's records folder, is committed on its own, and nothing
 else with it. Before development the commit lands directly on the integration branch when
 the profile's Branches and merging allows a direct commit there; otherwise it is made on a
-branch that is then fast-forwarded onto the integration branch, which the git guard allows
-under the marker of the skill making it, `grill`'s or `check-ready`'s. During development it
+branch that is then fast-forwarded onto the integration branch. During development it
 is made on the card's own branch.

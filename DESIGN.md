@@ -833,12 +833,9 @@ DevFactory/
       README.md             the commands, their flags and exit codes
       tests/                the script's tests
     hooks/
-      hooks.json            the four hooks, each switched by its line in the profile
+      hooks.json            the three hooks, each switched by its line in the profile
       guard_tracker.py      PreToolUse (Bash, PowerShell): refuses any tracker command that
                             is not a known read while no skill that writes cards runs
-      guard_git.py          PreToolUse (Bash, PowerShell): refuses a push while a card skill
-                            other than release or coordinate runs, and a change to a
-                            protected branch, except as the running skill's marker allows
       stamp_notice.py       UserPromptSubmit: says whether a named card's spec is current
       session_context.py    SessionStart: the profile, the event hooks, every skill by its
                             full name, the decision line and the markers
@@ -868,13 +865,13 @@ another version it also prints `plugin-changed <old> <new>`, and the skill loads
 again before it continues. A marker expires after the profile's Marker lifetime, a line of
 its Hooks section, 12 hours by default, and an expired marker counts as no skill running.
 `begin` refreshes a marker, and every skill that holds one across a wait runs `begin` again
-on resume. A `devfactory begin <skill>` earlier in the same command counts, for both guards,
+on resume. A `devfactory begin <skill>` earlier in the same command counts, for the tracker guard,
 as that skill's fresh marker for the rest of that command. `markers` lists the markers and,
 with `--clear-stale`, removes the expired ones.
 
-**Hooks.** Four ship in `hooks/hooks.json`, each switched on or off by its line in the
+**Hooks.** Three ship in `hooks/hooks.json`, each switched on or off by its line in the
 profile's Hooks section, all on by default. Each allows silently on a missing profile, when
-its line says off, and on any error of its own. Both guards judge every command a session
+its line says off, and on any error of its own. The tracker guard judges every command a session
 gives its Bash or PowerShell tool, in each part of the command line and inside `bash -c`,
 `sh -c` and `powershell -Command`.
 
@@ -884,28 +881,6 @@ gives its Bash or PowerShell tool, in each part of the command line and inside `
   writes cards is running: `create-card`, `add-to-card`, `re-evaluate-card`, `grill`,
   `check-ready`, `build`, `coordinate`, `accept`, `release` or `configure-project`. A
   `start` or `curate` marker does not unlock it.
-- The **git guard** protects the integration branch and every parent branch, and judges a
-  command by its effect on one. It refuses a push while any skill other than `release` or
-  `coordinate` holds a fresh marker, and allows one when no skill is running, so work that
-  belongs to no card is pushed without one. It refuses any change to a protected branch: a
-  merge, pull, rebase, cherry-pick, hard reset, a reset to a revision in any mode, an amend,
-  a forced branch move, a rename or delete of it (`branch -m|-M|-d|-D`), an `update-ref` of
-  `refs/heads/<branch>`, or a `checkout -B` or `switch -C` of it, while HEAD is on it, the
-  same through `cd`, `git -C`, `--git-dir` or `--work-tree` into its worktree, or a command
-  that names it. A `checkout` or `switch <branch>` earlier in the same command sets the
-  branch later parts are judged against. Every path is resolved to one canonical form before
-  matching, so a Windows path with either slash, an MSYS `/c/…` path and a Cygwin
-  `/cygdrive/c/…` path name one place; a target it cannot resolve to a repository, and a
-  `git -c alias.<x>=…` invocation, are refused while the session is guarded. Merging,
-  pulling or rebasing a protected branch into an unprotected one is never refused, nor is a
-  plain commit. A `release` or `coordinate` marker allows everything, except that a session
-  whose own root holds a fresh `build` marker gains nothing from a `release` or `coordinate`
-  marker in another root. A `build` marker allows the fast-forward into a parent branch,
-  which a build session makes with `git -C <parent worktree> merge --ff-only <branch>` from
-  its own worktree. A `grill` marker allows its spec commit and fast-forward onto the
-  integration branch, so `grill` holds its marker through the spec commit and the spec
-  line. A `create-card`, `re-evaluate-card`, `check-ready` or `curate` marker allows the
-  same fast-forward, which lands a receipt, a re-stamped spec or a profile change.
 - The **stamp notice** gives a prompt that names a card with a spec the result of
   `stamp-check`. It never blocks.
 - The **session context** gives a session in a project with a profile the profile's

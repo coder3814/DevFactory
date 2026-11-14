@@ -208,12 +208,12 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
     the Claude desktop app's session tools, so a project that runs parent
     issues needs the Claude desktop app; a standalone card, which `start` hands
     to `build`, does not.
-16. **Choose the hooks.** Show the four hooks as the template's "Hooks and
-    permissions" describes them — the tracker guard, the git guard, the stamp
-    notice and the session context — say that all four are on by default, and
-    ask whether the owner wants any off. Say that both guards judge every
-    command a session gives its Bash or PowerShell tool, and that the tracker
-    guard refuses every `gh issue`, `gh project`, `gh label` and
+16. **Choose the hooks.** Show the three hooks as the template's "Hooks and
+    permissions" describes them — the tracker guard, the stamp
+    notice and the session context — say that all three are on by default, and
+    ask whether the owner wants any off. Say that the tracker guard judges every
+    command a session gives its Bash or PowerShell tool, and that it
+    refuses every `gh issue`, `gh project`, `gh label` and
     `az boards work-item` subcommand that is not a known read, every `gh api`
     call that is not a GET, and every `az rest` call that is not a GET against a
     work-item API, unless a skill that writes the tracker is running. Say that
@@ -276,5 +276,5 @@ paths, the Hooks lines, the Marker lifetime), which holds the value itself.
     Commit the profile, the modules, any hooks, `.claude/settings.json` and `.gitignore` as the
     project's conventions say, or tell the owner to, so the whole team shares one profile.
     Say that hooks and the session context load when a session starts, so this session
-    runs without them: the next session in the project is the first with the guards on.
+    runs without them: the next session in the project is the first with the hooks on.
 20. **End.** Run `devfactory end configure-project`.
