@@ -229,8 +229,10 @@ where, so the readiness checker can read them.
   `az rest` call that is not a GET against a work-item API, unless a skill that writes the
   tracker is running, so every card change goes through the skills that own it. The **git
   guard** keeps the integration branch and parent branches from being changed outside the
-  skills that own them. While neither `release` nor `coordinate` is running, it refuses
-  every push, and every merge, pull, rebase, cherry-pick, hard reset, reset to another
+  skills that own them. It refuses a push while any skill other than `release` or
+  `coordinate` is running, and allows one when no skill is running, so work that belongs to
+  no card is pushed without one. While neither `release` nor `coordinate` is running, it
+  refuses every merge, pull, rebase, cherry-pick, hard reset, reset to another
   revision, amended commit, forced branch move, rename or delete, `update-ref`,
   `checkout -B` or `switch -C` that changes a protected branch, wherever in the command
   line it appears, `bash -c`, `sh -c` and `powershell -Command` included. A `git checkout

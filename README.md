@@ -91,8 +91,9 @@ profile entries that something else now holds, so the profile stays short.
 **Enforces its own rules.** Four hooks ship with the plugin, each switchable per project.
 Both guards judge every command a session gives its Bash or PowerShell tool. A tracker guard
 refuses any command against your board that is not a known read unless a skill that writes
-the board is running. A git guard refuses a push, or a change to the integration or a parent
-branch, unless the skill that owns that step is running. A stamp notice tells a session
+the board is running. A git guard refuses a change to the integration or a parent branch, and a
+push while a card skill is running, unless the skill that owns that step is running; work
+that belongs to no card is pushed with no skill running. A stamp notice tells a session
 whether the card it was asked about has changed since its spec earned Ready. A
 session-context hook puts the profile, the event hooks, every skill by its full name and the
 decision line in front of every new session. Machine checks are Python scripts, so two

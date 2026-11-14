@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """PreToolUse (Bash, PowerShell): keeps the integration branch and parent branches from being
-changed outside the skills that own them, and refuses every push outside release and
-coordinate.
+changed outside the skills that own them, and refuses a push while a card skill other than
+release or coordinate is running.
 
-Refused: `git push`; and, when the branch they change is protected, `git merge`, `git pull`,
+Refused: `git push` while any other skill's marker is fresh (with no marker at all a push is
+allowed, so work that belongs to no card can be pushed); and, when the branch they change is
+protected, `git merge`, `git pull`,
 `git rebase`, `git cherry-pick`, `git reset --hard`, a `git reset` to a revision other than
 the one the branch is at (in any mode), `git commit --amend`, `git branch -f`, `git branch
 -m|-M` of it (and -M or -C onto it), `git branch -d|-D` of it, `git update-ref` of
@@ -484,8 +486,10 @@ class Session:
             if 'build' in active:
                 return ('DevFactory: a build session never pushes; a push is the release, which goes through '
                         'the release skill.')
-            return ('DevFactory: a push goes through the release skill, or coordinate for a parent issue; '
-                    'neither is running.')
+            if active:
+                return ('DevFactory: %s is running, and a push while a card skill runs goes through the '
+                        'release skill, or coordinate for a parent issue.' % ', '.join(sorted(active)))
+            return None  # no skill is running: work that belongs to no card is pushed freely
         branch = self.branch_of(o, root)
         integration = guard['is_integration'](branch)
         parent = not integration and guard['is_parent'](branch)

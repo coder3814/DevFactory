@@ -836,7 +836,8 @@ DevFactory/
       hooks.json            the four hooks, each switched by its line in the profile
       guard_tracker.py      PreToolUse (Bash, PowerShell): refuses any tracker command that
                             is not a known read while no skill that writes cards runs
-      guard_git.py          PreToolUse (Bash, PowerShell): refuses a push, or a change to a
+      guard_git.py          PreToolUse (Bash, PowerShell): refuses a push while a card skill
+                            other than release or coordinate runs, and a change to a
                             protected branch, except as the running skill's marker allows
       stamp_notice.py       UserPromptSubmit: says whether a named card's spec is current
       session_context.py    SessionStart: the profile, the event hooks, every skill by its
@@ -884,7 +885,9 @@ gives its Bash or PowerShell tool, in each part of the command line and inside `
   `check-ready`, `build`, `coordinate`, `accept`, `release` or `configure-project`. A
   `start` or `curate` marker does not unlock it.
 - The **git guard** protects the integration branch and every parent branch, and judges a
-  command by its effect on one. It refuses any push, and any change to a protected branch: a
+  command by its effect on one. It refuses a push while any skill other than `release` or
+  `coordinate` holds a fresh marker, and allows one when no skill is running, so work that
+  belongs to no card is pushed without one. It refuses any change to a protected branch: a
   merge, pull, rebase, cherry-pick, hard reset, a reset to a revision in any mode, an amend,
   a forced branch move, a rename or delete of it (`branch -m|-M|-d|-D`), an `update-ref` of
   `refs/heads/<branch>`, or a `checkout -B` or `switch -C` of it, while HEAD is on it, the

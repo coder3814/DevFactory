@@ -36,8 +36,9 @@ requester's explicit instruction in the conversation, never on an agent's own ju
 is `../../scripts/devfactory.py` relative to this skill's folder.
 
 **Markers.** Run `devfactory begin release` as your first action and keep the marker for
-the whole release, through every wait and question: the git guard allows the push, and the
-merge onto the integration branch, only while it is there. Run `devfactory end release` as
+the whole release, through every wait and question: the git guard allows the merge onto
+the integration branch, and the push while another skill's marker is fresh, only while it is
+there. Run `devfactory end release` as
 your last action, after step 9, or when you stop and report with the release abandoned. A
 marker expires after the profile's Marker lifetime (12 hours by default), and `begin`
 refreshes it, so run `devfactory begin release` again whenever you resume after a wait.

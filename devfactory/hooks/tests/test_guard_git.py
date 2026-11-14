@@ -40,7 +40,8 @@ class GuardGitTest(unittest.TestCase):
     def test_the_powershell_tool_is_guarded_with_its_own_quoting_and_separators(self):
         session = self.on('card-7')
         target = self.on('main')
-        self.deny(self.run_guard(session, 'git push origin card-7', 'PowerShell'), r'release skill')
+        self.deny(self.run_guard(self.on('card-7', ['grill']), 'git push origin card-7', 'PowerShell'),
+                  r'release skill')
         for c in ['cd %s; git merge card-7' % target, 'Set-Location -Path "%s"\ngit merge card-7' % target,
                   "git -C '%s' merge --ff-only card-7" % target, 'git status; git -C %s reset --hard' % target,
                   'if ($true) { git -C %s merge card-7 }' % target]:
@@ -60,8 +61,8 @@ class GuardGitTest(unittest.TestCase):
         ]:
             with self.subTest(command=c):
                 self.assertEqual(self.run_guard(cwd, c, tool), '')
-        for c in ['git push origin main && devfactory begin release',
-                  'devfactory begin release || git push origin main',
+        for c in ['git merge card-7 && devfactory begin release',
+                  'devfactory begin release || git merge card-7',
                   'devfactory begin build && git push',
                   'devfactory begin grill && git merge spec-12']:
             with self.subTest(command=c):
@@ -121,13 +122,14 @@ class GuardGitTest(unittest.TestCase):
     def test_a_git_command_inside_another_shell_is_judged(self):
         cwd = self.on('main')
         encoded = base64.b64encode('git merge card-7'.encode('utf-16-le')).decode('ascii')
-        for c in ['bash -c "git push"', "sh -c 'git merge card-7'", 'bash -lc "cd . && git reset --hard"',
-                  'powershell -Command "git merge card-7"', 'pwsh -NoProfile -c git push',
+        for c in ['bash -c "git merge card-7"', "sh -c 'git merge card-7'", 'bash -lc "cd . && git reset --hard"',
+                  'powershell -Command "git merge card-7"', 'pwsh -NoProfile -c git merge card-7',
                   'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "git commit --amend --no-edit"',
                   'powershell -EncodedCommand %s' % encoded, 'powershell -enc %s' % encoded,
-                  'bash -c "bash -c \'git push\'"']:
+                  'bash -c "bash -c \'git merge card-7\'"']:
             with self.subTest(command=c):
                 self.deny(self.run_guard(cwd, c))
+        self.deny(self.run_guard(self.on('main', ['grill']), 'bash -c "bash -c \'git push\'"'), r'release skill')
         self.deny(self.run_guard(cwd, 'powershell -Command "git merge card-7"', 'PowerShell'))
         for c in ['bash -c "git status"', 'powershell -Command "git log -1"', 'bash script.sh',
                   'bash -c "echo git push"']:
@@ -191,8 +193,15 @@ class GuardGitTest(unittest.TestCase):
                 self.deny(self.run_guard(cwd, c))
         self.deny(self.run_guard(self.on('parent-12', ['check-ready']), 'git merge --ff-only ready-12'))
 
-    def test_git_push_without_a_marker_is_denied(self):
-        self.deny(self.run_guard(self.on('card-7'), 'git push origin card-7'), r'release skill')
+    def test_git_push_without_any_marker_is_allowed_silently(self):
+        self.assertEqual(self.run_guard(self.on('card-7'), 'git push origin card-7'), '')
+        self.assertEqual(self.run_guard(self.on('main'), 'git push origin main'), '')
+        self.assertEqual(self.run_guard(self.on('main'), 'git status && git -C . push'), '')
+        self.assertEqual(self.run_guard(self.on('main', [('build', 13)]), 'git push'), '')
+
+    def test_git_push_from_a_root_without_a_marker_into_one_with_a_card_skill_running_is_denied(self):
+        target = self.on('main', ['grill'])
+        self.deny(self.run_guard(self.on('card-7'), 'git -C "%s" push' % target), r'grill is running')
 
     def test_git_push_with_a_release_or_coordinate_marker_is_allowed_silently(self):
         self.assertEqual(self.run_guard(self.on('main', ['release']), 'git push origin main'), '')
@@ -200,10 +209,10 @@ class GuardGitTest(unittest.TestCase):
 
     def test_git_push_under_build_or_grill_is_denied(self):
         self.deny(self.run_guard(self.on('card-7', ['build']), 'git -C . push'), r'never pushes')
-        self.deny(self.run_guard(self.on('main', ['grill']), 'git push'))
+        self.deny(self.run_guard(self.on('main', ['grill']), 'git push'), r'grill is running')
 
     def test_push_only_counts_as_the_command_token_not_as_a_word_in_another_argument(self):
-        cwd = self.on('card-7')
+        cwd = self.on('card-7', ['grill'])
         self.assertEqual(self.run_guard(cwd, 'git log --grep=push && echo git push'), '')
         self.assertEqual(self.run_guard(cwd, 'git commit -m "then git push; done"'), '')
         self.deny(self.run_guard(cwd, 'git status && git push'))
@@ -348,9 +357,9 @@ class GuardGitTest(unittest.TestCase):
         self.assertEqual(self.run_guard(self.on('main', ['release']), 'git merge --ff-only card-7'), '')
 
     def test_a_marker_older_than_the_marker_lifetime_is_ignored(self):
-        self.deny(self.run_guard(self.on('main', [('release', 13)]), 'git push'))
+        self.deny(self.run_guard(self.on('main', [('release', 13)]), 'git merge card-7'))
         longer = PROFILE.replace('- Git guard: on', '- Git guard: on\n- Marker lifetime: 48h')
-        self.assertEqual(self.run_guard(self.on('main', [('release', 13)], longer), 'git push'), '')
+        self.assertEqual(self.run_guard(self.on('main', [('release', 13)], longer), 'git merge card-7'), '')
 
     def test_the_profile_is_read_at_the_repository_root_when_cwd_is_a_subfolder(self):
         cwd = self.on('main')
